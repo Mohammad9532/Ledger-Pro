@@ -103,7 +103,7 @@ export default function SystemPage() {
                 <CardTitle className="text-lg flex items-center gap-2"><Database className="w-5 h-5 text-blue-500" /> Database Health</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Server className="w-3 h-3" /> Engine</p>
                     <p className="font-semibold">{health?.engine}</p>
@@ -153,14 +153,15 @@ export default function SystemPage() {
 
           {/* Backups List */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <CardTitle className="text-lg">Database Backups</CardTitle>
-              <Button onClick={handleCreateBackup} disabled={actioning}>
+              <Button onClick={handleCreateBackup} disabled={actioning} className="w-full sm:w-auto">
                 {actioning ? 'Processing...' : 'Create Backup'}
               </Button>
             </CardHeader>
             <CardContent className="p-0">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="text-left p-4 font-medium">Filename</th>
@@ -189,6 +190,7 @@ export default function SystemPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </CardContent>
           </Card>
         </div>

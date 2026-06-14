@@ -38,6 +38,8 @@ export default function TransactionsPage() {
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Form state
   const [txType, setTxType] = useState('expense');
@@ -54,6 +56,8 @@ export default function TransactionsPage() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), per_page: '15' });
     if (filterType !== 'all') params.set('type', filterType);
+    if (startDate) params.set('start_date', startDate);
+    if (endDate) params.set('end_date', endDate);
     api.get(`/transactions?${params}`).then(res => {
       setTransactions(res.data.data || []);
       setTotalPages(res.data.last_page || 1);
@@ -61,7 +65,7 @@ export default function TransactionsPage() {
     });
   };
 
-  useEffect(() => { fetchTransactions(); }, [filterType, page]);
+  useEffect(() => { fetchTransactions(); }, [filterType, page, startDate, endDate]);
 
   useEffect(() => {
     api.get('/accounts').then(res => setAccounts(res.data));
@@ -241,19 +245,27 @@ export default function TransactionsPage() {
         <Button onClick={() => setShowModal(true)}><Plus className="w-4 h-4 mr-2" /> New Transaction</Button>
       </div>
 
-      {/* Type Filters */}
-      <div className="flex flex-wrap gap-2">
-        {transactionTypes.map(t => (
-          <Button key={t} variant={filterType === t ? 'default' : 'outline'} size="sm" onClick={() => { setFilterType(t); setPage(1); }}>
-            {t === 'all' ? 'All' : getTransactionTypeLabel(t)}
-          </Button>
-        ))}
-      </div>
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap items-start sm:items-end gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="space-y-1 flex-1 sm:flex-none"><label className="text-sm text-muted-foreground">From</label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full sm:w-40" /></div>
+            <div className="space-y-1 flex-1 sm:flex-none"><label className="text-sm text-muted-foreground">To</label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-40" /></div>
+          </div>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            {transactionTypes.map(t => (
+              <Button key={t} variant={filterType === t ? 'default' : 'outline'} size="sm" onClick={() => { setFilterType(t); setPage(1); }}>
+                {t === 'all' ? 'All' : getTransactionTypeLabel(t)}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Transaction List */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
@@ -313,6 +325,62 @@ export default function TransactionsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-border">
+            {loading ? (
+              <div className="p-8"><div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div>
+            ) : transactions.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No transactions</div>
+            ) : transactions.map((t: any) => {
+              const Icon = typeIcons[t.type] || Receipt;
+              return (
+                <div key={t.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-xs text-primary bg-primary/5 px-2 py-0.5 rounded">{t.txn_number || `#${t.id}`}</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(t.date)}</span>
+                      </div>
+                      <span className={`flex items-center gap-1.5 text-sm font-medium ${typeColors[t.type] || ''}`}>
+                        <Icon className="w-4 h-4" />
+                        {getTransactionTypeLabel(t.type)}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">{formatCurrency(t.amount)}</p>
+                    </div>
+                  </div>
+                  
+                  {t.description && <p className="text-sm text-muted-foreground">{t.description}</p>}
+                  
+                  <div className="bg-muted/30 p-2 rounded-lg text-xs space-y-1">
+                    {t.entries?.map((e: any, i: number) => (
+                      <div key={i} className="flex justify-between gap-2">
+                        <span className="text-muted-foreground truncate">{e.account?.name}</span>
+                        <div className="shrink-0">
+                          {parseFloat(e.debit) > 0 && <span className="text-emerald-500 font-medium">Dr {formatCurrency(e.debit)}</span>}
+                          {parseFloat(e.credit) > 0 && <span className="text-rose-500 font-medium">Cr {formatCurrency(e.credit)}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex justify-end pt-1">
+                    {t.type === 'opening_balance' ? (
+                      <Button variant="ghost" size="sm" className="text-muted-foreground/30 cursor-not-allowed h-8" disabled>
+                        <Trash2 className="w-4 h-4 mr-2" /> Cannot Delete
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id, t.type)} className="text-muted-foreground hover:text-destructive h-8">
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 p-4 border-t">
@@ -344,7 +412,7 @@ export default function TransactionsPage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Date</Label><Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div>
               <div className="space-y-2"><Label>Amount</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} placeholder="0.00" /></div>
             </div>
@@ -499,7 +567,7 @@ export default function TransactionsPage() {
                         <Label className="font-semibold text-primary">Investment Charges (Optional)</Label>
                       </div>
                       <div className="space-y-4 bg-muted/30 p-4 rounded-lg border border-border">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>Charge Amount</Label>
                             <Input type="number" step="0.01" value={investmentChargeAmount} onChange={e => setInvestmentChargeAmount(e.target.value)} placeholder="0.00" />
@@ -554,8 +622,8 @@ export default function TransactionsPage() {
                   
                   <div className="space-y-4">
                     {ccPaymentSources.map((source, idx) => (
-                      <div key={idx} className="flex items-end gap-2 bg-muted/30 p-3 rounded-lg border border-border">
-                        <div className="flex-1 space-y-2">
+                      <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-end gap-2 bg-muted/30 p-3 rounded-lg border border-border">
+                        <div className="flex-1 space-y-2 w-full sm:w-auto">
                           <Label>Account</Label>
                           <Select value={source.account_id} onValueChange={v => {
                             const newSources = [...ccPaymentSources];
@@ -566,7 +634,7 @@ export default function TransactionsPage() {
                             <SelectContent>{transferrableAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
-                        <div className="flex-1 space-y-2">
+                        <div className="flex-1 space-y-2 w-full sm:w-auto">
                           <Label>Amount</Label>
                           <Input type="number" step="0.01" value={source.amount} onChange={e => {
                             const newSources = [...ccPaymentSources];
@@ -587,7 +655,7 @@ export default function TransactionsPage() {
                   </div>
 
                   {targetAmt > 0 && (
-                    <div className="mt-4 p-3 rounded-lg border border-border/50 text-sm flex justify-between items-center bg-card">
+                    <div className="mt-4 p-3 rounded-lg border border-border/50 text-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 bg-card">
                       <div>
                         <span className="text-muted-foreground">Total Paid: </span>
                         <span className={`font-bold ${isMatch ? 'text-emerald-500' : 'text-rose-500'}`}>{formatCurrency(totalSources)}</span>

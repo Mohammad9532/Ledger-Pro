@@ -86,8 +86,9 @@ export default function BusinessPage() {
       {/* Items List */}
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead><tr className="border-b bg-muted/50">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b bg-muted/50">
               <th className="text-left p-3 font-medium">Item</th>
               <th className="text-right p-3 font-medium">Cost</th>
               <th className="text-right p-3 font-medium">Sale</th>
@@ -113,6 +114,7 @@ export default function BusinessPage() {
               {!loading && items.length === 0 && <tr><td colSpan={7} className="text-center p-8 text-muted-foreground">No items</td></tr>}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
 

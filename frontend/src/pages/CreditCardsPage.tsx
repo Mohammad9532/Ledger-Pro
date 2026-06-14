@@ -109,7 +109,7 @@ export default function CreditCardsPage() {
       <Dialog open={showSettle} onOpenChange={setShowSettle}>
         <DialogContent><DialogHeader><DialogTitle>Pay Credit Card Bill</DialogTitle><DialogDescription>{selectedCard?.name}</DialogDescription></DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Target Amount</Label><Input type="number" step="0.01" value={settleForm.amount} onChange={e => setSettleForm({...settleForm, amount: e.target.value})} /></div>
               <div className="space-y-2"><Label>Date</Label><Input type="date" value={settleForm.date} onChange={e => setSettleForm({...settleForm, date: e.target.value})} /></div>
             </div>
@@ -124,8 +124,8 @@ export default function CreditCardsPage() {
               
               <div className="space-y-3">
                 {paymentSources.map((source, idx) => (
-                  <div key={idx} className="flex items-end gap-2 bg-muted/30 p-2 rounded border border-border">
-                    <div className="flex-1 space-y-1">
+                  <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-end gap-2 bg-muted/30 p-2 rounded border border-border">
+                    <div className="flex-1 w-full sm:w-auto space-y-1">
                       <Label className="text-xs">Account</Label>
                       <Select value={source.account_id} onValueChange={v => {
                         const newSources = [...paymentSources];
@@ -136,7 +136,7 @@ export default function CreditCardsPage() {
                         <SelectContent>{transferrableAccounts.map((a: any) => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 w-full sm:w-auto space-y-1">
                       <Label className="text-xs">Amount</Label>
                       <Input type="number" step="0.01" value={source.amount} onChange={e => {
                         const newSources = [...paymentSources];

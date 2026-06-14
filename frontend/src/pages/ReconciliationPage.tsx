@@ -237,7 +237,7 @@ export default function ReconciliationPage() {
               <p className="text-2xl font-bold text-primary">{selectedAccount && formatCurrency(selectedAccount.system_balance)}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Physical / Statement Balance</Label>
                 <Input type="number" step="0.01" value={actualBalance} onChange={e => setActualBalance(e.target.value)}

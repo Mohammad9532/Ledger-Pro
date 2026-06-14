@@ -195,7 +195,7 @@ export default function AccountsPage() {
               )}
             </div>
           </div>
-          <DialogFooter className="flex justify-between items-center sm:justify-between w-full">
+          <DialogFooter className="flex flex-col-reverse sm:flex-row justify-between items-center sm:justify-between w-full gap-4 sm:gap-0 mt-4">
             {editId && !accounts.find(a => a.id === editId)?.is_system ? (
               <Button type="button" variant="destructive" onClick={handleDelete} disabled={saving}>
                 Delete

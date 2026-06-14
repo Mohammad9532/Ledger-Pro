@@ -48,19 +48,21 @@ export default function AccountStatementPage() {
 
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">From</label>
-              <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-40" />
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-end gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <label className="text-sm text-muted-foreground">From</label>
+                <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full sm:w-40" />
+              </div>
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <label className="text-sm text-muted-foreground">To</label>
+                <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-40" />
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">To</label>
-              <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-40" />
-            </div>
-            <Button onClick={fetchStatement}>Filter</Button>
-            <div className="ml-auto flex gap-4 text-sm">
-              <div><span className="text-muted-foreground">Opening:</span> <span className="font-bold">{formatCurrency(data.opening_balance)}</span></div>
-              <div><span className="text-muted-foreground">Closing:</span> <span className="font-bold">{formatCurrency(data.closing_balance)}</span></div>
+            <Button onClick={fetchStatement} className="w-full sm:w-auto">Filter</Button>
+            <div className="mt-4 sm:mt-0 sm:ml-auto flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm w-full sm:w-auto bg-muted/50 p-3 rounded-lg sm:bg-transparent sm:p-0">
+              <div className="flex justify-between sm:block"><span className="text-muted-foreground">Opening:</span> <span className="font-bold">{formatCurrency(data.opening_balance)}</span></div>
+              <div className="flex justify-between sm:block"><span className="text-muted-foreground">Closing:</span> <span className="font-bold">{formatCurrency(data.closing_balance)}</span></div>
             </div>
           </div>
         </CardContent>

@@ -59,15 +59,19 @@ export default function IncomePage() {
       </div>
 
       {/* Date Filter */}
-      <Card><CardContent className="p-4 flex flex-wrap items-end gap-4">
-        <div className="space-y-1"><label className="text-sm text-muted-foreground">From</label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-40" /></div>
-        <div className="space-y-1"><label className="text-sm text-muted-foreground">To</label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-40" /></div>
-        <div className="flex items-center gap-2 mb-2 ml-2">
-          <input type="checkbox" id="incBus" checked={includeBusiness} onChange={e => setIncludeBusiness(e.target.checked)} className="rounded border-gray-300" />
-          <label htmlFor="incBus" className="text-sm text-muted-foreground cursor-pointer">Include Business Revenue</label>
+      <Card><CardContent className="p-4 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-end gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <div className="space-y-1 flex-1 sm:flex-none"><label className="text-sm text-muted-foreground">From</label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full sm:w-40" /></div>
+          <div className="space-y-1 flex-1 sm:flex-none"><label className="text-sm text-muted-foreground">To</label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-40" /></div>
         </div>
-        <Button onClick={fetchData}>Apply</Button>
-        {summary && <div className="ml-auto"><span className="text-muted-foreground text-sm">Total: </span><span className="text-lg font-bold text-emerald-500">{formatCurrency(summary.grand_total)}</span></div>}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="incBus" checked={includeBusiness} onChange={e => setIncludeBusiness(e.target.checked)} className="rounded border-gray-300" />
+            <label htmlFor="incBus" className="text-sm text-muted-foreground cursor-pointer">Include Business Revenue</label>
+          </div>
+          <Button onClick={fetchData} className="w-full sm:w-auto">Apply</Button>
+        </div>
+        {summary && <div className="mt-4 sm:mt-0 sm:ml-auto w-full sm:w-auto bg-muted/50 p-3 rounded-lg sm:bg-transparent sm:p-0 flex justify-between sm:block"><span className="text-muted-foreground text-sm">Total: </span><span className="text-lg font-bold text-emerald-500">{formatCurrency(summary.grand_total)}</span></div>}
       </CardContent></Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -79,10 +83,10 @@ export default function IncomePage() {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                    <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}>
                       {chartData.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                    <Tooltip formatter={(v: any) => formatCurrency(Number(v))} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -94,10 +98,11 @@ export default function IncomePage() {
         <Card>
           <CardHeader><CardTitle className="text-lg">By Category</CardTitle></CardHeader>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b bg-muted/50">
-                <th className="text-left p-3 font-medium">Category</th>
-                <th className="text-right p-3 font-medium">Count</th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b bg-muted/50">
+                  <th className="text-left p-3 font-medium">Category</th>
+                  <th className="text-right p-3 font-medium">Count</th>
                 <th className="text-right p-3 font-medium">Total</th>
               </tr></thead>
               <tbody>
@@ -114,6 +119,7 @@ export default function IncomePage() {
                 {(!summary?.categories || summary.categories.length === 0) && <tr><td colSpan={3} className="text-center p-6 text-muted-foreground">No data</td></tr>}
               </tbody>
             </table>
+            </div>
           </CardContent>
         </Card>
       </div>

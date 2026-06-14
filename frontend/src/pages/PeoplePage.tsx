@@ -70,9 +70,9 @@ export default function PeoplePage() {
           <h1 className="text-2xl font-bold">People</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage contacts and view person ledgers</p>
         </div>
-        <div className="flex gap-2">
-          <Input placeholder="Search people..." value={search} onChange={e => setSearch(e.target.value)} className="w-48" />
-          <Button onClick={() => { setEditId(null); setForm({ name: '', phone: '', notes: '' }); setShowModal(true); }}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Input placeholder="Search people..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-48" />
+          <Button className="w-full sm:w-auto" onClick={() => { setEditId(null); setForm({ name: '', phone: '', notes: '' }); setShowModal(true); }}>
             <Plus className="w-4 h-4 mr-2" /> Add Person
           </Button>
         </div>
@@ -133,7 +133,7 @@ export default function PeoplePage() {
             <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone number" /></div>
             <div className="space-y-2"><Label>Notes</Label><Input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" /></div>
           </div>
-          <DialogFooter className="flex justify-between items-center sm:justify-between w-full">
+          <DialogFooter className="flex flex-col-reverse sm:flex-row justify-between items-center sm:justify-between w-full gap-4 sm:gap-0 mt-4">
             {editId ? (
               <Button type="button" variant="destructive" onClick={handleDelete} disabled={saving}>
                 Delete

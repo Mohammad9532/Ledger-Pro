@@ -119,27 +119,31 @@ export default function PersonLedgerPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/people')}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            {contact.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">{contact.name}</h1>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              {contact.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{contact.phone}</span>}
-              {contact.notes && <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{contact.notes}</span>}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/people')} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shrink-0">
+              {contact.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">{contact.name}</h1>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-1">
+                {contact.phone && <span className="flex items-center gap-1 shrink-0"><Phone className="w-3 h-3" />{contact.phone}</span>}
+                {contact.notes && <span className="flex items-center gap-1 truncate"><FileText className="w-3 h-3 shrink-0" /><span className="truncate">{contact.notes}</span></span>}
+              </div>
             </div>
           </div>
         </div>
-        <div className="ml-auto text-right">
-          <p className="text-sm text-muted-foreground">{closingBal > 0 ? 'They owe you' : closingBal < 0 ? 'You owe them' : 'Settled'}</p>
-          <p className={`text-2xl font-bold ${closingBal > 0 ? 'text-emerald-500' : closingBal < 0 ? 'text-rose-500' : 'text-muted-foreground'}`}>
-            {formatCurrency(Math.abs(closingBal))}
-          </p>
+        <div className="ml-0 sm:ml-auto text-left sm:text-right bg-muted/30 p-3 sm:p-0 rounded-lg w-full sm:w-auto border sm:border-transparent border-border">
+          <div className="flex justify-between sm:block">
+            <span className="text-sm text-muted-foreground">{closingBal > 0 ? 'They owe you' : closingBal < 0 ? 'You owe them' : 'Settled'}</span>
+            <span className={`text-xl sm:text-2xl font-bold ${closingBal > 0 ? 'text-emerald-500' : closingBal < 0 ? 'text-rose-500' : 'text-muted-foreground'}`}>
+              {formatCurrency(Math.abs(closingBal))}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -251,13 +255,15 @@ export default function PersonLedgerPage() {
         {/* Ledger Tab */}
         <TabsContent value="ledger" className="space-y-4">
           <Card>
-            <CardContent className="p-4 flex flex-wrap items-end gap-4">
-              <div className="space-y-1"><label className="text-sm text-muted-foreground">From</label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-40" /></div>
-              <div className="space-y-1"><label className="text-sm text-muted-foreground">To</label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-40" /></div>
-              <Button onClick={fetchLedger}>Filter</Button>
-              <div className="ml-auto flex gap-4 text-sm">
-                <div><span className="text-muted-foreground">Opening:</span> <span className="font-bold">{formatCurrency(statement.opening_balance)}</span></div>
-                <div><span className="text-muted-foreground">Closing:</span> <span className="font-bold">{formatCurrency(statement.closing_balance)}</span></div>
+            <CardContent className="p-4 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-end gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div className="space-y-1 flex-1 sm:flex-none"><label className="text-sm text-muted-foreground">From</label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full sm:w-40" /></div>
+                <div className="space-y-1 flex-1 sm:flex-none"><label className="text-sm text-muted-foreground">To</label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-40" /></div>
+              </div>
+              <Button onClick={fetchLedger} className="w-full sm:w-auto">Filter</Button>
+              <div className="mt-4 sm:mt-0 sm:ml-auto flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm w-full sm:w-auto bg-muted/50 p-3 rounded-lg sm:bg-transparent sm:p-0">
+                <div className="flex justify-between sm:block"><span className="text-muted-foreground">Opening:</span> <span className="font-bold">{formatCurrency(statement.opening_balance)}</span></div>
+                <div className="flex justify-between sm:block"><span className="text-muted-foreground">Closing:</span> <span className="font-bold">{formatCurrency(statement.closing_balance)}</span></div>
               </div>
             </CardContent>
           </Card>

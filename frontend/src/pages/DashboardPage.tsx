@@ -132,7 +132,7 @@ export default function DashboardPage() {
                     borderRadius: '8px',
                     fontSize: '13px',
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(Number(value))}
                 />
                 <Legend />
                 <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} name="Income" />
