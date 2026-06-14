@@ -10,8 +10,8 @@ import { Wallet, Eye, EyeOff } from 'lucide-react';
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@ledger.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@ledger.com" required />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" required />
             </div>
 
             <div className="space-y-2">

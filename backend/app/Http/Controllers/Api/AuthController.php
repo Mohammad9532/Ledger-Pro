@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -26,11 +27,23 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        $throttleKey = 'login-attempts:' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return response()->json([
+                'message' => "Too many login attempts. Please try again in {$seconds} seconds."
+            ], 429);
+        }
+
         if (!Auth::attempt($validated)) {
+            RateLimiter::hit($throttleKey, 600);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
+
+        RateLimiter::clear($throttleKey);
 
         $user = User::where('email', $validated['email'])->firstOrFail();
 
