@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import api from '@/lib/api';
 import { format } from 'date-fns';
-import { Download, RefreshCcw, Database, ShieldAlert, CheckCircle, Server, HardDrive, FileTerminal } from 'lucide-react';
+import { Download, RefreshCcw, Database, ShieldAlert, CheckCircle, Server, HardDrive, FileTerminal, Cloud, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function SystemPage() {
   const [health, setHealth] = useState<any>(null);
@@ -15,6 +15,7 @@ export default function SystemPage() {
   const [actioning, setActioning] = useState(false);
   const [showRestore, setShowRestore] = useState(false);
   const [restoreFile, setRestoreFile] = useState<string | null>(null);
+  const [showReadiness, setShowReadiness] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -99,46 +100,132 @@ export default function SystemPage() {
       ) : (
         <div className="space-y-6 animate-fade-in">
 
-          {/* System Health Card */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Server className="w-5 h-5 text-indigo-500" /> System Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-2">Application</p>
-                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${status?.application_status === 'OK' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
-                    {status?.application_status === 'OK' ? <CheckCircle className="w-3 h-3 mr-1" /> : <ShieldAlert className="w-3 h-3 mr-1" />}
-                    {status?.application_status || 'Unknown'}
-                  </div>
-                </div>
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-2">Database</p>
-                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${status?.database_status === 'OK' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
-                    {status?.database_status === 'OK' ? <CheckCircle className="w-3 h-3 mr-1" /> : <ShieldAlert className="w-3 h-3 mr-1" />}
-                    {status?.database_status || 'Unknown'}
-                  </div>
-                </div>
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Git Commit</p>
-                  <p className="font-mono text-sm">{status?.current_git_commit || 'N/A'}</p>
-                </div>
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Server Time</p>
-                  <p className="font-semibold text-sm">{status?.server_time ? format(new Date(status.server_time), 'PPp') : 'N/A'}</p>
-                </div>
-              </div>
+          {/* Production Monitoring */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+                <Server className={`w-6 h-6 mb-2 ${status?.application_status === 'OK' ? 'text-emerald-500' : 'text-red-500'}`} />
+                <p className="text-xs text-muted-foreground">Application</p>
+                <p className="font-bold">{status?.application_status || 'Unknown'}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+                <Database className={`w-6 h-6 mb-2 ${status?.database_status === 'OK' ? 'text-emerald-500' : 'text-red-500'}`} />
+                <p className="text-xs text-muted-foreground">Database</p>
+                <p className="font-bold">{status?.database_status || 'Unknown'}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+                <HardDrive className={`w-6 h-6 mb-2 ${status?.backup_today_exists ? 'text-emerald-500' : 'text-red-500'}`} />
+                <p className="text-xs text-muted-foreground">Local Backup</p>
+                <p className="font-bold">{status?.backup_today_exists ? 'Healthy' : 'Action Required'}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+                <Cloud className={`w-6 h-6 mb-2 ${status?.google_drive_status === 'Connected' ? 'text-emerald-500' : (status?.google_drive_status === 'Not Installed' ? 'text-amber-500' : 'text-red-500')}`} />
+                <p className="text-xs text-muted-foreground">Google Drive</p>
+                <p className="font-bold">{status?.google_drive_status || 'Unknown'}</p>
+              </CardContent>
+            </Card>
+            <Card className="col-span-2 md:col-span-1">
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+                <CheckCircle className="w-6 h-6 mb-2 text-blue-500" />
+                <p className="text-xs text-muted-foreground">Last Deployment</p>
+                <p className="font-bold text-sm truncate w-full">{status?.last_deployment_time ? format(new Date(status.last_deployment_time), 'MMM d, HH:mm') : 'N/A'}</p>
+              </CardContent>
+            </Card>
+          </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-semibold mb-3">Storage Usage</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>{status?.total_storage_gb && status?.free_storage_gb ? (status.total_storage_gb - status.free_storage_gb).toFixed(2) : 0} GB Used</span>
-                      <span className="text-muted-foreground">{status?.free_storage_gb || 0} GB Free of {status?.total_storage_gb || 0} GB</span>
+          {/* Backups Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <HardDrive className="w-5 h-5 text-indigo-500" /> Local Backup Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Backups</p>
+                    <p className="font-bold text-lg">{status?.total_local_backups_count || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Storage Used</p>
+                    <p className="font-bold text-lg">{status?.total_local_backup_size_mb || 0} MB</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Latest Backup</p>
+                    <p className={`font-semibold text-sm ${status?.backup_today_exists ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {status?.last_backup_local ? format(new Date(status.last_backup_local), 'PPp') : 'None'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Oldest Backup</p>
+                    <p className="font-semibold text-sm">
+                      {status?.oldest_local_backup ? format(new Date(status.oldest_local_backup), 'PPp') : 'None'}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg flex items-center gap-2">
+                  <FileTerminal className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Retention Policy: <strong>30 Days</strong> (Automated via cron)</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-indigo-500" /> Google Drive Sync
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Connection</p>
+                    <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold mt-1 ${status?.google_drive_status === 'Connected' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                      {status?.google_drive_status === 'Connected' ? <CheckCircle className="w-3 h-3 mr-1" /> : <ShieldAlert className="w-3 h-3 mr-1" />}
+                      {status?.google_drive_status || 'Unknown'}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Uploaded Files</p>
+                    <p className="font-bold text-lg">{status?.google_drive_files_count || 0}</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Destination Folder</p>
+                    <p className="font-mono text-sm bg-muted/50 px-2 py-1 rounded inline-block mt-1">gdrive:Ledger-Pro-Backups</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Last Successful Upload</p>
+                    <p className="font-semibold text-sm">
+                      {status?.last_backup_google_drive ? format(new Date(status.last_backup_google_drive), 'PPp') : 'No recent uploads detected'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Server className="w-5 h-5 text-indigo-500" /> System Resources
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-semibold">Storage Capacity</span>
+                      <span className="text-muted-foreground">{status?.free_storage_gb || 0} GB Free / {status?.total_storage_gb || 0} GB Total</span>
                     </div>
                     <div className="h-3 w-full bg-secondary rounded-full overflow-hidden">
                       <div 
@@ -146,38 +233,37 @@ export default function SystemPage() {
                         style={{ width: `${Math.min(100, Math.max(0, status?.disk_usage_percentage || 0))}%` }}
                       />
                     </div>
-                    <p className="text-xs text-right text-muted-foreground">{status?.disk_usage_percentage || 0}% Capacity</p>
+                    <p className="text-xs text-right text-muted-foreground mt-1">{status?.disk_usage_percentage || 0}% Used</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">PHP Version</p>
+                      <p className="font-mono text-sm">{status?.php_version || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Laravel Version</p>
+                      <p className="font-mono text-sm">{status?.laravel_version || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Git Commit</p>
+                      <p className="font-mono text-sm">{status?.current_git_commit || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Environment</p>
+                      <p className="font-mono text-sm capitalize">{health?.environment || 'production'}</p>
+                    </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold mb-2">System Info & Backups</h4>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div className="text-muted-foreground">PHP Version</div>
-                    <div className="text-right font-mono">{status?.php_version || 'N/A'}</div>
-                    
-                    <div className="text-muted-foreground">Laravel Version</div>
-                    <div className="text-right font-mono">{status?.laravel_version || 'N/A'}</div>
-                    
-                    <div className="text-muted-foreground">Last Local Backup</div>
-                    <div className="text-right">{status?.last_backup_local ? format(new Date(status.last_backup_local), 'PPp') : 'None'}</div>
-                    
-                    <div className="text-muted-foreground">Last Cloud Backup</div>
-                    <div className="text-right">{status?.last_backup_google_drive ? format(new Date(status.last_backup_google_drive), 'PPp') : 'None'}</div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Health & Deployment Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2"><Database className="w-5 h-5 text-blue-500" /> Database Health</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2"><Database className="w-5 h-5 text-blue-500" /> Database Engine</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Server className="w-3 h-3" /> Engine</p>
                     <p className="font-semibold">{health?.engine}</p>
@@ -186,51 +272,55 @@ export default function SystemPage() {
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><HardDrive className="w-3 h-3" /> Size</p>
                     <p className="font-semibold">{health?.size_mb} MB</p>
                   </div>
-                  <div className="p-4 bg-muted/30 rounded-lg">
+                  <div className="p-4 bg-muted/30 rounded-lg col-span-2">
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><FileTerminal className="w-3 h-3" /> Tables</p>
                     <p className="font-semibold">{health?.table_count}</p>
-                  </div>
-                  <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> Environment</p>
-                    <p className="font-semibold capitalize">{health?.environment}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Server className="w-5 h-5 text-indigo-500" /> Deployment Readiness
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={`p-4 rounded-lg mb-4 flex items-start gap-3 ${readiness?.status === 'Ready' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700'}`}>
+          <div className="border rounded-lg overflow-hidden">
+            <button 
+              onClick={() => setShowReadiness(!showReadiness)}
+              className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2 font-semibold text-sm">
+                <Server className="w-5 h-5 text-muted-foreground" />
+                PostgreSQL Compatibility Analysis
+                <span className="text-xs font-normal text-muted-foreground ml-2 hidden sm:inline-block">(Informational only - Production uses MySQL)</span>
+              </div>
+              {showReadiness ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+            </button>
+            {showReadiness && (
+              <div className="p-4 bg-background border-t">
+                <div className={`p-4 rounded-lg mb-4 flex items-start gap-3 ${readiness?.status === 'Ready' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-muted text-muted-foreground'}`}>
                   {readiness?.status === 'Ready' ? <CheckCircle className="w-5 h-5 mt-0.5" /> : <ShieldAlert className="w-5 h-5 mt-0.5" />}
                   <div>
-                    <p className="font-bold">{readiness?.status === 'Ready' ? 'PostgreSQL Compatible' : 'PostgreSQL Incompatibilities Detected'}</p>
-                    <p className="text-sm mt-1">
+                    <p className="font-bold text-sm">{readiness?.status === 'Ready' ? 'PostgreSQL Compatible' : 'PostgreSQL Incompatibilities Detected'}</p>
+                    <p className="text-xs mt-1">
                       {readiness?.status === 'Ready' 
                         ? 'No MySQL-specific schema issues found. Safe for PGSQL migration.'
-                        : 'The codebase contains raw MySQL statements or ENUMs that will break during PostgreSQL deployment.'}
+                        : 'The codebase contains raw MySQL statements or ENUMs that will break during PostgreSQL deployment. This is not an issue for your current MySQL production environment.'}
                     </p>
                   </div>
                 </div>
                 {readiness?.issues?.length > 0 && (
-                  <ul className="text-xs text-amber-700 space-y-2 list-disc pl-5">
+                  <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-5">
                     {readiness.issues.map((issue: string, i: number) => <li key={i}>{issue}</li>)}
                   </ul>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            )}
           </div>
 
           {/* Backups List */}
           <Card>
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <CardTitle className="text-lg">Database Backups</CardTitle>
+              <CardTitle className="text-lg">Database Backups History</CardTitle>
               <Button onClick={handleCreateBackup} disabled={actioning} className="w-full sm:w-auto">
-                {actioning ? 'Processing...' : 'Create Backup'}
+                {actioning ? 'Processing...' : 'Create Manual Backup'}
               </Button>
             </CardHeader>
             <CardContent className="p-0">

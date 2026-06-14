@@ -74,36 +74,93 @@ class SystemController extends Controller
         $diskUsagePercentage = $totalStorageGb > 0 ? round(($usedStorageGb / $totalStorageGb) * 100, 2) : 0;
 
         $lastBackupLocal = null;
+        $totalLocalBackupsCount = 0;
+        $totalLocalBackupSizeMb = 0;
+        $oldestLocalBackup = null;
+        $backupTodayExists = false;
+
+        $localFiles = [];
         if (File::isDirectory('/var/backups/ledger')) {
-            $files = File::files('/var/backups/ledger');
-            if (count($files) > 0) {
-                usort($files, fn($a, $b) => $b->getMTime() <=> $a->getMTime());
-                $lastBackupLocal = date('Y-m-d H:i:s', $files[0]->getMTime());
-            }
+            $localFiles = File::files('/var/backups/ledger');
         } else {
-            // Fallback to local storage path
             $files = Storage::disk('local')->files('backups');
-            if (count($files) > 0) {
-                $lastBackupLocal = date('Y-m-d H:i:s', Storage::disk('local')->lastModified(end($files)));
+            foreach ($files as $f) {
+                if (str_ends_with($f, '.sql')) {
+                    $localFiles[] = new \SplFileInfo(Storage::disk('local')->path($f));
+                }
+            }
+        }
+
+        if (count($localFiles) > 0) {
+            $totalLocalBackupsCount = count($localFiles);
+            $totalSize = 0;
+            $dates = [];
+            foreach ($localFiles as $f) {
+                $totalSize += $f->getSize();
+                $dates[] = $f->getMTime();
+            }
+            $totalLocalBackupSizeMb = round($totalSize / 1024 / 1024, 2);
+            rsort($dates); // Newest first
+            $lastBackupLocal = date('Y-m-d H:i:s', $dates[0]);
+            $oldestLocalBackup = date('Y-m-d H:i:s', end($dates));
+            if (time() - $dates[0] <= 86400) {
+                $backupTodayExists = true;
             }
         }
 
         $lastBackupGoogleDrive = null;
-        try {
-            if (config('filesystems.disks.google')) {
-                $files = Storage::disk('google')->files('Ledger-Pro-Backups');
-                if (count($files) > 0) {
-                    $lastBackupGoogleDrive = date('Y-m-d H:i:s', Storage::disk('google')->lastModified(end($files)));
-                }
-            } else if (File::isDirectory('/Ledger-Pro-Backups')) {
-                 $files = File::files('/Ledger-Pro-Backups');
-                 if (count($files) > 0) {
-                     usort($files, fn($a, $b) => $b->getMTime() <=> $a->getMTime());
-                     $lastBackupGoogleDrive = date('Y-m-d H:i:s', $files[0]->getMTime());
-                 }
+        $googleDriveStatus = 'Not Installed';
+        $googleDriveFilesCount = 0;
+
+        $hasRclone = false;
+        if (function_exists('exec')) {
+            exec('rclone version 2>&1', $out, $code);
+            if ($code === 0) {
+                $hasRclone = true;
             }
-        } catch (\Exception $e) {
-            // Ignore
+        }
+
+        if ($hasRclone) {
+            exec('rclone lsjson gdrive:Ledger-Pro-Backups 2>&1', $rcloneOut, $rcloneCode);
+            if ($rcloneCode === 0) {
+                $googleDriveStatus = 'Connected';
+                $json = json_decode(implode('', $rcloneOut), true);
+                if (is_array($json)) {
+                    $googleDriveFilesCount = count($json);
+                    if ($googleDriveFilesCount > 0) {
+                        usort($json, fn($a, $b) => strtotime($b['ModTime']) <=> strtotime($a['ModTime']));
+                        $lastBackupGoogleDrive = date('Y-m-d H:i:s', strtotime($json[0]['ModTime']));
+                    }
+                }
+            } else {
+                $googleDriveStatus = 'Error';
+            }
+        } else {
+            try {
+                if (config('filesystems.disks.google')) {
+                    $googleDriveStatus = 'Connected';
+                    $files = Storage::disk('google')->files('Ledger-Pro-Backups');
+                    $googleDriveFilesCount = count($files);
+                    if ($googleDriveFilesCount > 0) {
+                        $lastBackupGoogleDrive = date('Y-m-d H:i:s', Storage::disk('google')->lastModified(end($files)));
+                    }
+                } else if (File::isDirectory('/Ledger-Pro-Backups')) {
+                     $googleDriveStatus = 'Connected';
+                     $files = File::files('/Ledger-Pro-Backups');
+                     $googleDriveFilesCount = count($files);
+                     if ($googleDriveFilesCount > 0) {
+                         usort($files, fn($a, $b) => $b->getMTime() <=> $a->getMTime());
+                         $lastBackupGoogleDrive = date('Y-m-d H:i:s', $files[0]->getMTime());
+                     }
+                }
+            } catch (\Exception $e) {
+                $googleDriveStatus = 'Error';
+            }
+        }
+
+        $lastDeploymentTime = null;
+        if (File::exists(public_path('index.php'))) {
+            $lastDeploymentTime = date('Y-m-d H:i:s', File::lastModified(public_path('index.php')));
         }
 
         return response()->json([
@@ -113,8 +170,18 @@ class SystemController extends Controller
             'disk_usage_percentage' => $diskUsagePercentage,
             'total_storage_gb' => $totalStorageGb,
             'free_storage_gb' => $freeStorageGb,
+            
             'last_backup_local' => $lastBackupLocal,
+            'total_local_backups_count' => $totalLocalBackupsCount,
+            'total_local_backup_size_mb' => $totalLocalBackupSizeMb,
+            'oldest_local_backup' => $oldestLocalBackup,
+            'backup_today_exists' => $backupTodayExists,
+
+            'google_drive_status' => $googleDriveStatus,
+            'google_drive_files_count' => $googleDriveFilesCount,
             'last_backup_google_drive' => $lastBackupGoogleDrive,
+
+            'last_deployment_time' => $lastDeploymentTime,
             'php_version' => phpversion(),
             'laravel_version' => app()->version(),
             'server_time' => now()->toDateTimeString(),
