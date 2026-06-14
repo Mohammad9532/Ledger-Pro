@@ -8,12 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Wallet, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
-  const { login, register, user, isLoading } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('admin@ledger.com');
   const [password, setPassword] = useState('password');
-  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,11 +23,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      if (isRegister) {
-        await register(name, email, password);
-      } else {
-        await login(email, password);
-      }
+      await login(email, password);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Authentication failed');
@@ -54,7 +48,7 @@ export default function LoginPage() {
           <div>
             <CardTitle className="text-2xl font-bold">Ledger Pro</CardTitle>
             <CardDescription className="mt-1">
-              {isRegister ? 'Create your account' : 'Personal Accounting & Ledger Management'}
+              Personal Accounting & Ledger Management
             </CardDescription>
           </div>
         </CardHeader>
@@ -63,13 +57,6 @@ export default function LoginPage() {
             {error && (
               <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                 {error}
-              </div>
-            )}
-
-            {isRegister && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
               </div>
             )}
 
@@ -102,15 +89,8 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : isRegister ? 'Create Account' : 'Sign In'}
+              ) : 'Sign In'}
             </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
-              <button type="button" onClick={() => { setIsRegister(!isRegister); setError(''); }} className="text-primary hover:underline font-medium">
-                {isRegister ? 'Sign In' : 'Register'}
-              </button>
-            </p>
           </form>
         </CardContent>
       </Card>
