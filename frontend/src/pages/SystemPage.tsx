@@ -10,6 +10,7 @@ export default function SystemPage() {
   const [health, setHealth] = useState<any>(null);
   const [backups, setBackups] = useState<any[]>([]);
   const [readiness, setReadiness] = useState<any>(null);
+  const [status, setStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState(false);
   const [showRestore, setShowRestore] = useState(false);
@@ -18,14 +19,16 @@ export default function SystemPage() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [hRes, bRes, rRes] = await Promise.all([
+      const [hRes, bRes, rRes, sRes] = await Promise.all([
         api.get('/system/health'),
         api.get('/system/backups'),
-        api.get('/system/readiness')
+        api.get('/system/readiness'),
+        api.get('/system/status')
       ]);
       setHealth(hRes.data);
       setBackups(bRes.data);
       setReadiness(rRes.data);
+      setStatus(sRes.data);
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -95,6 +98,77 @@ export default function SystemPage() {
         </div>
       ) : (
         <div className="space-y-6 animate-fade-in">
+
+          {/* System Health Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Server className="w-5 h-5 text-indigo-500" /> System Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-2">Application</p>
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${status?.application_status === 'OK' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+                    {status?.application_status === 'OK' ? <CheckCircle className="w-3 h-3 mr-1" /> : <ShieldAlert className="w-3 h-3 mr-1" />}
+                    {status?.application_status || 'Unknown'}
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-2">Database</p>
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${status?.database_status === 'OK' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+                    {status?.database_status === 'OK' ? <CheckCircle className="w-3 h-3 mr-1" /> : <ShieldAlert className="w-3 h-3 mr-1" />}
+                    {status?.database_status || 'Unknown'}
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Git Commit</p>
+                  <p className="font-mono text-sm">{status?.current_git_commit || 'N/A'}</p>
+                </div>
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Server Time</p>
+                  <p className="font-semibold text-sm">{status?.server_time ? format(new Date(status.server_time), 'PPp') : 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Storage Usage</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>{status?.total_storage_gb && status?.free_storage_gb ? (status.total_storage_gb - status.free_storage_gb).toFixed(2) : 0} GB Used</span>
+                      <span className="text-muted-foreground">{status?.free_storage_gb || 0} GB Free of {status?.total_storage_gb || 0} GB</span>
+                    </div>
+                    <div className="h-3 w-full bg-secondary rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${status?.disk_usage_percentage > 90 ? 'bg-red-500' : status?.disk_usage_percentage > 70 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                        style={{ width: `${Math.min(100, Math.max(0, status?.disk_usage_percentage || 0))}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-right text-muted-foreground">{status?.disk_usage_percentage || 0}% Capacity</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold mb-2">System Info & Backups</h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div className="text-muted-foreground">PHP Version</div>
+                    <div className="text-right font-mono">{status?.php_version || 'N/A'}</div>
+                    
+                    <div className="text-muted-foreground">Laravel Version</div>
+                    <div className="text-right font-mono">{status?.laravel_version || 'N/A'}</div>
+                    
+                    <div className="text-muted-foreground">Last Local Backup</div>
+                    <div className="text-right">{status?.last_backup_local ? format(new Date(status.last_backup_local), 'PPp') : 'None'}</div>
+                    
+                    <div className="text-muted-foreground">Last Cloud Backup</div>
+                    <div className="text-right">{status?.last_backup_google_drive ? format(new Date(status.last_backup_google_drive), 'PPp') : 'None'}</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
           {/* Health & Deployment Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

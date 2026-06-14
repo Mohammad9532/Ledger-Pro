@@ -34,6 +34,93 @@ class SystemController extends Controller
         ]);
     }
 
+    public function status(): JsonResponse
+    {
+        $applicationStatus = 'OK';
+
+        try {
+            DB::connection()->getPdo();
+            $databaseStatus = 'OK';
+        } catch (\Exception $e) {
+            $databaseStatus = 'ERROR';
+        }
+
+        $currentGitCommit = null;
+        if (File::exists(base_path('.git/HEAD'))) {
+            $head = File::get(base_path('.git/HEAD'));
+            if (str_starts_with($head, 'ref:')) {
+                $ref = trim(substr($head, 5));
+                if (File::exists(base_path('.git/' . $ref))) {
+                    $currentGitCommit = substr(trim(File::get(base_path('.git/' . $ref))), 0, 7);
+                }
+            } else {
+                $currentGitCommit = substr(trim($head), 0, 7);
+            }
+        }
+        if (!$currentGitCommit && function_exists('exec')) {
+            $execResult = exec('git rev-parse --short HEAD');
+            if ($execResult) {
+                $currentGitCommit = $execResult;
+            }
+        }
+
+        $totalStorageBytes = @disk_total_space(base_path()) ?: 0;
+        $freeStorageBytes = @disk_free_space(base_path()) ?: 0;
+        
+        $totalStorageGb = $totalStorageBytes > 0 ? round($totalStorageBytes / 1024 / 1024 / 1024, 2) : 0;
+        $freeStorageGb = $freeStorageBytes > 0 ? round($freeStorageBytes / 1024 / 1024 / 1024, 2) : 0;
+        $usedStorageGb = max(0, $totalStorageGb - $freeStorageGb);
+        
+        $diskUsagePercentage = $totalStorageGb > 0 ? round(($usedStorageGb / $totalStorageGb) * 100, 2) : 0;
+
+        $lastBackupLocal = null;
+        if (File::isDirectory('/var/backups/ledger')) {
+            $files = File::files('/var/backups/ledger');
+            if (count($files) > 0) {
+                usort($files, fn($a, $b) => $b->getMTime() <=> $a->getMTime());
+                $lastBackupLocal = date('Y-m-d H:i:s', $files[0]->getMTime());
+            }
+        } else {
+            // Fallback to local storage path
+            $files = Storage::disk('local')->files('backups');
+            if (count($files) > 0) {
+                $lastBackupLocal = date('Y-m-d H:i:s', Storage::disk('local')->lastModified(end($files)));
+            }
+        }
+
+        $lastBackupGoogleDrive = null;
+        try {
+            if (config('filesystems.disks.google')) {
+                $files = Storage::disk('google')->files('Ledger-Pro-Backups');
+                if (count($files) > 0) {
+                    $lastBackupGoogleDrive = date('Y-m-d H:i:s', Storage::disk('google')->lastModified(end($files)));
+                }
+            } else if (File::isDirectory('/Ledger-Pro-Backups')) {
+                 $files = File::files('/Ledger-Pro-Backups');
+                 if (count($files) > 0) {
+                     usort($files, fn($a, $b) => $b->getMTime() <=> $a->getMTime());
+                     $lastBackupGoogleDrive = date('Y-m-d H:i:s', $files[0]->getMTime());
+                 }
+            }
+        } catch (\Exception $e) {
+            // Ignore
+        }
+
+        return response()->json([
+            'application_status' => $applicationStatus,
+            'database_status' => $databaseStatus,
+            'current_git_commit' => $currentGitCommit ?: 'unknown',
+            'disk_usage_percentage' => $diskUsagePercentage,
+            'total_storage_gb' => $totalStorageGb,
+            'free_storage_gb' => $freeStorageGb,
+            'last_backup_local' => $lastBackupLocal,
+            'last_backup_google_drive' => $lastBackupGoogleDrive,
+            'php_version' => phpversion(),
+            'laravel_version' => app()->version(),
+            'server_time' => now()->toDateTimeString(),
+        ]);
+    }
+
     public function getBackups(): JsonResponse
     {
         if (!Storage::disk('local')->exists('backups')) {

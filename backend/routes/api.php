@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // System & Backups
     Route::prefix('system')->group(function () {
+        Route::get('/status', [\App\Http\Controllers\Api\SystemController::class, 'status']);
         Route::get('/health', [\App\Http\Controllers\Api\SystemController::class, 'health']);
         Route::get('/readiness', [\App\Http\Controllers\Api\SystemController::class, 'readiness']);
         Route::get('/backups', [\App\Http\Controllers\Api\SystemController::class, 'getBackups']);
