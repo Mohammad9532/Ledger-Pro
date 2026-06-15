@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\BusinessItem;
 use App\Models\TransactionEntry;
 use App\Services\BalanceService;
+use App\Services\TransactionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,10 +18,12 @@ use Illuminate\Support\Facades\DB;
 class ContactController extends Controller
 {
     protected BalanceService $balanceService;
+    protected TransactionService $transactionService;
 
-    public function __construct(BalanceService $balanceService)
+    public function __construct(BalanceService $balanceService, TransactionService $transactionService)
     {
         $this->balanceService = $balanceService;
+        $this->transactionService = $transactionService;
     }
 
     public function index(): JsonResponse
@@ -30,12 +33,34 @@ class ContactController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Fetch opening balance entries
+        $obEntries = DB::table('transaction_entries')
+            ->join('transactions', 'transactions.id', '=', 'transaction_entries.transaction_id')
+            ->where('transactions.type', 'opening_balance')
+            ->whereNull('transactions.deleted_at')
+            ->whereIn('transaction_entries.account_id', $contacts->pluck('account_id')->filter())
+            ->select('transaction_entries.account_id', 'transaction_entries.debit', 'transaction_entries.credit')
+            ->get()
+            ->keyBy('account_id');
+
         // Append computed balance
-        $contacts->each(function ($contact) {
+        $contacts->each(function ($contact) use ($obEntries) {
             if ($contact->account) {
                 $contact->computed_balance = $this->balanceService->getAccountBalance($contact->account->id);
+                
+                $ob = $obEntries->get($contact->account->id);
+                if ($ob) {
+                    $net = $ob->debit - $ob->credit;
+                    $contact->opening_balance = abs($net);
+                    $contact->opening_balance_type = $net < 0 ? 'payable' : 'receivable';
+                } else {
+                    $contact->opening_balance = 0;
+                    $contact->opening_balance_type = 'receivable';
+                }
             } else {
                 $contact->computed_balance = '0.0000';
+                $contact->opening_balance = 0;
+                $contact->opening_balance_type = 'receivable';
             }
         });
 
@@ -48,6 +73,8 @@ class ContactController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
+            'opening_balance' => 'nullable|numeric|min:0',
+            'opening_balance_type' => 'nullable|in:receivable,payable',
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
@@ -86,8 +113,23 @@ class ContactController extends Controller
                 'created_at' => now(),
             ]);
 
+            if (!empty($validated['opening_balance']) && $validated['opening_balance'] > 0) {
+                $obAmount = ($validated['opening_balance_type'] ?? 'receivable') === 'payable' 
+                    ? -abs($validated['opening_balance']) 
+                    : abs($validated['opening_balance']);
+                
+                $this->transactionService->createOpeningBalanceTransaction(
+                    $account->id,
+                    'person',
+                    $obAmount,
+                    now()->toDateString()
+                );
+            }
+
             $contact->load('account');
             $contact->computed_balance = '0.0000';
+            $contact->opening_balance = $validated['opening_balance'] ?? 0;
+            $contact->opening_balance_type = $validated['opening_balance_type'] ?? 'receivable';
 
             return response()->json($contact, 201);
         });
@@ -99,6 +141,23 @@ class ContactController extends Controller
 
         if ($contact->account) {
             $contact->computed_balance = $this->balanceService->getAccountBalance($contact->account->id);
+
+            $ob = DB::table('transaction_entries')
+                ->join('transactions', 'transactions.id', '=', 'transaction_entries.transaction_id')
+                ->where('transactions.type', 'opening_balance')
+                ->whereNull('transactions.deleted_at')
+                ->where('transaction_entries.account_id', $contact->account->id)
+                ->select('transaction_entries.debit', 'transaction_entries.credit')
+                ->first();
+
+            if ($ob) {
+                $net = $ob->debit - $ob->credit;
+                $contact->opening_balance = abs($net);
+                $contact->opening_balance_type = $net < 0 ? 'payable' : 'receivable';
+            } else {
+                $contact->opening_balance = 0;
+                $contact->opening_balance_type = 'receivable';
+            }
         }
 
         return response()->json($contact);
@@ -113,6 +172,8 @@ class ContactController extends Controller
             'name' => 'sometimes|string|max:255',
             'phone' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
+            'opening_balance' => 'nullable|numeric|min:0',
+            'opening_balance_type' => 'nullable|in:receivable,payable',
         ]);
 
         $validated['updated_by'] = Auth::id();
@@ -133,6 +194,27 @@ class ContactController extends Controller
             'ip_address' => $request->ip(),
             'created_at' => now(),
         ]);
+
+        if (array_key_exists('opening_balance', $validated) && $contact->account) {
+            $existingOb = \App\Models\Transaction::where('type', 'opening_balance')
+                ->whereHas('entries', function ($q) use ($contact) {
+                    $q->where('account_id', $contact->account_id);
+                })->first();
+
+            $obAmount = 0;
+            if ($validated['opening_balance'] > 0) {
+                $obType = $validated['opening_balance_type'] ?? 'receivable';
+                $obAmount = $obType === 'payable' ? -abs($validated['opening_balance']) : abs($validated['opening_balance']);
+            }
+
+            $this->transactionService->createOpeningBalanceTransaction(
+                $contact->account_id,
+                'person',
+                $obAmount,
+                $existingOb ? $existingOb->date : now()->toDateString(),
+                $existingOb ? $existingOb->id : null
+            );
+        }
 
         return response()->json($contact->load('account'));
     }

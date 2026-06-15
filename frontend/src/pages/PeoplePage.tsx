@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
 import api from '@/lib/api';
 import { Plus, User, Phone, FileText } from 'lucide-react';
@@ -12,13 +13,14 @@ import { Plus, User, Phone, FileText } from 'lucide-react';
 interface Contact {
   id: number; name: string; phone: string | null; notes: string | null;
   account_id: number | null; computed_balance: string;
+  opening_balance: number; opening_balance_type: 'receivable' | 'payable';
 }
 
 export default function PeoplePage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', notes: '' });
+  const [form, setForm] = useState({ name: '', phone: '', notes: '', opening_balance: '', opening_balance_type: 'receivable' });
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -38,7 +40,7 @@ export default function PeoplePage() {
       } else {
         await api.post('/contacts', form);
       }
-      setShowModal(false); setForm({ name: '', phone: '', notes: '' }); setEditId(null);
+      setShowModal(false); setForm({ name: '', phone: '', notes: '', opening_balance: '', opening_balance_type: 'receivable' }); setEditId(null);
       fetchContacts();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to save');
@@ -72,7 +74,7 @@ export default function PeoplePage() {
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Input placeholder="Search people..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-48" />
-          <Button className="w-full sm:w-auto" onClick={() => { setEditId(null); setForm({ name: '', phone: '', notes: '' }); setShowModal(true); }}>
+          <Button className="w-full sm:w-auto" onClick={() => { setEditId(null); setForm({ name: '', phone: '', notes: '', opening_balance: '', opening_balance_type: 'receivable' }); setShowModal(true); }}>
             <Plus className="w-4 h-4 mr-2" /> Add Person
           </Button>
         </div>
@@ -98,7 +100,7 @@ export default function PeoplePage() {
                         {c.phone && <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</p>}
                       </div>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); setForm({ name: c.name, phone: c.phone || '', notes: c.notes || '' }); setEditId(c.id); setShowModal(true); }}
+                    <button onClick={(e) => { e.stopPropagation(); setForm({ name: c.name, phone: c.phone || '', notes: c.notes || '', opening_balance: c.opening_balance ? c.opening_balance.toString() : '', opening_balance_type: c.opening_balance_type || 'receivable' }); setEditId(c.id); setShowModal(true); }}
                       className="p-1.5 rounded-md hover:bg-accent text-muted-foreground">
                       <FileText className="w-4 h-4" />
                     </button>
@@ -132,6 +134,22 @@ export default function PeoplePage() {
             <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Person name" /></div>
             <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone number" /></div>
             <div className="space-y-2"><Label>Notes</Label><Input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Opening Balance</Label>
+                <Input type="number" min="0" step="0.01" value={form.opening_balance} onChange={e => setForm({ ...form, opening_balance: e.target.value })} placeholder="0.00" />
+              </div>
+              <div className="space-y-2">
+                <Label>Balance Type</Label>
+                <Select value={form.opening_balance_type} onValueChange={(v: 'receivable'|'payable') => setForm({ ...form, opening_balance_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receivable">They owe me</SelectItem>
+                    <SelectItem value="payable">I owe them</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
           <DialogFooter className="flex flex-col-reverse sm:flex-row justify-between items-center sm:justify-between w-full gap-4 sm:gap-0 mt-4">
             {editId ? (
