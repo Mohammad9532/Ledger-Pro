@@ -18,7 +18,22 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
 
           script: |
+            # Main App
             cd /var/www/Ledger-Pro
+
+            git pull origin main
+
+            cd frontend
+            npm install
+            npm run build
+
+            cd ../backend
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan optimize:clear
+
+            # Friend App
+            cd /var/www/Ledger-Pro-Friend
 
             git pull origin main
 
