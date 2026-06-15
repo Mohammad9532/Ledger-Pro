@@ -122,10 +122,6 @@ class SystemController extends Controller
 
         if ($hasRclone) {
             exec('rclone --config /var/www/.config/rclone/rclone.conf lsjson gdrive:Ledger-Pro-Backups 2>&1', $rcloneOut, $rcloneCode);
-            return response()->json([
-                'rcloneCode' => $rcloneCode,
-                'rcloneOut' => $rcloneOut,
-            ]);
             if ($rcloneCode === 0) {
                 $googleDriveStatus = 'Connected';
                 $json = json_decode(implode('', $rcloneOut), true);
