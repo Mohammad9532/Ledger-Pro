@@ -143,6 +143,28 @@ class TransactionService
             $transaction->update(['updated_by' => Auth::id()]);
             $transaction->delete(); // Soft delete
 
+            // If this was a purchase transaction, also soft-delete the linked BusinessItem
+            // so it no longer appears as a ghost entry in the Business page.
+            if ($transaction->type === 'purchase' && $transaction->business_item_id) {
+                \App\Models\BusinessItem::where('id', $transaction->business_item_id)
+                    ->whereNull('deleted_at')
+                    ->update(['deleted_at' => now()]);
+            }
+
+            // If this was a sale transaction, revert the linked BusinessItem back to 'purchased'
+            if ($transaction->type === 'sale' && $transaction->business_item_id) {
+                \App\Models\BusinessItem::where('id', $transaction->business_item_id)
+                    ->whereNull('deleted_at')
+                    ->update([
+                        'status'               => 'purchased',
+                        'sale_amount'          => null,
+                        'profit'               => null,
+                        'buyer_contact_id'     => null,
+                        'sale_transaction_id'  => null,
+                        'updated_by'           => Auth::id(),
+                    ]);
+            }
+
             $this->logAudit($transaction, 'deleted', $oldValues);
 
             return true;

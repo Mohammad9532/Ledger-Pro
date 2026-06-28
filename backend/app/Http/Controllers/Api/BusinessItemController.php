@@ -25,8 +25,7 @@ class BusinessItemController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = BusinessItem::with(['buyer', 'purchaseTransaction', 'saleTransaction'])
-            ->whereNull('deleted_at');
+        $query = BusinessItem::with(['buyer', 'purchaseTransaction', 'saleTransaction']);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -205,7 +204,6 @@ class BusinessItemController extends Controller
     {
         $items = BusinessItem::with('buyer')
             ->where('status', 'sold')
-            ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->get();
 

@@ -517,7 +517,12 @@ export default function TransactionsPage() {
                   <Label>Pay From</Label>
                   <Select value={form.from_account} onValueChange={v => setForm({...form, from_account: v})}>
                     <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
-                    <SelectContent>{[...cashBankAccounts, ...ccAccounts].map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {cashBankAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}
+                      {ccAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}
+                      {assetAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}
+                      {contacts.filter(c => c.account?.id).map(c => <SelectItem key={`p-${c.id}`} value={String(c.account!.id)}>{c.name} (Person)</SelectItem>)}
+                    </SelectContent>
                   </Select>
                 </div>
               </>
@@ -536,7 +541,7 @@ export default function TransactionsPage() {
                   <Label>Receive Into</Label>
                   <Select value={form.to_account} onValueChange={v => setForm({...form, to_account: v})}>
                     <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
-                    <SelectContent>{cashBankAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{[...cashBankAccounts, ...assetAccounts].map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </>
