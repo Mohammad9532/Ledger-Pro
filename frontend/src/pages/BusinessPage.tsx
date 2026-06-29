@@ -20,6 +20,11 @@ export default function BusinessPage() {
   const [profitData, setProfitData] = useState<any>(null);
   const [saving, setSaving] = useState(false);
 
+  const [incomeCategories, setIncomeCategories] = useState<any[]>([]);
+  const [cashbackAmount, setCashbackAmount] = useState('');
+  const [cashbackAccountId, setCashbackAccountId] = useState('');
+  const [cashbackIncomeId, setCashbackIncomeId] = useState('');
+
   const [purchaseForm, setPurchaseForm] = useState({ description: '', purchase_cost: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', reference_number: '', is_credit: false, supplier_contact_id: '', immediate_payment_amount: '' });
   const [saleForm, setSaleForm] = useState({ sale_amount: '', buyer_contact_id: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', is_credit: false, reference_number: '' });
 
@@ -30,14 +35,28 @@ export default function BusinessPage() {
     fetchItems(); fetchProfit();
     api.get('/accounts').then(res => setAccounts(res.data));
     api.get('/contacts').then(res => setContacts(res.data));
+    api.get('/income-categories').then(res => setIncomeCategories(res.data));
   }, []);
 
   const handlePurchase = async () => {
+    const cbAmt = parseFloat(cashbackAmount) || 0;
+    if (cbAmt > 0 && (!cashbackAccountId || !cashbackIncomeId)) {
+      alert('Please select both Cashback Wallet and Income Category for the cashback.');
+      return;
+    }
+
     setSaving(true);
     try {
-      await api.post('/business-items', purchaseForm);
+      const payload = {
+        ...purchaseForm,
+        cashback_amount: cbAmt,
+        cashback_account_id: cashbackAccountId,
+        cashback_income_account_id: incomeCategories.find(c => String(c.id) === cashbackIncomeId)?.account_id || null
+      };
+      await api.post('/business-items', payload);
       setShowPurchase(false); fetchItems(); fetchProfit();
       setPurchaseForm({ description: '', purchase_cost: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', reference_number: '', is_credit: false, supplier_contact_id: '', immediate_payment_amount: '' });
+      setCashbackAmount(''); setCashbackAccountId(''); setCashbackIncomeId('');
     } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
     finally { setSaving(false); }
   };
@@ -54,6 +73,10 @@ export default function BusinessPage() {
 
   const paymentAccounts = accounts.filter((a: any) => ['cash', 'bank', 'credit_card', 'asset', 'liability'].includes(a.type));
   const receiveAccounts = accounts.filter((a: any) => ['cash', 'bank', 'asset'].includes(a.type));
+  const assetAccounts = accounts.filter((a: any) => ['asset', 'bank', 'cash'].includes(a.type));
+
+  const selectedPaymentAccount = accounts.find((a: any) => String(a.id) === purchaseForm.payment_account_id);
+  const isCreditCardSelected = selectedPaymentAccount?.type === 'credit_card';
 
   return (
     <div className="space-y-6">
@@ -173,6 +196,36 @@ export default function BusinessPage() {
                   <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
                   <SelectContent>{paymentAccounts.map((a: any) => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {isCreditCardSelected && (
+              <div className="pt-4 border-t border-border mt-4">
+                <Label className="font-semibold text-primary mb-2 block">Cashback (Optional)</Label>
+                <div className="space-y-4 bg-muted/30 p-4 rounded-lg border border-border">
+                  <div className="space-y-2">
+                    <Label>Cashback Amount</Label>
+                    <Input type="number" step="0.01" value={cashbackAmount} onChange={e => setCashbackAmount(e.target.value)} placeholder="0.00" />
+                  </div>
+                  {parseFloat(cashbackAmount) > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Cashback Wallet Asset</Label>
+                        <Select value={cashbackAccountId} onValueChange={setCashbackAccountId}>
+                          <SelectTrigger><SelectValue placeholder="Select wallet" /></SelectTrigger>
+                          <SelectContent>{assetAccounts.map((a: any) => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Income Category</Label>
+                        <Select value={cashbackIncomeId} onValueChange={setCashbackIncomeId}>
+                          <SelectTrigger><SelectValue placeholder="Select income" /></SelectTrigger>
+                          <SelectContent>{incomeCategories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

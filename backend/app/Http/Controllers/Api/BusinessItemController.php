@@ -46,6 +46,9 @@ class BusinessItemController extends Controller
             'supplier_contact_id' => 'nullable|exists:contacts,id',
             'immediate_payment_amount' => 'nullable|numeric|min:0',
             'reference_number' => 'nullable|string|max:100',
+            'cashback_amount' => 'nullable|numeric|min:0',
+            'cashback_account_id' => 'nullable|exists:accounts,id',
+            'cashback_income_account_id' => 'nullable|exists:accounts,id',
         ]);
 
         if (empty($validated['is_credit']) && empty($validated['payment_account_id'])) {
@@ -100,6 +103,22 @@ class BusinessItemController extends Controller
                         'account_id' => $validated['payment_account_id'],
                         'debit' => 0,
                         'credit' => $validated['purchase_cost']
+                    ];
+                }
+
+                if (!empty($validated['cashback_amount']) && $validated['cashback_amount'] > 0) {
+                    if (empty($validated['cashback_account_id']) || empty($validated['cashback_income_account_id'])) {
+                        throw new InvalidArgumentException('Cashback wallet and income category are required for cashback.');
+                    }
+                    $entries[] = [
+                        'account_id' => $validated['cashback_account_id'],
+                        'debit' => $validated['cashback_amount'],
+                        'credit' => 0
+                    ];
+                    $entries[] = [
+                        'account_id' => $validated['cashback_income_account_id'],
+                        'debit' => 0,
+                        'credit' => $validated['cashback_amount']
                     ];
                 }
 
