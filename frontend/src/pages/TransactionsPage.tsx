@@ -200,6 +200,7 @@ export default function TransactionsPage() {
         type: txType, date: form.date, amount: parseFloat(form.amount),
         description: form.description, reference_number: form.reference_number,
         expense_category_id: form.category_id ? parseInt(form.category_id) : null,
+        contact_id: (form.person_id && form.person_id !== 'none') ? parseInt(form.person_id) : null,
         entries,
       });
       setShowModal(false);
@@ -542,6 +543,16 @@ export default function TransactionsPage() {
                   <Select value={form.to_account} onValueChange={v => setForm({...form, to_account: v})}>
                     <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
                     <SelectContent>{[...cashBankAccounts, ...assetAccounts].map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Paid By / Received From <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                  <Select value={form.person_id} onValueChange={v => setForm({...form, person_id: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select person (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— None —</SelectItem>
+                      {contacts.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                    </SelectContent>
                   </Select>
                 </div>
               </>
