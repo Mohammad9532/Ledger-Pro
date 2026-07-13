@@ -542,7 +542,11 @@ export default function TransactionsPage() {
                   <Label>Receive Into</Label>
                   <Select value={form.to_account} onValueChange={v => setForm({...form, to_account: v})}>
                     <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
-                    <SelectContent>{[...cashBankAccounts, ...assetAccounts].map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {cashBankAccounts.length > 0 && cashBankAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}
+                      {assetAccounts.length > 0 && assetAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}
+                      {contacts.filter(c => c.account?.id).map(c => <SelectItem key={`p-${c.id}`} value={String(c.account!.id)}>{c.name} (Person)</SelectItem>)}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
