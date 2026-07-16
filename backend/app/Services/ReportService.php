@@ -205,7 +205,7 @@ class ReportService
      */
     public function expenseSummary(string $startDate, string $endDate, bool $includeBusiness = false): array
     {
-        $query = DB::table('transaction_entries')
+        $query = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
             ->join('accounts', 'transaction_entries.account_id', '=', 'accounts.id')
             ->leftJoin('expense_categories', 'accounts.id', '=', 'expense_categories.account_id')
@@ -241,7 +241,7 @@ class ReportService
      */
     public function incomeSummary(string $startDate, string $endDate, bool $includeBusiness = false): array
     {
-        $query = DB::table('transaction_entries')
+        $query = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
             ->join('accounts', 'transaction_entries.account_id', '=', 'accounts.id')
             ->where('accounts.type', 'income')

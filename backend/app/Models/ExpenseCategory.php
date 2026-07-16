@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Tenant\TenantModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ExpenseCategory extends Model
+class ExpenseCategory extends TenantModel
 {
     protected $fillable = ['name', 'account_id'];
 

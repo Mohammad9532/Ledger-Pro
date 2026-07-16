@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Tenant\TenantModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class MonthClosing extends Model
+class MonthClosing extends TenantModel
 {
     protected $fillable = [
         'year',

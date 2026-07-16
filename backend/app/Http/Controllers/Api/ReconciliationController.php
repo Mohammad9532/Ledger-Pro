@@ -67,7 +67,7 @@ class ReconciliationController extends Controller
     public function reconcile(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'account_id' => 'required|exists:accounts,id',
+            'account_id' => 'required|exists:tenant.accounts,id',
             'actual_balance' => 'required|numeric',
             'reconciliation_date' => 'required|date',
             'notes' => 'nullable|string',

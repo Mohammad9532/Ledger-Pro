@@ -6,6 +6,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
+    use \Laravel\Sanctum\HasApiTokens;
+
     protected $connection = 'master';
 
     protected $fillable = [

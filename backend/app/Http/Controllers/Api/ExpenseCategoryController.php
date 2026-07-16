@@ -21,10 +21,10 @@ class ExpenseCategoryController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:expense_categories,name',
+            'name' => 'required|string|max:255|unique:tenant.expense_categories,name',
         ]);
 
-        return DB::transaction(function () use ($validated) {
+        return DB::connection('tenant')->transaction(function () use ($validated) {
             $account = Account::create([
                 'name' => $validated['name'] . ' Expense',
                 'type' => 'expense',
@@ -53,7 +53,7 @@ class ExpenseCategoryController extends Controller
     {
         $category = ExpenseCategory::findOrFail($id);
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:expense_categories,name,' . $id,
+            'name' => 'required|string|max:255|unique:tenant.expense_categories,name,' . $id,
         ]);
         $category->update($validated);
         if ($category->account) {
@@ -72,11 +72,12 @@ class ExpenseCategoryController extends Controller
             ], 422);
         }
 
-        return DB::transaction(function () use ($category) {
-            if ($category->account) {
-                $category->account->forceDelete();
-            }
+        return DB::connection('tenant')->transaction(function () use ($category) {
+            $account = $category->account;
             $category->delete();
+            if ($account) {
+                $account->forceDelete();
+            }
             return response()->json(['message' => 'Category and linked account deleted']);
         });
     }

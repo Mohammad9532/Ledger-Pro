@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Tenant\TenantModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Reconciliation extends Model
+class Reconciliation extends TenantModel
 {
     protected $fillable = [
         'account_id',

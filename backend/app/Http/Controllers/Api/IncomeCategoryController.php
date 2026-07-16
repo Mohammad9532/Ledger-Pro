@@ -25,7 +25,7 @@ class IncomeCategoryController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        return DB::transaction(function () use ($validated, $request) {
+        return DB::connection('tenant')->transaction(function () use ($validated, $request) {
             $userId = Auth::id();
 
             // Auto-create a ledger account for this category
@@ -73,7 +73,7 @@ class IncomeCategoryController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        return DB::transaction(function () use ($category, $validated, $oldValues, $request) {
+        return DB::connection('tenant')->transaction(function () use ($category, $validated, $oldValues, $request) {
             $category->update(['name' => $validated['name']]);
 
             // Sync account name if it exists
@@ -109,14 +109,17 @@ class IncomeCategoryController extends Controller
             ], 422);
         }
 
-        return DB::transaction(function () use ($category) {
-            // Delete the linked account first
-            if ($category->account) {
-                // Bypass normal account deletion restriction since we're deleting from the parent module
-                $category->account->forceDelete();
-            }
+        return DB::connection('tenant')->transaction(function () use ($category) {
+            $account = $category->account;
 
+            // 1. Delete the category first
             $category->delete();
+
+            // 2. Then delete the linked account
+            if ($account) {
+                // Bypass normal account deletion restriction since we're deleting from the parent module
+                $account->forceDelete();
+            }
 
             return response()->json(['message' => 'Income category and linked account deleted successfully']);
         });

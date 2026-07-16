@@ -41,14 +41,14 @@ class BusinessItemController extends Controller
             'description' => 'required|string|max:255',
             'purchase_cost' => 'required|numeric|min:0.01',
             'date' => 'required|date',
-            'payment_account_id' => 'nullable|exists:accounts,id',
+            'payment_account_id' => 'nullable|exists:tenant.accounts,id',
             'is_credit' => 'nullable|boolean',
-            'supplier_contact_id' => 'nullable|exists:contacts,id',
+            'supplier_contact_id' => 'nullable|exists:tenant.contacts,id',
             'immediate_payment_amount' => 'nullable|numeric|min:0',
             'reference_number' => 'nullable|string|max:100',
             'cashback_amount' => 'nullable|numeric|min:0',
-            'cashback_account_id' => 'nullable|exists:accounts,id',
-            'cashback_income_account_id' => 'nullable|exists:accounts,id',
+            'cashback_account_id' => 'nullable|exists:tenant.accounts,id',
+            'cashback_income_account_id' => 'nullable|exists:tenant.accounts,id',
         ]);
 
         if (empty($validated['is_credit']) && empty($validated['payment_account_id'])) {
@@ -59,7 +59,7 @@ class BusinessItemController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($validated) {
+            return DB::connection('tenant')->transaction(function () use ($validated) {
                 $entries = [];
                 // 1. Debit Business Inventory for the full purchase cost
                 $entries[] = [
@@ -153,9 +153,9 @@ class BusinessItemController extends Controller
     {
         $validated = $request->validate([
             'sale_amount' => 'required|numeric|min:0.01',
-            'buyer_contact_id' => 'required|exists:contacts,id',
+            'buyer_contact_id' => 'required|exists:tenant.contacts,id',
             'date' => 'required|date',
-            'payment_account_id' => 'nullable|exists:accounts,id',
+            'payment_account_id' => 'nullable|exists:tenant.accounts,id',
             'is_credit' => 'nullable|boolean',
             'reference_number' => 'nullable|string|max:100',
         ]);
@@ -163,7 +163,7 @@ class BusinessItemController extends Controller
         $item = BusinessItem::findOrFail($id);
 
         try {
-            return DB::transaction(function () use ($validated, $item) {
+            return DB::connection('tenant')->transaction(function () use ($validated, $item) {
                 $buyerContact = \App\Models\Contact::with('account')->findOrFail($validated['buyer_contact_id']);
                 $profit = bcsub((string)$validated['sale_amount'], (string)$item->purchase_cost, 4);
 

@@ -197,7 +197,7 @@ class BalanceService
     {
         $column = $type === 'expense' ? 'debit' : 'credit';
 
-        return DB::table('transaction_entries')
+        return DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
             ->join('accounts', 'transaction_entries.account_id', '=', 'accounts.id')
             ->where('accounts.type', $type)

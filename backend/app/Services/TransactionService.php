@@ -28,7 +28,7 @@ class TransactionService
         // Enforce month closing — no backdated transactions into closed months
         $this->assertMonthOpen($data['date']);
 
-        return DB::transaction(function () use ($data, $entries) {
+        return DB::connection('tenant')->transaction(function () use ($data, $entries) {
             $userId = Auth::id();
 
             // Generate sequential transaction number: TXN-YYYY-NNNNNN
@@ -80,7 +80,7 @@ class TransactionService
     {
         $this->validateBalance($entries);
 
-        return DB::transaction(function () use ($transactionId, $data, $entries) {
+        return DB::connection('tenant')->transaction(function () use ($transactionId, $data, $entries) {
             $transaction = Transaction::findOrFail($transactionId);
 
             // Enforce month closing — cannot edit transactions in closed months
@@ -132,7 +132,7 @@ class TransactionService
      */
     public function deleteTransaction(int $transactionId): bool
     {
-        return DB::transaction(function () use ($transactionId) {
+        return DB::connection('tenant')->transaction(function () use ($transactionId) {
             $transaction = Transaction::findOrFail($transactionId);
 
             // Enforce month closing — cannot delete transactions in closed months
@@ -176,7 +176,7 @@ class TransactionService
      */
     public function restoreTransaction(int $transactionId): Transaction
     {
-        return DB::transaction(function () use ($transactionId) {
+        return DB::connection('tenant')->transaction(function () use ($transactionId) {
             $transaction = Transaction::withTrashed()->findOrFail($transactionId);
             $transaction->restore();
 
@@ -257,7 +257,7 @@ class TransactionService
             }
         }
 
-        return DB::transaction(function () use (
+        return DB::connection('tenant')->transaction(function () use (
             $accountId, $accountType, $absAmount, $date,
             $existingTransactionId, $entries
         ) {

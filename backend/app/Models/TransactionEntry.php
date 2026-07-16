@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Tenant\TenantModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TransactionEntry extends Model
+class TransactionEntry extends TenantModel
 {
     protected $fillable = [
         'transaction_id',

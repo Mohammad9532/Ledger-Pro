@@ -26,7 +26,7 @@ class AccountController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = Account::query()->whereNull('deleted_at');
+        $query = Account::whereNull('deleted_at');
 
         if ($request->has('type')) {
             $query->where('type', $request->type);
@@ -39,7 +39,7 @@ class AccountController extends Controller
         $accounts = $query->orderBy('type')->orderBy('name')->get();
 
         // Fetch opening balance entries
-        $obEntries = DB::table('transaction_entries')
+        $obEntries = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transactions.id', '=', 'transaction_entries.transaction_id')
             ->where('transactions.type', 'opening_balance')
             ->whereNull('transactions.deleted_at')
@@ -124,7 +124,7 @@ class AccountController extends Controller
         $account = Account::findOrFail($id);
         $account->computed_balance = $this->balanceService->getAccountBalance($account->id);
 
-        $ob = DB::table('transaction_entries')
+        $ob = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transactions.id', '=', 'transaction_entries.transaction_id')
             ->where('transactions.type', 'opening_balance')
             ->whereNull('transactions.deleted_at')

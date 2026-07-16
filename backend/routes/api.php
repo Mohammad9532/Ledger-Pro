@@ -13,13 +13,17 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\MonthClosingController;
+use App\Http\Controllers\Api\AuditLogController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // Protected routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware([
+    'auth:sanctum',
+    \App\Http\Middleware\SetTenantConnection::class,
+])->group(function () {
     // Audits & Backup
     Route::get('/audit-logs', [AuditLogController::class, 'index']);
 

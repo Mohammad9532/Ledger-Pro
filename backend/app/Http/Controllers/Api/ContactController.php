@@ -34,7 +34,7 @@ class ContactController extends Controller
             ->get();
 
         // Fetch opening balance entries
-        $obEntries = DB::table('transaction_entries')
+        $obEntries = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transactions.id', '=', 'transaction_entries.transaction_id')
             ->where('transactions.type', 'opening_balance')
             ->whereNull('transactions.deleted_at')
@@ -142,7 +142,7 @@ class ContactController extends Controller
         if ($contact->account) {
             $contact->computed_balance = $this->balanceService->getAccountBalance($contact->account->id);
 
-            $ob = DB::table('transaction_entries')
+            $ob = DB::connection('tenant')->table('transaction_entries')
                 ->join('transactions', 'transactions.id', '=', 'transaction_entries.transaction_id')
                 ->where('transactions.type', 'opening_balance')
                 ->whereNull('transactions.deleted_at')
