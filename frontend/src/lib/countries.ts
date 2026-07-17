@@ -1,0 +1,40 @@
+export const COUNTRIES = [
+  { code: 'AE', name: 'United Arab Emirates', currencyCode: 'AED', defaultTimezone: 'Asia/Dubai' },
+  { code: 'AU', name: 'Australia', currencyCode: 'AUD', defaultTimezone: 'Australia/Sydney' },
+  { code: 'BR', name: 'Brazil', currencyCode: 'BRL', defaultTimezone: 'America/Sao_Paulo' },
+  { code: 'CA', name: 'Canada', currencyCode: 'CAD', defaultTimezone: 'America/Toronto' },
+  { code: 'CH', name: 'Switzerland', currencyCode: 'CHF', defaultTimezone: 'Europe/Zurich' },
+  { code: 'CN', name: 'China', currencyCode: 'CNY', defaultTimezone: 'Asia/Shanghai' },
+  { code: 'DE', name: 'Germany', currencyCode: 'EUR', defaultTimezone: 'Europe/Berlin' },
+  { code: 'FR', name: 'France', currencyCode: 'EUR', defaultTimezone: 'Europe/Paris' },
+  { code: 'GB', name: 'United Kingdom', currencyCode: 'GBP', defaultTimezone: 'Europe/London' },
+  { code: 'IN', name: 'India', currencyCode: 'INR', defaultTimezone: 'Asia/Kolkata' },
+  { code: 'JP', name: 'Japan', currencyCode: 'JPY', defaultTimezone: 'Asia/Tokyo' },
+  { code: 'MX', name: 'Mexico', currencyCode: 'MXN', defaultTimezone: 'America/Mexico_City' },
+  { code: 'NZ', name: 'New Zealand', currencyCode: 'NZD', defaultTimezone: 'Pacific/Auckland' },
+  { code: 'SA', name: 'Saudi Arabia', currencyCode: 'SAR', defaultTimezone: 'Asia/Riyadh' },
+  { code: 'SE', name: 'Sweden', currencyCode: 'SEK', defaultTimezone: 'Europe/Stockholm' },
+  { code: 'SG', name: 'Singapore', currencyCode: 'SGD', defaultTimezone: 'Asia/Singapore' },
+  { code: 'US', name: 'United States', currencyCode: 'USD', defaultTimezone: 'America/New_York' },
+  { code: 'ZA', name: 'South Africa', currencyCode: 'ZAR', defaultTimezone: 'Africa/Johannesburg' }
+].sort((a, b) => a.name.localeCompare(b.name));
+
+export const CURRENCIES = [
+  { code: 'AED', name: 'United Arab Emirates Dirham' },
+  { code: 'AUD', name: 'Australian Dollar' },
+  { code: 'BRL', name: 'Brazilian Real' },
+  { code: 'CAD', name: 'Canadian Dollar' },
+  { code: 'CHF', name: 'Swiss Franc' },
+  { code: 'CNY', name: 'Chinese Yuan' },
+  { code: 'EUR', name: 'Euro' },
+  { code: 'GBP', name: 'British Pound' },
+  { code: 'INR', name: 'Indian Rupee' },
+  { code: 'JPY', name: 'Japanese Yen' },
+  { code: 'MXN', name: 'Mexican Peso' },
+  { code: 'NZD', name: 'New Zealand Dollar' },
+  { code: 'SAR', name: 'Saudi Riyal' },
+  { code: 'SEK', name: 'Swedish Krona' },
+  { code: 'SGD', name: 'Singapore Dollar' },
+  { code: 'USD', name: 'United States Dollar' },
+  { code: 'ZAR', name: 'South African Rand' }
+].sort((a, b) => a.code.localeCompare(b.code));

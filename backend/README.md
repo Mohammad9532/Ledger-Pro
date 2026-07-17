@@ -57,3 +57,54 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Brevo SMTP Setup
+
+OTP verification emails are sent through [Brevo](https://www.brevo.com/) via SMTP using Laravel's queue system.
+
+### Required .env variables
+
+`env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp-relay.brevo.com
+MAIL_PORT=587
+MAIL_USERNAME=b255c8001@smtp-brevo.com
+MAIL_PASSWORD=<your-brevo-smtp-key>
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=accounts@beingreal.in
+MAIL_FROM_NAME="Ledger Pro"
+DB_QUEUE_CONNECTION=master
+`
+
+> **Note:** MAIL_PASSWORD must be set to your Brevo SMTP key. It is never committed to version control.
+
+### Steps after configuring .env
+
+1. Clear config cache:
+   ```bash
+   php artisan optimize:clear
+   ```
+
+2. Start the queue worker (emails are sent via the database queue):
+   ```bash
+   php artisan queue:work
+   ```
+
+3. Send a test email to verify the integration:
+   ```bash
+   php artisan mail:test your@email.com
+   ```
+
+   Expected output:
+   ```
+   ? Test email queued successfully.
+     Run php artisan queue:work to dispatch it.
+   ```
+
+### SMTP IP Restrictions
+
+If Brevo has IP restrictions enabled on your SMTP account, you must authorize your server's public IP address in the Brevo dashboard under **SMTP & API > SMTP > Authorized IPs** before emails will be delivered.
+
+### Queue connection
+
+The application uses QUEUE_CONNECTION=database. Ensure your master database migrations have been run so the jobs and ailed_jobs tables exist.

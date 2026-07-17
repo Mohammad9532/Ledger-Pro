@@ -10,7 +10,7 @@ const api = axios.create({
 
 // Add auth token to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem('auth_token') ?? sessionStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,7 +21,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.data?.code === 'ONBOARDING_REQUIRED') {
+      window.dispatchEvent(new CustomEvent('onboarding_required'));
+    } else if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
       window.location.href = '/login';

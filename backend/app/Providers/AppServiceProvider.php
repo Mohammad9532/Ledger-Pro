@@ -28,5 +28,25 @@ class AppServiceProvider extends ServiceProvider
             RegisteredCompanyCreated::class,
             SendVerificationEmail::class
         );
+
+        // Fail fast if SMTP mailer is configured but required env vars are missing.
+        // This prevents silent fallback to log driver in production.
+        if (config('mail.default') === 'smtp') {
+            $required = [
+                'MAIL_HOST'     => config('mail.mailers.smtp.host'),
+                'MAIL_USERNAME' => config('mail.mailers.smtp.username'),
+                'MAIL_PASSWORD' => config('mail.mailers.smtp.password'),
+                'MAIL_FROM_ADDRESS' => config('mail.from.address'),
+            ];
+
+            foreach ($required as $key => $value) {
+                if (empty($value)) {
+                    throw new \RuntimeException(
+                        "Mail misconfiguration: {$key} is required when MAIL_MAILER=smtp. "
+                        . 'Set it in your .env file and run: php artisan optimize:clear'
+                    );
+                }
+            }
+        }
     }
 }

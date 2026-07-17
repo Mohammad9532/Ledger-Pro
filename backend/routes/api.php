@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\CompanyProfileController;
 // Public routes
 Route::post('/register', [RegisterController::class, 'store']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/verify-email', [VerificationController::class, 'verify']);
+Route::post('/resend-verification', [VerificationController::class, 'resend']);
 
 // Protected routes
 Route::middleware([

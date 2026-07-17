@@ -4,40 +4,41 @@ $app = require_once 'bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-$user = \App\Models\Master\User::where('email', 'bruce@wayne-ents.test')->first();
-
-echo "User: {$user->name}\n";
-echo "Company: {$user->company->company_name}\n";
-echo "Onboarding Completed At: " . ($user->company->onboarding_completed_at ?? 'NULL') . "\n";
-
-// Emulate Controller Update
-$validated = [
-    'company_name' => 'Wayne Enterprises Inc.',
-    'country_code' => 'US',
-    'currency_code' => 'USD',
-    'timezone' => 'America/New_York',
-    'financial_year_start' => '01-01',
-    'financial_year_end' => '12-31',
-    'tax_enabled' => true,
-    'tax_rate' => 8.5
-];
-
-// Set Tenant connection
-app(\App\Services\Tenant\TenantSwitcher::class)->switch($user->company->database_name);
-
-$profile = \App\Models\Tenant\CompanyProfile::first();
-if ($profile) {
-    $profile->update($validated);
-} else {
-    $profile = \App\Models\Tenant\CompanyProfile::create($validated);
+echo "=== MASTER COMPANY LIST ===\n";
+$companies = DB::connection('master')->table('companies')->select('id','company_name','database_name','created_at')->get();
+foreach ($companies as $c) {
+    echo "ID: {$c->id} | Name: {$c->company_name} | DB: {$c->database_name} | Created: {$c->created_at}\n";
 }
 
-echo "Created Tenant Profile: {$profile->company_name}\n";
+echo "\n=== DATABASE EXISTENCE CHECK ===\n";
+foreach ($companies as $c) {
+    try {
+        Config::set('database.connections.tenant.database', $c->database_name);
+        DB::purge('tenant');
+        DB::reconnect('tenant');
+        $tables = DB::connection('tenant')->select('SHOW TABLES');
+        $tableNames = array_map('current', array_map('get_object_vars', $tables));
+        $hasProfiles = in_array('company_profiles', $tableNames);
+        echo "{$c->database_name}: " . count($tableNames) . " tables | company_profiles: " . ($hasProfiles ? 'YES' : 'NO') . "\n";
+    } catch (Exception $e) {
+        echo "{$c->database_name}: ERROR - " . $e->getMessage() . "\n";
+    }
+}
 
-$masterCompany = $user->company;
-$masterCompany->update([
-    'onboarding_completed_at' => now(),
-    'company_name' => $validated['company_name']
-]);
-
-echo "Updated Master Company Onboarding At: " . $masterCompany->fresh()->onboarding_completed_at . "\n";
+echo "\n=== CHECKING accounting_ledger DATABASE ===\n";
+try {
+    Config::set('database.connections.tenant.database', 'accounting_ledger');
+    DB::purge('tenant');
+    DB::reconnect('tenant');
+    $tables = DB::connection('tenant')->select('SHOW TABLES');
+    $tableNames = array_map('current', array_map('get_object_vars', $tables));
+    echo "Tables in accounting_ledger: " . implode(', ', $tableNames) . "\n";
+    
+    // Check if migrations table exists and what's recorded
+    if (in_array('migrations', $tableNames)) {
+        $migrations = DB::connection('tenant')->table('migrations')->pluck('migration')->toArray();
+        echo "\nRecorded migrations: " . implode(', ', $migrations) . "\n";
+    }
+} catch (Exception $e) {
+    echo "accounting_ledger: ERROR - " . $e->getMessage() . "\n";
+}

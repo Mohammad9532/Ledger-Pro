@@ -7,7 +7,7 @@ use App\Models\Master\VerificationCode;
 use App\Enums\VerificationPurpose;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
-use App\Mail\OtpVerificationMail;
+use App\Mail\VerifyEmailOtpMail;
 use App\Exceptions\Verification\VerificationThrottleException;
 use App\Exceptions\Verification\VerificationExpiredException;
 use App\Exceptions\Verification\VerificationAttemptsExceededException;
@@ -101,7 +101,10 @@ class EmailVerificationService
 
     public function sendEmail(User $user, string $plainCode): void
     {
-        Mail::to($user->email)->send(new OtpVerificationMail($plainCode));
+        Mail::to($user->email)->queue(new VerifyEmailOtpMail(
+            otp: $plainCode,
+            recipientEmail: $user->email,
+        ));
     }
 
     public function deleteCode(User $user, VerificationPurpose $purpose): void
