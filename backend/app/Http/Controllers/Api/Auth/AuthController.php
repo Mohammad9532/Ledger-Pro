@@ -1,25 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Master\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
-    {
-        return response()->json([
-            'message' => 'Public registration is disabled.'
-        ], 403);
-    }
-
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -46,6 +38,13 @@ class AuthController extends Controller
         RateLimiter::clear($throttleKey);
 
         $user = User::where('email', $validated['email'])->firstOrFail();
+
+        if (is_null($user->email_verified_at)) {
+            Auth::logout(); // Ensure we don't leave an active session if they were somehow authenticated via cookies
+            return response()->json([
+                'message' => 'Please verify your email.'
+            ], 403);
+        }
 
         // Revoke old tokens
         $user->tokens()->delete();

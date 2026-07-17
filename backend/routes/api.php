@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\Auth\VerificationController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\ContactController;
@@ -13,10 +15,10 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\MonthClosingController;
-use App\Http\Controllers\Api\AuditLogController;
+use App\Http\Controllers\Api\CompanyProfileController;
 
 // Public routes
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [RegisterController::class, 'store']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // Protected routes
@@ -25,7 +27,7 @@ Route::middleware([
     \App\Http\Middleware\SetTenantConnection::class,
 ])->group(function () {
     // Audits & Backup
-    Route::get('/audit-logs', [AuditLogController::class, 'index']);
+    // Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
     // System & Backups
     Route::prefix('system')->group(function () {
@@ -42,8 +44,14 @@ Route::middleware([
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    // Company Profile (Bypasses Onboarding Check)
+    Route::put('/company/profile', [CompanyProfileController::class, 'update']);
+
+    // Fully Protected Routes (Requires Onboarding)
+    Route::middleware([\App\Http\Middleware\EnsureOnboardingCompleted::class])->group(function () {
+        
+        // Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // Accounts
     Route::apiResource('accounts', AccountController::class);
@@ -93,6 +101,7 @@ Route::middleware([
         Route::get('/credit-card-summary', [ReportController::class, 'creditCardSummary']);
     });
 
-    // Search
-    Route::get('/search', [SearchController::class, 'search']);
+        // Search
+        Route::get('/search', [SearchController::class, 'search']);
+    });
 });

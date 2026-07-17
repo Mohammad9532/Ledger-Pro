@@ -13,5 +13,14 @@ class Company extends Model
         'company_name',
         'database_name',
         'status',
+        'onboarding_completed_at',
+    ];
+
+    protected $hidden = [
+        'database_name',
+    ];
+
+    protected $casts = [
+        'onboarding_completed_at' => 'datetime',
     ];
 }

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/utils';
 import api from '@/lib/api';
-import { Plus, TrendingUp, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, Trash2, Edit2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e', '#6366f1'];
@@ -20,6 +20,9 @@ export default function IncomePage() {
   const [includeBusiness, setIncludeBusiness] = useState(false);
   const [showAddCat, setShowAddCat] = useState(false);
   const [catName, setCatName] = useState('');
+  const [showEditCat, setShowEditCat] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editCatName, setEditCatName] = useState('');
 
   const fetchData = () => {
     setLoading(true);
@@ -34,6 +37,21 @@ export default function IncomePage() {
       await api.post('/income-categories', { name: catName });
       setCatName(''); setShowAddCat(false); fetchData();
     } catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
+  };
+
+  const openEditModal = (c: any) => {
+    setEditingCategory(c);
+    setEditCatName(c.name);
+    setShowEditCat(true);
+  };
+
+  const handleEditCategory = async () => {
+    try {
+      await api.put(`/income-categories/${editingCategory.id}`, { name: editCatName });
+      setShowEditCat(false);
+      setEditingCategory(null);
+      fetchData();
+    } catch (err: any) { alert(err.response?.data?.message || 'Failed to update'); }
   };
 
   const handleDeleteCategory = async (id: number) => {
@@ -130,10 +148,13 @@ export default function IncomePage() {
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {categories.map((c: any) => (
-              <span key={c.id} className="px-3 py-1.5 rounded-lg bg-accent text-sm font-medium flex items-center gap-1.5 pr-1">
-                <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+              <span key={c.id} className="px-3 py-1.5 rounded-lg bg-accent text-sm font-medium flex items-center gap-1 pr-1">
+                <TrendingUp className="w-3.5 h-3.5 text-muted-foreground mr-1" />
                 {c.name}
-                <button onClick={() => handleDeleteCategory(c.id)} className="ml-2 p-1 hover:bg-muted hover:text-destructive rounded-full transition-colors">
+                <button onClick={() => openEditModal(c)} className="ml-2 p-1 hover:bg-muted hover:text-primary rounded-full transition-colors">
+                  <Edit2 className="w-3 h-3" />
+                </button>
+                <button onClick={() => handleDeleteCategory(c.id)} className="p-1 hover:bg-muted hover:text-destructive rounded-full transition-colors">
                   <Trash2 className="w-3 h-3" />
                 </button>
               </span>
@@ -146,6 +167,13 @@ export default function IncomePage() {
         <DialogContent><DialogHeader><DialogTitle>Add Category</DialogTitle><DialogDescription>Create a new income category</DialogDescription></DialogHeader>
           <div className="space-y-2"><Label>Category Name</Label><Input value={catName} onChange={e => setCatName(e.target.value)} placeholder="e.g., Salary" /></div>
           <DialogFooter><Button variant="outline" onClick={() => setShowAddCat(false)}>Cancel</Button><Button onClick={handleAddCategory}>Create</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditCat} onOpenChange={setShowEditCat}>
+        <DialogContent><DialogHeader><DialogTitle>Edit Category</DialogTitle><DialogDescription>Update income category name</DialogDescription></DialogHeader>
+          <div className="space-y-2"><Label>Category Name</Label><Input value={editCatName} onChange={e => setEditCatName(e.target.value)} placeholder="e.g., Salary" /></div>
+          <DialogFooter><Button variant="outline" onClick={() => setShowEditCat(false)}>Cancel</Button><Button onClick={handleEditCategory}>Save</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
