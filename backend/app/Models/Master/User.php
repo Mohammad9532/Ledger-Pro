@@ -29,6 +29,8 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    protected $with = ['company'];
+
     public function company()
     {
         return $this->belongsTo(Company::class);
