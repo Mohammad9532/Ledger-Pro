@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class BusinessItemController extends Controller
 {
@@ -236,6 +238,43 @@ class BusinessItemController extends Controller
             'total_sales' => (string)$totalSales,
             'total_profit' => (string)$totalProfit,
         ]);
+    }
+
+    public function generateDocument(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'document_type' => 'required|string|in:flight',
+            'data' => 'required|array',
+        ]);
+
+        $item = BusinessItem::findOrFail($id);
+        
+        // Save metadata
+        $metadata = $item->metadata ?? [];
+        $metadata['document_type'] = $validated['document_type'];
+        $metadata = array_merge($metadata, $validated['data']);
+        
+        $item->update(['metadata' => $metadata]);
+
+        // Generate PDF
+        $company = auth()->user()->company;
+        $profile = \App\Models\Tenant\CompanyProfile::first();
+        
+        if ($validated['document_type'] === 'flight') {
+            $pdf = Pdf::loadView('tickets.flight', [
+                'company' => $company,
+                'profile' => $profile,
+                'item' => $item,
+                'data' => $metadata
+            ]);
+            
+            $passengerName = $metadata['passenger']['first_name'] ?? 'Ticket';
+            $filename = 'Flight_Itinerary_' . Str::slug($passengerName) . '.pdf';
+            
+            return $pdf->download($filename);
+        }
+
+        return response()->json(['error' => 'Unsupported document type'], 400);
     }
 
     private function getOrCreateBusinessAccount(): \App\Models\Account

@@ -92,6 +92,7 @@ Route::middleware([
     // Business Items
     Route::apiResource('business-items', BusinessItemController::class)->only(['index', 'store', 'show']);
     Route::post('/business-items/{id}/sell', [BusinessItemController::class, 'recordSale']);
+    Route::post('/business-items/{id}/documents', [BusinessItemController::class, 'generateDocument']);
     Route::get('/business-profit', [BusinessItemController::class, 'profitReport']);
 
     // Reconciliation

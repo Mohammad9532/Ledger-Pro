@@ -7,13 +7,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
-import { Plus, ShoppingBag, TrendingUp, DollarSign, Package } from 'lucide-react';
+import { Plus, ShoppingBag, TrendingUp, DollarSign, Package, FileText, Download } from 'lucide-react';
 
 export default function BusinessPage() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPurchase, setShowPurchase] = useState(false);
   const [showSale, setShowSale] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -27,6 +28,14 @@ export default function BusinessPage() {
 
   const [purchaseForm, setPurchaseForm] = useState({ description: '', purchase_cost: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', reference_number: '', is_credit: false, supplier_contact_id: '', immediate_payment_amount: '' });
   const [saleForm, setSaleForm] = useState({ sale_amount: '', buyer_contact_id: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', is_credit: false, reference_number: '' });
+
+  const [docForm, setDocForm] = useState({
+    document_type: 'flight',
+    passenger: { title: 'Mr', first_name: '', last_name: '', passport: '' },
+    flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '' },
+    journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10) }
+  });
+  const [generatingDoc, setGeneratingDoc] = useState(false);
 
   const fetchItems = () => { api.get('/business-items').then(res => { setItems(res.data.data || []); setLoading(false); }); };
   const fetchProfit = () => { api.get('/business-profit').then(res => setProfitData(res.data)); };
@@ -69,6 +78,52 @@ export default function BusinessPage() {
       setShowSale(false); fetchItems(); fetchProfit();
     } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
     finally { setSaving(false); }
+  };
+
+  const handleOpenDocModal = (item: any) => {
+    setSelectedItem(item);
+    if (item.metadata && item.metadata.document_type === 'flight') {
+      setDocForm({
+        document_type: 'flight',
+        passenger: { title: 'Mr', first_name: '', last_name: '', passport: '', ...item.metadata.passenger },
+        flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '', ...item.metadata.flight },
+        journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10), ...item.metadata.journey }
+      });
+    } else {
+      setDocForm({
+        document_type: 'flight',
+        passenger: { title: 'Mr', first_name: '', last_name: '', passport: '' },
+        flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '' },
+        journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10) }
+      });
+    }
+    setShowDocModal(true);
+  };
+
+  const handleGenerateDoc = async () => {
+    if (!selectedItem) return;
+    setGeneratingDoc(true);
+    try {
+      const res = await api.post(`/business-items/${selectedItem.id}/documents`, {
+        document_type: docForm.document_type,
+        data: docForm
+      }, { responseType: 'blob' });
+      
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Flight_Itinerary_${docForm.passenger.first_name || 'Ticket'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      
+      setShowDocModal(false);
+      fetchItems();
+    } catch (err: any) {
+      alert('Failed to generate document');
+    } finally {
+      setGeneratingDoc(false);
+    }
   };
 
   const paymentAccounts = accounts.filter((a: any) => ['cash', 'bank', 'credit_card', 'asset', 'liability'].includes(a.type));
@@ -131,7 +186,12 @@ export default function BusinessPage() {
                   <td className="p-3 text-right">{item.profit ? <span className="text-emerald-500">{formatCurrency(item.profit)}</span> : '-'}</td>
                   <td className="p-3">{item.buyer?.name || '-'}</td>
                   <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === 'sold' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{item.status}</span></td>
-                  <td className="p-3">{item.status === 'purchased' && <Button size="sm" variant="outline" onClick={() => { setSelectedItem(item); setShowSale(true); }}>Sell</Button>}</td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      {item.status === 'purchased' && <Button size="sm" variant="outline" onClick={() => { setSelectedItem(item); setShowSale(true); }}>Sell</Button>}
+                      <Button size="sm" variant="ghost" onClick={() => handleOpenDocModal(item)} title="Generate Document"><FileText className="w-4 h-4 text-blue-500" /></Button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {!loading && items.length === 0 && <tr><td colSpan={7} className="text-center p-8 text-muted-foreground">No items</td></tr>}
@@ -261,6 +321,72 @@ export default function BusinessPage() {
             )}
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setShowSale(false)}>Cancel</Button><Button onClick={handleSale} disabled={saving}>{saving ? '...' : 'Record Sale'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Modal */}
+      <Dialog open={showDocModal} onOpenChange={setShowDocModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Generate Travel Document</DialogTitle>
+            <DialogDescription>Create a branded PDF document for {selectedItem?.description}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Document Type</Label>
+              <Select value={docForm.document_type} onValueChange={v => setDocForm({...docForm, document_type: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="flight">Flight Itinerary / E-Ticket</SelectItem></SelectContent>
+              </Select>
+            </div>
+
+            {docForm.document_type === 'flight' && (
+              <>
+                <div className="border border-border p-4 rounded-lg space-y-4">
+                  <h3 className="font-semibold border-b pb-2">Passenger Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div className="space-y-2"><Label>Title</Label><Input value={docForm.passenger.title} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, title: e.target.value}})} placeholder="Mr/Ms" /></div>
+                    <div className="space-y-2 sm:col-span-2"><Label>First Name</Label><Input value={docForm.passenger.first_name} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, first_name: e.target.value}})} /></div>
+                    <div className="space-y-2"><Label>Last Name</Label><Input value={docForm.passenger.last_name} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, last_name: e.target.value}})} /></div>
+                  </div>
+                  <div className="space-y-2"><Label>Passport Number (Optional)</Label><Input value={docForm.passenger.passport} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, passport: e.target.value}})} /></div>
+                </div>
+
+                <div className="border border-border p-4 rounded-lg space-y-4">
+                  <h3 className="font-semibold border-b pb-2">Flight Details</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2"><Label>Airline</Label><Input value={docForm.flight.airline} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, airline: e.target.value}})} placeholder="e.g. Emirates" /></div>
+                    <div className="space-y-2"><Label>Flight No.</Label><Input value={docForm.flight.flight_number} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, flight_number: e.target.value}})} placeholder="e.g. EK501" /></div>
+                    <div className="space-y-2"><Label>PNR</Label><Input value={docForm.flight.pnr} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, pnr: e.target.value}})} placeholder="Booking Ref" /></div>
+                    <div className="space-y-2"><Label>Ticket No.</Label><Input value={docForm.flight.ticket_number} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, ticket_number: e.target.value}})} /></div>
+                    <div className="space-y-2"><Label>Class</Label><Input value={docForm.flight.class} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, class: e.target.value}})} placeholder="Economy" /></div>
+                    <div className="space-y-2"><Label>Seat</Label><Input value={docForm.flight.seat} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, seat: e.target.value}})} /></div>
+                    <div className="space-y-2"><Label>Status</Label><Input value={docForm.flight.status} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, status: e.target.value}})} placeholder="Confirmed" /></div>
+                    <div className="space-y-2"><Label>Check-in Bag</Label><Input value={docForm.flight.baggage} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, baggage: e.target.value}})} placeholder="e.g. 30 Kg" /></div>
+                    <div className="space-y-2"><Label>Cabin Bag</Label><Input value={docForm.flight.cabin_baggage} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, cabin_baggage: e.target.value}})} placeholder="e.g. 7 Kg" /></div>
+                  </div>
+                </div>
+
+                <div className="border border-border p-4 rounded-lg space-y-4">
+                  <h3 className="font-semibold border-b pb-2">Journey Details</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>From</Label><Input value={docForm.journey.from} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, from: e.target.value}})} placeholder="Origin City/Airport" /></div>
+                    <div className="space-y-2"><Label>To</Label><Input value={docForm.journey.to} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, to: e.target.value}})} placeholder="Destination City/Airport" /></div>
+                    <div className="space-y-2"><Label>Departure Time</Label><Input type="datetime-local" value={docForm.journey.departure} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, departure: e.target.value}})} /></div>
+                    <div className="space-y-2"><Label>Arrival Time</Label><Input type="datetime-local" value={docForm.journey.arrival} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, arrival: e.target.value}})} /></div>
+                    <div className="space-y-2"><Label>Terminal</Label><Input value={docForm.journey.terminal} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, terminal: e.target.value}})} /></div>
+                    <div className="space-y-2"><Label>Gate</Label><Input value={docForm.journey.gate} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, gate: e.target.value}})} /></div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDocModal(false)}>Cancel</Button>
+            <Button onClick={handleGenerateDoc} disabled={generatingDoc}>
+              {generatingDoc ? 'Generating...' : <><Download className="w-4 h-4 mr-2" /> Download PDF</>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

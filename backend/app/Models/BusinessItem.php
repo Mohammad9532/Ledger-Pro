@@ -22,12 +22,14 @@ class BusinessItem extends TenantModel
         'sale_transaction_id',
         'created_by',
         'updated_by',
+        'metadata',
     ];
 
     protected $casts = [
         'purchase_cost' => 'decimal:4',
         'sale_amount' => 'decimal:4',
         'profit' => 'decimal:4',
+        'metadata' => 'array',
     ];
 
     public function buyer(): BelongsTo
