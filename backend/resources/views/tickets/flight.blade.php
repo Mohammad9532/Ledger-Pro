@@ -67,16 +67,24 @@
 <body>
 
     @php
-        // Helper to extract airport code (text inside parentheses, e.g. "Varanasi (VNS)" -> "VNS")
-        function getAirportCode($str) {
+        // Helper to extract code (text inside parentheses)
+        function extractCode($str) {
             if (preg_match('/\((.*?)\)/', $str, $matches)) {
-                return $matches[1];
+                return strtoupper(trim($matches[1]));
             }
             return strtoupper(substr($str, 0, 3));
         }
         
-        $fromCode = getAirportCode($data['journey']['from'] ?? 'ORG');
-        $toCode = getAirportCode($data['journey']['to'] ?? 'DST');
+        $fromCode = extractCode($data['journey']['from'] ?? 'ORG');
+        $toCode = extractCode($data['journey']['to'] ?? 'DST');
+        
+        $airlineStr = $data['flight']['airline'] ?? '';
+        $airlineCode = '';
+        if (preg_match('/\((.*?)\)/', $airlineStr, $matches)) {
+            $airlineCode = strtoupper(trim($matches[1]));
+            // Also clean up the airline string to not show the code twice if we want, 
+            // but let's keep it as entered by user.
+        }
         
         $passengerName = trim(($data['passenger']['title'] ?? '') . ' ' . ($data['passenger']['first_name'] ?? '') . ' ' . ($data['passenger']['last_name'] ?? ''));
         $pnr = $data['flight']['pnr'] ?? 'N/A';
@@ -91,6 +99,9 @@
     <table class="header-table">
         <tr>
             <td width="60%">
+                @if(isset($logoPath) && $logoPath)
+                    <img src="{{ $logoPath }}" style="max-height: 40px; margin-bottom: 10px;" alt="Logo"><br>
+                @endif
                 <div class="company-name">{{ $profile->company_name ?? $company->company_name ?? 'Company Name' }}</div>
                 <div class="company-address">
                     {!! nl2br(e($profile->address ?? '')) !!}<br>
@@ -135,7 +146,11 @@
         <tr>
             <td width="25%">
                 <div class="flight-details-header">Flight</div>
-                <div style="color: #e11d48; font-weight: bold; font-style: italic; font-size: 14px; margin-bottom: 5px;">{{ $data['flight']['airline'] ?? 'Airline' }}</div>
+                @if($airlineCode)
+                    <img src="https://pics.avs.io/150/40/{{ $airlineCode }}.png" style="max-height: 25px; margin-bottom: 5px;" alt="{{ $airlineCode }}">
+                @else
+                    <div style="color: #e11d48; font-weight: bold; font-style: italic; font-size: 14px; margin-bottom: 5px;">{{ $data['flight']['airline'] ?? 'Airline' }}</div>
+                @endif
                 <div class="font-bold">{{ $data['flight']['airline'] ?? '' }} {{ $data['flight']['flight_number'] ?? '' }}</div>
                 <div style="color: #666; margin-top: 2px;">{{ $data['flight']['class'] ?? 'Economy Class' }}</div>
             </td>

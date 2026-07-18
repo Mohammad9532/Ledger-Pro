@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { Plus, ShoppingBag, TrendingUp, DollarSign, Package, FileText, Download } from 'lucide-react';
+import { AIRPORTS, AIRLINES } from '@/lib/travelData';
 
 export default function BusinessPage() {
   const [items, setItems] = useState<any[]>([]);
@@ -355,7 +356,13 @@ export default function BusinessPage() {
                 <div className="border border-border p-4 rounded-lg space-y-4">
                   <h3 className="font-semibold border-b pb-2">Flight Details</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2"><Label>Airline</Label><Input value={docForm.flight.airline} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, airline: e.target.value}})} placeholder="e.g. Emirates" /></div>
+                    <div className="space-y-2">
+                      <Label>Airline</Label>
+                      <Input list="airlines-list" value={docForm.flight.airline} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, airline: e.target.value}})} placeholder="e.g. Air India (AI)" />
+                      <datalist id="airlines-list">
+                        {AIRLINES.map(a => <option key={a.iata} value={`${a.name} (${a.iata})`} />)}
+                      </datalist>
+                    </div>
                     <div className="space-y-2"><Label>Flight No.</Label><Input value={docForm.flight.flight_number} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, flight_number: e.target.value}})} placeholder="e.g. EK501" /></div>
                     <div className="space-y-2"><Label>PNR</Label><Input value={docForm.flight.pnr} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, pnr: e.target.value}})} placeholder="Booking Ref" /></div>
                     <div className="space-y-2"><Label>Ticket No.</Label><Input value={docForm.flight.ticket_number} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, ticket_number: e.target.value}})} /></div>
@@ -370,8 +377,17 @@ export default function BusinessPage() {
                 <div className="border border-border p-4 rounded-lg space-y-4">
                   <h3 className="font-semibold border-b pb-2">Journey Details</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>From</Label><Input value={docForm.journey.from} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, from: e.target.value}})} placeholder="Origin City/Airport" /></div>
-                    <div className="space-y-2"><Label>To</Label><Input value={docForm.journey.to} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, to: e.target.value}})} placeholder="Destination City/Airport" /></div>
+                    <div className="space-y-2">
+                      <Label>From</Label>
+                      <Input list="airports-list" value={docForm.journey.from} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, from: e.target.value}})} placeholder="Origin Airport" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>To</Label>
+                      <Input list="airports-list" value={docForm.journey.to} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, to: e.target.value}})} placeholder="Destination Airport" />
+                    </div>
+                    <datalist id="airports-list">
+                      {AIRPORTS.map(a => <option key={a.iata} value={`${a.name} (${a.iata})`} />)}
+                    </datalist>
                     <div className="space-y-2"><Label>Departure Time</Label><Input type="datetime-local" value={docForm.journey.departure} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, departure: e.target.value}})} /></div>
                     <div className="space-y-2"><Label>Arrival Time</Label><Input type="datetime-local" value={docForm.journey.arrival} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, arrival: e.target.value}})} /></div>
                     <div className="space-y-2"><Label>Terminal</Label><Input value={docForm.journey.terminal} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, terminal: e.target.value}})} /></div>
