@@ -115,6 +115,7 @@ Route::middleware([
         Route::get('/expense-summary', [ReportController::class, 'expenseSummary']);
         Route::get('/income-summary', [ReportController::class, 'incomeSummary']);
         Route::get('/credit-card-summary', [ReportController::class, 'creditCardSummary']);
+        Route::get('/{type}/export', [ReportController::class, 'export']);
     });
 
         // Search

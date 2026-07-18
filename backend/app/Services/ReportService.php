@@ -22,38 +22,63 @@ class ReportService
     public function balanceSheet(?string $date = null): array
     {
         $date = $date ?? now()->toDateString();
-        $accounts = Account::active()->whereNull('deleted_at')->get();
+        // Include soft-deleted and inactive accounts for historical accuracy
+        $accounts = Account::withTrashed()->get();
 
-        $assets = [];
-        $liabilities = [];
+        $currentAssets = [];
+        $nonCurrentAssets = [];
+        $currentLiabilities = [];
+        $nonCurrentLiabilities = [];
         $equity = [];
-        $totalAssets = '0.0000';
-        $totalLiabilities = '0.0000';
+        
+        $totalCurrentAssets = '0.0000';
+        $totalNonCurrentAssets = '0.0000';
+        $totalCurrentLiabilities = '0.0000';
+        $totalNonCurrentLiabilities = '0.0000';
         $totalEquity = '0.0000';
 
         foreach ($accounts as $account) {
             $balance = $this->balanceService->getAccountBalance($account->id, $date);
+            
+            // Skip if the account is deleted or inactive AND has a zero balance
+            if (bccomp($balance, '0', 4) == 0 && ($account->deleted_at !== null || !$account->is_active)) {
+                continue;
+            }
+
+            // Append (Deleted) or (Inactive) to name if applicable, for clarity
+            $name = $account->name;
+            if ($account->deleted_at !== null) {
+                $name .= ' (Deleted)';
+            } elseif (!$account->is_active) {
+                $name .= ' (Inactive)';
+            }
+
             $item = [
                 'id' => $account->id,
-                'name' => $account->name,
+                'name' => $name,
                 'type' => $account->type,
                 'balance' => $balance,
             ];
 
-            if (in_array($account->type, ['cash', 'bank', 'asset'])) {
-                $assets[] = $item;
-                $totalAssets = bcadd($totalAssets, $balance, 4);
-            } elseif (in_array($account->type, ['credit_card', 'liability'])) {
-                // For liabilities, balance is typically negative (credit heavy)
-                $liabilities[] = $item;
-                $totalLiabilities = bcadd($totalLiabilities, $balance, 4);
+            if (in_array($account->type, ['cash', 'bank'])) {
+                $currentAssets[] = $item;
+                $totalCurrentAssets = bcadd($totalCurrentAssets, $balance, 4);
+            } elseif ($account->type === 'asset') {
+                $nonCurrentAssets[] = $item;
+                $totalNonCurrentAssets = bcadd($totalNonCurrentAssets, $balance, 4);
+            } elseif ($account->type === 'credit_card') {
+                $currentLiabilities[] = $item;
+                $totalCurrentLiabilities = bcadd($totalCurrentLiabilities, $balance, 4);
+            } elseif ($account->type === 'liability') {
+                $nonCurrentLiabilities[] = $item;
+                $totalNonCurrentLiabilities = bcadd($totalNonCurrentLiabilities, $balance, 4);
             } elseif ($account->type === 'person') {
                 if (bccomp($balance, '0', 4) > 0) {
-                    $assets[] = $item; // Receivable
-                    $totalAssets = bcadd($totalAssets, $balance, 4);
+                    $currentAssets[] = $item; // Receivable
+                    $totalCurrentAssets = bcadd($totalCurrentAssets, $balance, 4);
                 } else {
-                    $liabilities[] = $item; // Payable
-                    $totalLiabilities = bcadd($totalLiabilities, $balance, 4);
+                    $currentLiabilities[] = $item; // Payable
+                    $totalCurrentLiabilities = bcadd($totalCurrentLiabilities, $balance, 4);
                 }
             } elseif ($account->type === 'equity') {
                 $equity[] = $item;
@@ -74,11 +99,20 @@ class ReportService
         ];
         $totalEquity = bcadd($totalEquity, $retainedEarnings, 4);
 
+        $totalAssets = bcadd($totalCurrentAssets, $totalNonCurrentAssets, 4);
+        $totalLiabilities = bcadd($totalCurrentLiabilities, $totalNonCurrentLiabilities, 4);
+
         return [
             'date' => $date,
-            'assets' => $assets,
-            'liabilities' => $liabilities,
+            'current_assets' => $currentAssets,
+            'non_current_assets' => $nonCurrentAssets,
+            'current_liabilities' => $currentLiabilities,
+            'non_current_liabilities' => $nonCurrentLiabilities,
             'equity' => $equity,
+            'total_current_assets' => $totalCurrentAssets,
+            'total_non_current_assets' => $totalNonCurrentAssets,
+            'total_current_liabilities' => $totalCurrentLiabilities,
+            'total_non_current_liabilities' => $totalNonCurrentLiabilities,
             'total_assets' => $totalAssets,
             'total_liabilities' => $totalLiabilities,
             'total_equity' => $totalEquity,
@@ -91,43 +125,73 @@ class ReportService
     public function profitAndLoss(string $startDate, string $endDate): array
     {
         // Income accounts
-        $incomeAccounts = Account::where('type', 'income')->whereNull('deleted_at')->get();
+        $incomeAccounts = Account::withTrashed()->where('type', 'income')->get();
         $incomeItems = [];
         $totalIncome = '0.0000';
 
         foreach ($incomeAccounts as $account) {
-            $credits = TransactionEntry::where('transaction_entries.account_id', $account->id)
+            $net = TransactionEntry::where('transaction_entries.account_id', $account->id)
                 ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
                 ->whereNull('transactions.deleted_at')
                 ->whereBetween('transactions.date', [$startDate, $endDate])
-                ->sum('transaction_entries.credit');
+                ->selectRaw('COALESCE(SUM(transaction_entries.credit), 0) - COALESCE(SUM(transaction_entries.debit), 0) as balance')
+                ->value('balance');
+
+            $amount = (string) ($net ?? '0.0000');
+            
+            // Skip deleted/inactive accounts if they have 0 activity in this period
+            if (bccomp($amount, '0', 4) == 0 && ($account->deleted_at !== null || !$account->is_active)) {
+                continue;
+            }
+
+            $name = $account->name;
+            if ($account->deleted_at !== null) {
+                $name .= ' (Deleted)';
+            } elseif (!$account->is_active) {
+                $name .= ' (Inactive)';
+            }
 
             $incomeItems[] = [
                 'id' => $account->id,
-                'name' => $account->name,
-                'amount' => (string) $credits,
+                'name' => $name,
+                'amount' => $amount,
             ];
-            $totalIncome = bcadd($totalIncome, (string) $credits, 4);
+            $totalIncome = bcadd($totalIncome, $amount, 4);
         }
 
         // Expense accounts
-        $expenseAccounts = Account::where('type', 'expense')->whereNull('deleted_at')->get();
+        $expenseAccounts = Account::withTrashed()->where('type', 'expense')->get();
         $expenseItems = [];
         $totalExpense = '0.0000';
 
         foreach ($expenseAccounts as $account) {
-            $debits = TransactionEntry::where('transaction_entries.account_id', $account->id)
+            $net = TransactionEntry::where('transaction_entries.account_id', $account->id)
                 ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
                 ->whereNull('transactions.deleted_at')
                 ->whereBetween('transactions.date', [$startDate, $endDate])
-                ->sum('transaction_entries.debit');
+                ->selectRaw('COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as balance')
+                ->value('balance');
+
+            $amount = (string) ($net ?? '0.0000');
+
+            // Skip deleted/inactive accounts if they have 0 activity in this period
+            if (bccomp($amount, '0', 4) == 0 && ($account->deleted_at !== null || !$account->is_active)) {
+                continue;
+            }
+
+            $name = $account->name;
+            if ($account->deleted_at !== null) {
+                $name .= ' (Deleted)';
+            } elseif (!$account->is_active) {
+                $name .= ' (Inactive)';
+            }
 
             $expenseItems[] = [
                 'id' => $account->id,
-                'name' => $account->name,
-                'amount' => (string) $debits,
+                'name' => $name,
+                'amount' => $amount,
             ];
-            $totalExpense = bcadd($totalExpense, (string) $debits, 4);
+            $totalExpense = bcadd($totalExpense, $amount, 4);
         }
 
         $netProfit = bcsub($totalIncome, $totalExpense, 4);
@@ -147,10 +211,7 @@ class ReportService
      */
     public function receivableReport(): array
     {
-        $personAccounts = Account::where('type', 'person')
-            ->whereNull('deleted_at')
-            ->active()
-            ->get();
+        $personAccounts = Account::withTrashed()->where('type', 'person')->get();
 
         $receivables = [];
         $total = '0.0000';
@@ -158,9 +219,16 @@ class ReportService
         foreach ($personAccounts as $account) {
             $balance = $this->balanceService->getAccountBalance($account->id);
             if (bccomp($balance, '0', 4) > 0) {
+                $name = $account->name;
+                if ($account->deleted_at !== null) {
+                    $name .= ' (Deleted)';
+                } elseif (!$account->is_active) {
+                    $name .= ' (Inactive)';
+                }
+                
                 $receivables[] = [
                     'id' => $account->id,
-                    'name' => $account->name,
+                    'name' => $name,
                     'contact_id' => $account->contact_id,
                     'balance' => $balance,
                 ];
@@ -176,10 +244,7 @@ class ReportService
      */
     public function payableReport(): array
     {
-        $personAccounts = Account::where('type', 'person')
-            ->whereNull('deleted_at')
-            ->active()
-            ->get();
+        $personAccounts = Account::withTrashed()->where('type', 'person')->get();
 
         $payables = [];
         $total = '0.0000';
@@ -187,9 +252,16 @@ class ReportService
         foreach ($personAccounts as $account) {
             $balance = $this->balanceService->getAccountBalance($account->id);
             if (bccomp($balance, '0', 4) < 0) {
+                $name = $account->name;
+                if ($account->deleted_at !== null) {
+                    $name .= ' (Deleted)';
+                } elseif (!$account->is_active) {
+                    $name .= ' (Inactive)';
+                }
+                
                 $payables[] = [
                     'id' => $account->id,
-                    'name' => $account->name,
+                    'name' => $name,
                     'contact_id' => $account->contact_id,
                     'balance' => $balance,
                 ];
@@ -220,10 +292,11 @@ class ReportService
         $summary = $query->select(
                 'expense_categories.id as category_id',
                 'expense_categories.name as category_name',
-                DB::raw('COALESCE(SUM(transaction_entries.debit), 0) as total'),
+                DB::raw('COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as total'),
                 DB::raw('COUNT(DISTINCT transactions.id) as count')
             )
             ->groupBy('expense_categories.id', 'expense_categories.name')
+            ->havingRaw('COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) > 0')
             ->orderByDesc('total')
             ->get();
 
@@ -255,11 +328,11 @@ class ReportService
         $summary = $query->select(
                 'accounts.id as category_id',
                 'accounts.name as category_name',
-                DB::raw('COALESCE(SUM(transaction_entries.credit), 0) as total'),
+                DB::raw('COALESCE(SUM(transaction_entries.credit), 0) - COALESCE(SUM(transaction_entries.debit), 0) as total'),
                 DB::raw('COUNT(DISTINCT transactions.id) as count')
             )
             ->groupBy('accounts.id', 'accounts.name')
-            ->havingRaw('COALESCE(SUM(transaction_entries.credit), 0) > 0')
+            ->havingRaw('COALESCE(SUM(transaction_entries.credit), 0) - COALESCE(SUM(transaction_entries.debit), 0) > 0')
             ->orderByDesc('total')
             ->get();
 

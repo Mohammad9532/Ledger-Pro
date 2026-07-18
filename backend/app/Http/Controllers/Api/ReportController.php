@@ -62,4 +62,38 @@ class ReportController extends Controller
     {
         return response()->json($this->reportService->creditCardSummary());
     }
+
+    public function export(Request $request, string $type)
+    {
+        $validTypes = [
+            'balance-sheet', 'profit-loss', 'cash-flow', 
+            'receivable', 'payable', 'expense-summary', 
+            'income-summary', 'credit-card-summary',
+            'account-ledger'
+        ];
+        
+        $validFormats = ['pdf', 'xlsx', 'csv'];
+
+        if (!in_array($type, $validTypes)) {
+            return response()->json(['message' => 'Invalid report type'], 400);
+        }
+
+        $format = $request->query('format', 'pdf');
+        if (!in_array($format, $validFormats)) {
+            return response()->json(['message' => 'Invalid export format'], 400);
+        }
+
+        if (in_array($type, ['profit-loss', 'cash-flow', 'expense-summary', 'income-summary'])) {
+            $request->validate(['start_date' => 'required|date', 'end_date' => 'required|date']);
+        }
+
+        if ($type === 'account-ledger') {
+            $request->validate(['account_id' => 'required|integer']);
+        }
+
+        /** @var \App\Services\ReportExportService $exportService */
+        $exportService = app(\App\Services\ReportExportService::class);
+        
+        return $exportService->export($type, $format, $request->all());
+    }
 }

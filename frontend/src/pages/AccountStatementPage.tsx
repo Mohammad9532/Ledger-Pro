@@ -31,6 +31,53 @@ export default function AccountStatementPage() {
     }).catch(() => setLoading(false));
   };
 
+  const handleExport = async (format: string) => {
+    try {
+      const params = new URLSearchParams();
+      params.set('format', format);
+      params.set('account_id', data.account.id.toString());
+      if (startDate) params.set('start_date', startDate);
+      if (endDate) params.set('end_date', endDate);
+      
+      const res = await api.get(`/reports/account-ledger/export?${params}`, {
+        responseType: 'blob'
+      });
+
+      if (res.data.type === 'application/json') {
+        const text = await res.data.text();
+        const json = JSON.parse(text);
+        throw new Error(json.message || 'Export failed');
+      }
+      
+      const contentDisposition = res.headers['content-disposition'];
+      let filename = `Ledger-${Date.now()}.${format}`;
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+
+      const mimeTypes: Record<string, string> = {
+        'pdf': 'application/pdf',
+        'csv': 'text/csv',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      };
+
+      const blob = new Blob([res.data], { type: mimeTypes[format] || (res.headers['content-type'] as string) });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) { 
+      alert(err.message || err.response?.data?.message || 'Failed to export report'); 
+    }
+  };
+
   useEffect(() => { fetchStatement(); }, [id]);
 
   if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -59,7 +106,12 @@ export default function AccountStatementPage() {
                 <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-40" />
               </div>
             </div>
-            <Button onClick={fetchStatement} className="w-full sm:w-auto">Filter</Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button onClick={fetchStatement} className="w-full sm:w-auto">Filter</Button>
+              <Button variant="outline" onClick={() => handleExport('pdf')} className="w-full sm:w-auto flex gap-2">
+                <Download className="w-4 h-4" /> Export PDF
+              </Button>
+            </div>
             <div className="mt-4 sm:mt-0 sm:ml-auto flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm w-full sm:w-auto bg-muted/50 p-3 rounded-lg sm:bg-transparent sm:p-0">
               <div className="flex justify-between sm:block"><span className="text-muted-foreground">Opening:</span> <span className="font-bold">{formatCurrency(data.opening_balance)}</span></div>
               <div className="flex justify-between sm:block"><span className="text-muted-foreground">Closing:</span> <span className="font-bold">{formatCurrency(data.closing_balance)}</span></div>

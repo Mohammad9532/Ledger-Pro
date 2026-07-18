@@ -24,6 +24,7 @@ export default function ReportsPage() {
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
 
   const selectedReport = reportTypes.find(r => r.value === reportType);
 
@@ -39,6 +40,60 @@ export default function ReportsPage() {
       setData(res.data);
     } catch (err: any) { alert(err.response?.data?.message || 'Failed to generate report'); }
     finally { setLoading(false); }
+  };
+
+  const handleExport = async (format: string) => {
+    setExporting(format);
+    try {
+      const params = new URLSearchParams();
+      params.set('format', format);
+      if (selectedReport?.needsDates) {
+        params.set('start_date', startDate);
+        params.set('end_date', endDate);
+      }
+      
+      const res = await api.get(`/reports/${reportType}/export?${params}`, {
+        responseType: 'blob'
+      });
+
+      // If the backend returned JSON (e.g. error message), it will be a blob with type application/json
+      if (res.data.type === 'application/json') {
+        const text = await res.data.text();
+        const json = JSON.parse(text);
+        throw new Error(json.message || 'Export failed');
+      }
+      
+      // Extract filename from Content-Disposition header if present
+      const contentDisposition = res.headers['content-disposition'];
+      let filename = `${reportType}-${Date.now()}.${format}`;
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Ensure proper MIME type mapping
+      const mimeTypes: Record<string, string> = {
+        'pdf': 'application/pdf',
+        'csv': 'text/csv',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      };
+
+      const blob = new Blob([res.data], { type: mimeTypes[format] || (res.headers['content-type'] as string) });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) { 
+      alert(err.message || err.response?.data?.message || 'Failed to export report'); 
+    } finally { 
+      setExporting(null); 
+    }
   };
 
   const renderReport = () => {
@@ -153,7 +208,28 @@ export default function ReportsPage() {
             <div className="space-y-1 flex-1 sm:flex-none"><label className="text-sm text-muted-foreground">To</label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-40" /></div>
           </div>
         )}
-        <Button onClick={generateReport} disabled={loading} className="w-full sm:w-auto">{loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><BarChart3 className="w-4 h-4 mr-2" />Generate</>}</Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button onClick={generateReport} disabled={loading} className="w-full sm:w-auto flex-1">
+            {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" /> : <BarChart3 className="w-4 h-4 mr-2" />}
+            Generate
+          </Button>
+
+          <div className="relative">
+            <select
+              className="h-10 w-full sm:w-auto px-8 py-2 rounded-md border border-input bg-background text-sm ring-offset-background appearance-none pr-8 cursor-pointer disabled:opacity-50"
+              onChange={(e) => {
+                if (e.target.value) { handleExport(e.target.value); e.target.value = ''; }
+              }}
+              disabled={exporting !== null}
+            >
+              <option value="" disabled selected hidden>{exporting ? `Exporting...` : `Export ▼`}</option>
+              <option value="pdf">Export as PDF</option>
+              <option value="xlsx">Export as Excel</option>
+              <option value="csv">Export as CSV</option>
+            </select>
+            {!exporting && <Download className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />}
+          </div>
+        </div>
       </CardContent></Card>
 
       {data && (
