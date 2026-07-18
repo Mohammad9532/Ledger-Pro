@@ -64,7 +64,7 @@ class TransactionController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'type' => 'required|in:give_money,receive_money,expense,income,transfer,purchase,sale,credit_card_payment',
+            'type' => 'required|in:give_money,receive_money,expense,income,transfer,purchase,sale,credit_card_payment,settlement',
             'date' => 'required|date',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string',
@@ -100,7 +100,7 @@ class TransactionController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'type' => 'sometimes|in:give_money,receive_money,expense,income,transfer,purchase,sale,credit_card_payment',
+            'type' => 'sometimes|in:give_money,receive_money,expense,income,transfer,purchase,sale,credit_card_payment,settlement',
             'date' => 'sometimes|date',
             'amount' => 'sometimes|numeric|min:0.01',
             'description' => 'nullable|string',

@@ -34,6 +34,7 @@ export function getTransactionTypeLabel(type: string): string {
     sale: 'Sale',
     credit_card_payment: 'CC Payment',
     opening_balance: 'Opening Balance',
+    settlement: 'Third Party Transfer',
   };
   return labels[type] || type;
 }

@@ -8,17 +8,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatDate, getTransactionTypeLabel } from '@/lib/utils';
 import api from '@/lib/api';
-import { Plus, ArrowUpRight, ArrowDownLeft, Receipt, TrendingUp, ArrowLeftRight, ShoppingBag, Tag, CreditCard, Landmark, Trash2 } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownLeft, Receipt, TrendingUp, ArrowLeftRight, ShoppingBag, Tag, CreditCard, Landmark, Trash2, Users } from 'lucide-react';
 
 const typeIcons: Record<string, any> = {
   give_money: ArrowUpRight, receive_money: ArrowDownLeft, expense: Receipt, income: TrendingUp,
   transfer: ArrowLeftRight, purchase: ShoppingBag, sale: Tag, credit_card_payment: CreditCard,
-  opening_balance: Landmark,
+  opening_balance: Landmark, settlement: Users,
 };
 const typeColors: Record<string, string> = {
   give_money: 'text-orange-500', receive_money: 'text-emerald-500', expense: 'text-rose-500', income: 'text-emerald-500',
   transfer: 'text-blue-500', purchase: 'text-purple-500', sale: 'text-indigo-500', credit_card_payment: 'text-amber-500',
-  opening_balance: 'text-slate-500',
+  opening_balance: 'text-slate-500', settlement: 'text-fuchsia-500',
 };
 
 interface Account { id: number; name: string; type: string; }
@@ -187,6 +187,17 @@ export default function TransactionsPage() {
 
         return entries;
       }
+      case 'settlement': {
+        if (!form.from_account || !form.to_account) return null;
+        if (form.from_account === form.to_account) {
+          alert('Paid By and Received By persons must be different');
+          return null;
+        }
+        return [
+          { account_id: parseInt(form.to_account), debit: amt, credit: 0 },
+          { account_id: parseInt(form.from_account), debit: 0, credit: amt },
+        ];
+      }
       default: return null;
     }
   };
@@ -234,7 +245,7 @@ export default function TransactionsPage() {
   const assetAccounts = accounts.filter(a => a.type === 'asset');
   const transferrableAccounts = accounts.filter(a => ['cash', 'bank', 'credit_card', 'asset', 'liability', 'business'].includes(a.type));
 
-  const transactionTypes = ['all', 'give_money', 'receive_money', 'expense', 'income', 'transfer', 'purchase', 'sale', 'credit_card_payment'];
+  const transactionTypes = ['all', 'give_money', 'receive_money', 'expense', 'income', 'transfer', 'purchase', 'sale', 'credit_card_payment', 'settlement'];
 
   return (
     <div className="space-y-6">
@@ -406,7 +417,7 @@ export default function TransactionsPage() {
               <Select value={txType} onValueChange={setTxType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {['give_money','receive_money','expense','income','transfer','credit_card_payment'].map(t => (
+                  {['give_money','receive_money','expense','income','transfer','credit_card_payment', 'settlement'].map(t => (
                     <SelectItem key={t} value={t}>{getTransactionTypeLabel(t)}</SelectItem>
                   ))}
                 </SelectContent>
@@ -690,6 +701,31 @@ export default function TransactionsPage() {
               </>
               );
             })()}
+
+            {txType === 'settlement' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Paid By (Person A)</Label>
+                  <Select value={form.from_account} onValueChange={v => setForm({...form, from_account: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select person who paid" /></SelectTrigger>
+                    <SelectContent>
+                      {contacts.filter(c => c.account?.id).map(c => <SelectItem key={`from-${c.id}`} value={String(c.account!.id)}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">This person's balance will drop (Credit)</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Received By (Person B)</Label>
+                  <Select value={form.to_account} onValueChange={v => setForm({...form, to_account: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select person who received" /></SelectTrigger>
+                    <SelectContent>
+                      {contacts.filter(c => c.account?.id).map(c => <SelectItem key={`to-${c.id}`} value={String(c.account!.id)}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">This person's balance will increase (Debit)</p>
+                </div>
+              </>
+            )}
 
             <div className="space-y-2"><Label>Description</Label><Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Transaction description" /></div>
             <div className="space-y-2"><Label>Reference #</Label><Input value={form.reference_number} onChange={e => setForm({...form, reference_number: e.target.value})} placeholder="Optional" /></div>
