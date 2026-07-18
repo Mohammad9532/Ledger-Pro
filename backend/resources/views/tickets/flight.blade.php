@@ -82,8 +82,17 @@
         $airlineCode = '';
         if (preg_match('/\((.*?)\)/', $airlineStr, $matches)) {
             $airlineCode = strtoupper(trim($matches[1]));
-            // Also clean up the airline string to not show the code twice if we want, 
-            // but let's keep it as entered by user.
+        }
+        
+        $airlineLogoBase64 = null;
+        if ($airlineCode) {
+            try {
+                $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+                $logoData = @file_get_contents("https://pics.avs.io/150/40/{$airlineCode}.png", false, $ctx);
+                if ($logoData) {
+                    $airlineLogoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                }
+            } catch (\Exception $e) {}
         }
         
         $passengerName = trim(($data['passenger']['title'] ?? '') . ' ' . ($data['passenger']['first_name'] ?? '') . ' ' . ($data['passenger']['last_name'] ?? ''));
@@ -137,7 +146,7 @@
     <div class="divider-dashed"></div>
 
     <div class="flight-route">
-        &#9992; &nbsp;&nbsp; {{ $fromCode }} - {{ $toCode }}
+        FLIGHT &nbsp;&nbsp; {{ $fromCode }} &rarr; {{ $toCode }}
     </div>
 
     <div class="divider-thin"></div>
@@ -146,23 +155,20 @@
         <tr>
             <td width="25%">
                 <div class="flight-details-header">Flight</div>
-                @if($airlineCode)
-                    <img src="https://pics.avs.io/150/40/{{ $airlineCode }}.png" style="max-height: 25px; margin-bottom: 5px;" alt="{{ $airlineCode }}">
-                @else
-                    <div style="color: #e11d48; font-weight: bold; font-style: italic; font-size: 14px; margin-bottom: 5px;">{{ $data['flight']['airline'] ?? 'Airline' }}</div>
+                @if($airlineLogoBase64)
+                    <img src="{{ $airlineLogoBase64 }}" style="max-height: 25px; margin-bottom: 5px;">
                 @endif
-                <div class="font-bold">{{ $data['flight']['airline'] ?? '' }} {{ $data['flight']['flight_number'] ?? '' }}</div>
+                <div style="color: #e11d48; font-weight: bold; font-size: 13px; margin-bottom: 3px;">{{ $data['flight']['airline'] ?? 'Airline' }}</div>
+                <div class="font-bold">Flight No: {{ $data['flight']['flight_number'] ?? '' }}</div>
                 <div style="color: #666; margin-top: 2px;">{{ $data['flight']['class'] ?? 'Economy Class' }}</div>
             </td>
             <td width="25%">
                 <div class="flight-details-header">Departure</div>
-                <div>{{ $data['journey']['from'] ?? '-' }}</div>
                 <div class="font-bold" style="margin-top: 2px; margin-bottom: 10px;">{{ $data['journey']['from'] ?? '-' }}</div>
                 <div>{!! $depDate !!}</div>
             </td>
             <td width="25%">
                 <div class="flight-details-header">Arrival</div>
-                <div>{{ $data['journey']['to'] ?? '-' }}</div>
                 <div class="font-bold" style="margin-top: 2px; margin-bottom: 10px;">{{ $data['journey']['to'] ?? '-' }}</div>
                 <div>{!! $arrDate !!}</div>
             </td>
