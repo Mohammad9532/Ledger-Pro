@@ -29,6 +29,7 @@ jobs:
 
             cd ../backend
             composer install --no-dev --optimize-autoloader
+            php artisan migrate --force --database=master --path=database/migrations/master
             php artisan migrate --force
             php artisan optimize:clear
 
