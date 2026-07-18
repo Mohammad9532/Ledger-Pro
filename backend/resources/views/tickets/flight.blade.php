@@ -5,7 +5,7 @@
     <title>E-Ticket / Flight Itinerary</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 11px;
             color: #333;
             line-height: 1.4;
@@ -151,7 +151,7 @@
     <div class="divider-dashed"></div>
 
     <div class="flight-route">
-        FLIGHT &nbsp;&nbsp; {{ $fromCode }} - {{ $toCode }}
+        <span style="font-size: 16px;">&#x2708;</span> &nbsp;&nbsp; {{ $fromCode }} - {{ $toCode }}
     </div>
 
     <div class="divider-thin"></div>
