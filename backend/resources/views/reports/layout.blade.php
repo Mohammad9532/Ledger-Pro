@@ -5,7 +5,7 @@
     <title>{{ $title ?? 'Report' }}</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 10px;
             color: #111;
             line-height: 1.4;
