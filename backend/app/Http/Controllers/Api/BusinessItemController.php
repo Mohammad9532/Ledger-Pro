@@ -260,12 +260,23 @@ class BusinessItemController extends Controller
         $company = auth()->user()->company;
         $profile = \App\Models\Tenant\CompanyProfile::first();
         
+        $logoPath = null;
+        if ($profile && $profile->logo_path) {
+            $logoPath = storage_path('app/public/' . $profile->logo_path);
+        }
+
         if ($validated['document_type'] === 'flight') {
             $pdf = Pdf::loadView('tickets.flight', [
                 'company' => $company,
                 'profile' => $profile,
                 'item' => $item,
-                'data' => $metadata
+                'data' => $metadata,
+                'companyName' => $profile->company_name ?? ($company->company_name ?? 'Company'),
+                'title' => 'E-Ticket Confirmation',
+                'period' => 'Booking Ref: ' . ($metadata['flight']['pnr'] ?? 'N/A'),
+                'generatedAt' => now()->format('Y-m-d H:i:s'),
+                'currency' => $profile->currency_code ?? 'INR',
+                'logoPath' => $logoPath,
             ]);
             
             $passengerName = $metadata['passenger']['first_name'] ?? 'Ticket';
