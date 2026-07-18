@@ -161,7 +161,7 @@
             <td width="25%">
                 <div class="flight-details-header">Flight</div>
                 @if($airlineLogoBase64)
-                    <img src="{{ $airlineLogoBase64 }}" style="max-height: 25px; margin-bottom: 5px;">
+                    <img src="{{ $airlineLogoBase64 }}" style="max-height: 18px; margin-bottom: 5px;">
                 @endif
                 <div style="color: #e11d48; font-weight: bold; font-size: 13px; margin-bottom: 3px;">{{ $data['flight']['airline'] ?? 'Airline' }}</div>
                 <div class="font-bold">Flight No: {{ $data['flight']['flight_number'] ?? '' }}</div>
