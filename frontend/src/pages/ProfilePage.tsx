@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, User, Lock, Mail, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Loader2, User, Lock, Mail, Eye, EyeOff, CheckCircle2, Building2 } from 'lucide-react';
 import PasswordStrengthIndicator from '@/components/ui/PasswordStrengthIndicator';
 import api from '@/lib/api';
 
@@ -55,6 +55,33 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // Company Profile State
+  const [companyName, setCompanyName] = useState('');
+  const [currencyCode, setCurrencyCode] = useState('INR');
+  const [countryCode, setCountryCode] = useState('IN');
+  const [timezone, setTimezone] = useState('Asia/Kolkata');
+  const [fyStart, setFyStart] = useState('04-01');
+  const [fyEnd, setFyEnd] = useState('03-31');
+  const [taxEnabled, setTaxEnabled] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [savingCompany, setSavingCompany] = useState(false);
+  const [companySuccess, setCompanySuccess] = useState(false);
+
+  useEffect(() => {
+    api.get('/company/profile').then(res => {
+      const p = res.data.profile;
+      setCompanyName(p?.company_name || res.data.company_name);
+      if (p) {
+        setCurrencyCode(p.currency_code);
+        setCountryCode(p.country_code);
+        setTimezone(p.timezone);
+        setFyStart(p.financial_year_start);
+        setFyEnd(p.financial_year_end);
+        setTaxEnabled(p.tax_enabled);
+      }
+    });
+  }, []);
+
   // --- Handlers ---
 
   const handleSaveInfo = async (e: React.FormEvent) => {
@@ -70,6 +97,33 @@ export default function ProfilePage() {
       console.error(err);
     } finally {
       setSavingInfo(false);
+    }
+  };
+
+  const handleSaveCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingCompany(true);
+    try {
+      const formData = new FormData();
+      formData.append('company_name', companyName);
+      formData.append('currency_code', currencyCode);
+      formData.append('country_code', countryCode);
+      formData.append('timezone', timezone);
+      formData.append('financial_year_start', fyStart);
+      formData.append('financial_year_end', fyEnd);
+      formData.append('tax_enabled', taxEnabled ? '1' : '0');
+      formData.append('_method', 'PUT');
+      if (logoFile) formData.append('logo', logoFile);
+
+      await api.post('/company/profile', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setCompanySuccess(true);
+      setTimeout(() => setCompanySuccess(false), 3000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update company');
+    } finally {
+      setSavingCompany(false);
     }
   };
 
@@ -158,6 +212,48 @@ export default function ProfilePage() {
 
       <div className="grid gap-6">
         
+        {/* Company Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" />
+              <CardTitle>Business Settings</CardTitle>
+            </div>
+            <CardDescription>Update your company name and logo for invoices and reports.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {companySuccess && (
+              <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-700 dark:text-green-400 text-sm flex items-center gap-2 animate-fade-in">
+                <CheckCircle2 className="w-4 h-4" /> Business settings updated.
+              </div>
+            )}
+            <form onSubmit={handleSaveCompany} className="space-y-4 max-w-md">
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Business Name</Label>
+                <Input id="companyName" value={companyName} onChange={e => setCompanyName(e.target.value)} required disabled={savingCompany} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Currency Code</Label>
+                  <Input value={currencyCode} onChange={e => setCurrencyCode(e.target.value)} required maxLength={3} disabled={savingCompany} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Country Code</Label>
+                  <Input value={countryCode} onChange={e => setCountryCode(e.target.value)} required maxLength={2} disabled={savingCompany} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Company Logo (Optional)</Label>
+                <Input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files?.[0] || null)} disabled={savingCompany} />
+              </div>
+              <Button type="submit" disabled={savingCompany || !companyName}>
+                {savingCompany && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Save Business Settings
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
         {/* Personal Information */}
         <Card>
           <CardHeader>

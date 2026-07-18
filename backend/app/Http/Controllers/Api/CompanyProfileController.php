@@ -12,6 +12,18 @@ class CompanyProfileController extends Controller
     public function __construct(
         private CompanyProfileService $profileService
     ) {}
+
+    public function show(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $profile = \App\Models\Tenant\CompanyProfile::first();
+        $company = $request->user()->company;
+        
+        return response()->json([
+            'profile' => $profile,
+            'company_name' => $company->company_name
+        ]);
+    }
+
     public function update(UpdateCompanyProfileRequest $request): JsonResponse
     {
         $user = $request->user();

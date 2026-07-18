@@ -61,6 +61,7 @@ Route::middleware([
     Route::post('/profile/email/verify', [ProfileController::class, 'verifyEmailChange']);
 
     // Company Profile (Bypasses Onboarding Check)
+    Route::get('/company/profile', [CompanyProfileController::class, 'show']);
     Route::put('/company/profile', [CompanyProfileController::class, 'update']);
 
     // Fully Protected Routes (Requires Onboarding)
