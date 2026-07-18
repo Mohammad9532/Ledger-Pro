@@ -91,7 +91,19 @@ export default function PersonLedgerPage() {
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err: any) { 
-      alert(err.message || err.response?.data?.message || 'Failed to export report'); 
+      let errorMessage = 'Failed to export report';
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          errorMessage = json.message || errorMessage;
+        } catch (e) {}
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      alert(errorMessage); 
     }
   };
 
