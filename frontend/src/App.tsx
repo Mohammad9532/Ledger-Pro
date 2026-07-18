@@ -12,12 +12,14 @@ import AppLayout from '@/components/layout/AppLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import VerifyEmailPage from '@/pages/auth/VerifyEmailPage';
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 
 // Onboarding
 import OnboardingPage from '@/pages/onboarding/OnboardingPage';
 
 // App pages
 import DashboardPage from '@/pages/DashboardPage';
+import ProfilePage from '@/pages/ProfilePage';
 import AccountsPage from '@/pages/AccountsPage';
 import AccountStatementPage from '@/pages/AccountStatementPage';
 import PeoplePage from '@/pages/PeoplePage';
@@ -46,6 +48,7 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             </Route>
           </Route>
 
@@ -67,6 +70,7 @@ export default function App() {
           <Route element={<ProtectedGuard />}>
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/accounts" element={<AccountsPage />} />
               <Route path="/accounts/:id" element={<AccountStatementPage />} />
               <Route path="/people" element={<PeoplePage />} />

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Registration;
+namespace App\Services\Auth;
 
 use App\Models\Master\User;
 use App\Models\Master\VerificationCode;
@@ -8,13 +8,14 @@ use App\Enums\VerificationPurpose;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Mail\VerifyEmailOtpMail;
+use App\Mail\PasswordResetOtpMail;
+use App\Mail\ChangeEmailOtpMail;
 use App\Exceptions\Verification\VerificationThrottleException;
 use App\Exceptions\Verification\VerificationExpiredException;
 use App\Exceptions\Verification\VerificationAttemptsExceededException;
 use App\Exceptions\Verification\VerificationCodeInvalidException;
-use App\Events\EmailVerified;
 
-class EmailVerificationService
+class OtpService
 {
     public function generateCode(): string
     {
@@ -27,23 +28,50 @@ class EmailVerificationService
         return hash_hmac('sha256', $plainCode, config('app.key'));
     }
 
-    public function storeCode(User $user, VerificationPurpose $purpose, string $plainCode): VerificationCode
+    public function send(User $user, VerificationPurpose $purpose, ?string $targetEmail = null, ?array $metadata = null): void
     {
+        $code = VerificationCode::where('user_id', $user->id)->where('purpose', $purpose)->first();
+
+        // Throttle check if we already sent one recently
+        if ($code && $code->last_sent_at) {
+            $resendAfter = config('verification.otp.resend_after_seconds', 60);
+            if (now()->lessThan($code->last_sent_at->addSeconds($resendAfter))) {
+                throw new VerificationThrottleException();
+            }
+        }
+
+        // Invalidate old code by deleting it
+        if ($code) {
+            $code->delete();
+        }
+
+        $plainCode = $this->generateCode();
         $expiryMinutes = config('verification.otp.expiry_minutes', 10);
         
-        return VerificationCode::updateOrCreate(
-            ['user_id' => $user->id, 'purpose' => $purpose],
-            [
-                'code_hash' => $this->hashOtp($plainCode),
-                'expires_at' => now()->addMinutes($expiryMinutes),
-                'attempts' => 0,
-                'last_sent_at' => now(),
-                'verified_at' => null,
-            ]
-        );
+        VerificationCode::create([
+            'user_id' => $user->id,
+            'purpose' => $purpose,
+            'code_hash' => $this->hashOtp($plainCode),
+            'expires_at' => now()->addMinutes($expiryMinutes),
+            'attempts' => 0,
+            'last_sent_at' => now(),
+            'verified_at' => null,
+            'metadata' => $metadata,
+        ]);
+
+        $sendTo = $targetEmail ?? $user->email;
+
+        $mailable = match ($purpose) {
+            VerificationPurpose::EMAIL_VERIFICATION => new VerifyEmailOtpMail($plainCode, $sendTo),
+            VerificationPurpose::PASSWORD_RESET => new PasswordResetOtpMail($plainCode, $sendTo),
+            VerificationPurpose::CHANGE_EMAIL => new ChangeEmailOtpMail($plainCode, $sendTo),
+            default => throw new \Exception("Unsupported verification purpose"),
+        };
+
+        Mail::to($sendTo)->queue($mailable);
     }
 
-    public function verifyCode(User $user, VerificationPurpose $purpose, string $plainCode): void
+    public function verify(User $user, VerificationPurpose $purpose, string $plainCode): void
     {
         $code = VerificationCode::where('user_id', $user->id)
             ->where('purpose', $purpose)
@@ -53,13 +81,17 @@ class EmailVerificationService
             throw new VerificationCodeInvalidException();
         }
 
+        if ($code->verified_at) {
+            // Already verified
+            return;
+        }
+
         if (now()->isAfter($code->expires_at)) {
             throw new VerificationExpiredException();
         }
 
         $maxAttempts = config('verification.otp.max_attempts', 5);
         if ($code->attempts >= $maxAttempts) {
-            $this->resendCode($user, $purpose, true);
             throw new VerificationAttemptsExceededException();
         }
 
@@ -67,47 +99,43 @@ class EmailVerificationService
             $code->increment('attempts');
             
             if ($code->attempts >= $maxAttempts) {
-                $this->resendCode($user, $purpose, true);
                 throw new VerificationAttemptsExceededException();
             }
             
             throw new VerificationCodeInvalidException();
         }
 
-        DB::connection('master')->transaction(function () use ($code, $user, $purpose) {
-            $user->update(['email_verified_at' => now()]);
-            $this->deleteCode($user, $purpose);
-        });
-        
-        EmailVerified::dispatch($user);
+        $code->update(['verified_at' => now()]);
     }
 
-    public function resendCode(User $user, VerificationPurpose $purpose, bool $force = false): void
+    public function isVerified(User $user, VerificationPurpose $purpose): bool
     {
-        if (!$force) {
-            $code = VerificationCode::where('user_id', $user->id)->where('purpose', $purpose)->first();
-            if ($code && $code->last_sent_at) {
-                $resendAfter = config('verification.otp.resend_after_seconds', 60);
-                if (now()->lessThan($code->last_sent_at->addSeconds($resendAfter))) {
-                    throw new VerificationThrottleException();
-                }
-            }
+        $code = VerificationCode::where('user_id', $user->id)
+            ->where('purpose', $purpose)
+            ->first();
+
+        if (!$code || !$code->verified_at) {
+            return false;
         }
 
-        $plainCode = $this->generateCode();
-        $this->storeCode($user, $purpose, $plainCode);
-        $this->sendEmail($user, $plainCode);
-    }
+        // Optional: Check if verified OTP has expired
+        if (now()->isAfter($code->expires_at)) {
+            return false;
+        }
 
-    public function sendEmail(User $user, string $plainCode): void
+        return true;
+    }
+    
+    public function getMetadata(User $user, VerificationPurpose $purpose): ?array
     {
-        Mail::to($user->email)->queue(new VerifyEmailOtpMail(
-            otp: $plainCode,
-            recipientEmail: $user->email,
-        ));
+        $code = VerificationCode::where('user_id', $user->id)
+            ->where('purpose', $purpose)
+            ->first();
+            
+        return $code ? $code->metadata : null;
     }
 
-    public function deleteCode(User $user, VerificationPurpose $purpose): void
+    public function consume(User $user, VerificationPurpose $purpose): void
     {
         VerificationCode::where('user_id', $user->id)
             ->where('purpose', $purpose)

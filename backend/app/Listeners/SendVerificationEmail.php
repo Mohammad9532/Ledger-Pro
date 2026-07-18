@@ -3,13 +3,13 @@
 namespace App\Listeners;
 
 use App\Events\RegisteredCompanyCreated;
-use App\Services\Registration\EmailVerificationService;
+use App\Services\Auth\OtpService;
 use App\Enums\VerificationPurpose;
 
 class SendVerificationEmail
 {
     public function __construct(
-        private EmailVerificationService $verificationService
+        private OtpService $otpService
     ) {}
 
     public function handle(RegisteredCompanyCreated $event): void
@@ -17,8 +17,6 @@ class SendVerificationEmail
         $user = $event->result->owner;
         $purpose = VerificationPurpose::EMAIL_VERIFICATION;
 
-        $plainCode = $this->verificationService->generateCode();
-        $this->verificationService->storeCode($user, $purpose, $plainCode);
-        $this->verificationService->sendEmail($user, $plainCode);
+        $this->otpService->send($user, $purpose);
     }
 }

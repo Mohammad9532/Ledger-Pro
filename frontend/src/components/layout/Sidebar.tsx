@@ -95,10 +95,6 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
             {darkMode ? <Sun className="w-5 h-5 shrink-0" /> : <Moon className="w-5 h-5 shrink-0" />}
             {!collapsed && <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
           </button>
-          <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 w-full transition-colors">
-            <LogOut className="w-5 h-5 shrink-0" />
-            {!collapsed && <span>Logout</span>}
-          </button>
           <button onClick={() => setCollapsed(!collapsed)} className="hidden lg:flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-accent w-full transition-colors">
             {collapsed ? <ChevronRight className="w-5 h-5 shrink-0" /> : <ChevronLeft className="w-5 h-5 shrink-0" />}
             {!collapsed && <span>Collapse</span>}

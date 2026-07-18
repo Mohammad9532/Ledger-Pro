@@ -16,6 +16,7 @@ class VerificationCode extends Model
         'attempts',
         'last_sent_at',
         'verified_at',
+        'metadata',
     ];
 
     protected $casts = [
@@ -24,7 +25,9 @@ class VerificationCode extends Model
         'last_sent_at' => 'datetime',
         'verified_at' => 'datetime',
         'attempts' => 'integer',
+        'metadata' => 'array',
     ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

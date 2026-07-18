@@ -4,7 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\VerificationController;
+use App\Http\Controllers\Api\Auth\PasswordController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\TransactionController;
@@ -22,6 +24,11 @@ Route::post('/register', [RegisterController::class, 'store']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify-email', [VerificationController::class, 'verify']);
 Route::post('/resend-verification', [VerificationController::class, 'resend']);
+
+// Password Reset
+Route::post('/password/forgot', [PasswordController::class, 'forgot']);
+Route::post('/password/verify-otp', [PasswordController::class, 'verifyOtp']);
+Route::post('/password/reset', [PasswordController::class, 'reset']);
 
 // Protected routes
 Route::middleware([
@@ -45,6 +52,13 @@ Route::middleware([
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    // User Profile
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'changePassword']);
+    Route::post('/profile/email/request', [ProfileController::class, 'requestEmailChange']);
+    Route::post('/profile/email/verify', [ProfileController::class, 'verifyEmailChange']);
 
     // Company Profile (Bypasses Onboarding Check)
     Route::put('/company/profile', [CompanyProfileController::class, 'update']);

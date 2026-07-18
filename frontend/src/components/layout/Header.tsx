@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Menu, Bell } from 'lucide-react';
+import { Search, Menu, LogOut, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
 import api from '@/lib/api';
 
 interface SearchResult {
@@ -13,18 +14,23 @@ interface SearchResult {
 }
 
 export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowResults(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -88,11 +94,43 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
-          <span className="text-sm font-medium">{user?.name}</span>
+        <div ref={profileMenuRef} className="relative">
+          <button 
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="flex items-center gap-2 hover:bg-accent p-1.5 rounded-lg transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <span className="hidden md:inline-block text-sm font-medium pr-1">{user?.name}</span>
+          </button>
+
+          {showProfileMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-popover border border-border rounded-lg shadow-xl py-1 z-50">
+              <div className="px-4 py-2 border-b border-border mb-1 md:hidden">
+                <p className="text-sm font-medium truncate">{user?.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              </div>
+              <Link
+                to="/profile"
+                onClick={() => setShowProfileMenu(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <User className="w-4 h-4" />
+                My Profile
+              </Link>
+              <button
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
