@@ -5,6 +5,7 @@ interface User {
   id: number;
   name: string;
   email: string;
+  phone?: string;
   company?: {
     company_name: string;
     onboarding_completed_at: string | null;

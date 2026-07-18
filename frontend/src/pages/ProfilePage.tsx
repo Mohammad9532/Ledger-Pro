@@ -9,7 +9,7 @@ import PasswordStrengthIndicator from '@/components/ui/PasswordStrengthIndicator
 import api from '@/lib/api';
 
 export default function ProfilePage() {
-  const { user, fetchUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   
   // Personal Info State
   const [name, setName] = useState(user?.name || '');
@@ -63,7 +63,7 @@ export default function ProfilePage() {
     setInfoSuccess(false);
     try {
       await api.put('/profile', { name, phone });
-      await fetchUser();
+      await refreshUser();
       setInfoSuccess(true);
       setTimeout(() => setInfoSuccess(false), 3000);
     } catch (err) {
@@ -124,7 +124,7 @@ export default function ProfilePage() {
     setEmailError('');
     try {
       await api.post('/profile/email/verify', { code });
-      await fetchUser();
+      await refreshUser();
       setEmailSuccess(true);
       setIsChangingEmail(false);
       setOtpSent(false);
@@ -334,7 +334,7 @@ export default function ProfilePage() {
                         {emailOtp.map((digit, index) => (
                           <Input
                             key={index}
-                            ref={el => emailOtpRefs.current[index] = el}
+                            ref={el => { emailOtpRefs.current[index] = el; }}
                             type="text"
                             inputMode="numeric"
                             value={digit}
