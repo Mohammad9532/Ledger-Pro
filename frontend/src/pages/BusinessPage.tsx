@@ -33,7 +33,7 @@ export default function BusinessPage() {
 
   const [docForm, setDocForm] = useState({
     document_type: 'flight',
-    passenger: { title: 'Mr', first_name: '', last_name: '', passport: '' },
+    passengers: [{ title: 'Mr', first_name: '', last_name: '', passport: '' }],
     flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '' },
     journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10) }
   });
@@ -85,16 +85,17 @@ export default function BusinessPage() {
   const handleOpenDocModal = (item: any) => {
     setSelectedItem(item);
     if (item.metadata && item.metadata.document_type === 'flight') {
+      const passengers = item.metadata.passengers || (item.metadata.passenger ? [item.metadata.passenger] : [{ title: 'Mr', first_name: '', last_name: '', passport: '' }]);
       setDocForm({
         document_type: 'flight',
-        passenger: { title: 'Mr', first_name: '', last_name: '', passport: '', ...item.metadata.passenger },
+        passengers: passengers,
         flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '', ...item.metadata.flight },
         journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10), ...item.metadata.journey }
       });
     } else {
       setDocForm({
         document_type: 'flight',
-        passenger: { title: 'Mr', first_name: '', last_name: '', passport: '' },
+        passengers: [{ title: 'Mr', first_name: '', last_name: '', passport: '' }],
         flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '' },
         journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10) }
       });
@@ -114,7 +115,8 @@ export default function BusinessPage() {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Flight_Itinerary_${docForm.passenger.first_name || 'Ticket'}.pdf`);
+      const firstPax = docForm.passengers && docForm.passengers.length > 0 ? docForm.passengers[0].first_name : 'Ticket';
+      link.setAttribute('download', `Flight_Itinerary_${firstPax || 'Ticket'}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
@@ -345,13 +347,29 @@ export default function BusinessPage() {
             {docForm.document_type === 'flight' && (
               <>
                 <div className="border border-border p-4 rounded-lg space-y-4">
-                  <h3 className="font-semibold border-b pb-2">Passenger Information</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    <div className="space-y-2"><Label>Title</Label><Input value={docForm.passenger.title} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, title: e.target.value}})} placeholder="Mr/Ms" /></div>
-                    <div className="space-y-2 sm:col-span-2"><Label>First Name</Label><Input value={docForm.passenger.first_name} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, first_name: e.target.value}})} /></div>
-                    <div className="space-y-2"><Label>Last Name</Label><Input value={docForm.passenger.last_name} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, last_name: e.target.value}})} /></div>
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <h3 className="font-semibold">Passenger Information</h3>
+                    <Button variant="outline" size="sm" onClick={() => setDocForm({...docForm, passengers: [...docForm.passengers, {title: 'Mr', first_name: '', last_name: '', passport: ''}]})}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Passenger
+                    </Button>
                   </div>
-                  <div className="space-y-2"><Label>Passport Number (Optional)</Label><Input value={docForm.passenger.passport} onChange={e => setDocForm({...docForm, passenger: {...docForm.passenger, passport: e.target.value}})} /></div>
+                  
+                  {docForm.passengers.map((pax, idx) => (
+                    <div key={idx} className="relative p-3 border border-border rounded bg-muted/20">
+                      {docForm.passengers.length > 1 && (
+                        <button type="button" className="absolute top-2 right-2 text-red-500 text-xs font-bold" onClick={() => setDocForm({...docForm, passengers: docForm.passengers.filter((_, i) => i !== idx)})}>
+                          ✕ Remove
+                        </button>
+                      )}
+                      <h4 className="text-xs font-bold mb-3 text-muted-foreground">PASSENGER {idx + 1}</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div className="space-y-2"><Label>Title</Label><Input value={pax.title} onChange={e => { const newPax = [...docForm.passengers]; newPax[idx].title = e.target.value; setDocForm({...docForm, passengers: newPax}); }} placeholder="Mr/Ms" /></div>
+                        <div className="space-y-2 sm:col-span-2"><Label>First Name</Label><Input value={pax.first_name} onChange={e => { const newPax = [...docForm.passengers]; newPax[idx].first_name = e.target.value; setDocForm({...docForm, passengers: newPax}); }} /></div>
+                        <div className="space-y-2"><Label>Last Name</Label><Input value={pax.last_name} onChange={e => { const newPax = [...docForm.passengers]; newPax[idx].last_name = e.target.value; setDocForm({...docForm, passengers: newPax}); }} /></div>
+                      </div>
+                      <div className="space-y-2 mt-2"><Label>Passport Number (Optional)</Label><Input value={pax.passport} onChange={e => { const newPax = [...docForm.passengers]; newPax[idx].passport = e.target.value; setDocForm({...docForm, passengers: newPax}); }} /></div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="border border-border p-4 rounded-lg space-y-4">

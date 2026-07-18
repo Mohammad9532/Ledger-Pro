@@ -95,7 +95,10 @@
             } catch (\Exception $e) {}
         }
         
-        $passengerName = trim(($data['passenger']['title'] ?? '') . ' ' . ($data['passenger']['first_name'] ?? '') . ' ' . ($data['passenger']['last_name'] ?? ''));
+        $passengers = isset($data['passengers']) && is_array($data['passengers']) 
+            ? $data['passengers'] 
+            : (isset($data['passenger']) ? [$data['passenger']] : []);
+        
         $pnr = $data['flight']['pnr'] ?? 'N/A';
         
         $depDateStr = isset($data['journey']['departure']) && $data['journey']['departure'] ? strtotime($data['journey']['departure']) : null;
@@ -136,17 +139,19 @@
             <th width="30%">Ticket Number</th>
             <th width="30%">Frequent Flyer No.</th>
         </tr>
+        @foreach($passengers as $index => $p)
         <tr>
-            <td>1. {{ $passengerName }}</td>
+            <td>{{ $index + 1 }}. {{ trim(($p['title'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['last_name'] ?? '')) }}</td>
             <td>{{ $data['flight']['ticket_number'] ?? $pnr }}</td>
             <td>-</td>
         </tr>
+        @endforeach
     </table>
 
     <div class="divider-dashed"></div>
 
     <div class="flight-route">
-        FLIGHT &nbsp;&nbsp; {{ $fromCode }} &rarr; {{ $toCode }}
+        FLIGHT &nbsp;&nbsp; {{ $fromCode }} - {{ $toCode }}
     </div>
 
     <div class="divider-thin"></div>
@@ -191,14 +196,16 @@
             <th width="20%">Segments</th>
             <th width="40%">Barcode</th>
         </tr>
+        @foreach($passengers as $p)
         <tr>
-            <td style="vertical-align: middle;">{{ $passengerName }}</td>
+            <td style="vertical-align: middle;">{{ trim(($p['title'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['last_name'] ?? '')) }}</td>
             <td style="vertical-align: middle; text-align: center;">{{ $fromCode }}-{{ $toCode }}</td>
             <td class="barcode-container">
                 <!-- CSS Based Barcode representation -->
                 <div class="barcode-bars"></div>
             </td>
         </tr>
+        @endforeach
     </table>
 
     <div class="section-title" style="margin-top: 20px;">Terms & Conditions</div>
