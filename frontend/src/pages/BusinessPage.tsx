@@ -60,8 +60,10 @@ export default function BusinessPage() {
     try {
       const payload = {
         ...purchaseForm,
-        cashback_amount: cbAmt,
-        cashback_account_id: cashbackAccountId
+        ...(cbAmt > 0 ? {
+          cashback_amount: cbAmt,
+          cashback_account_id: cashbackAccountId
+        } : {})
       };
       await api.post('/business-items', payload);
       setShowPurchase(false); fetchItems(); fetchProfit();
