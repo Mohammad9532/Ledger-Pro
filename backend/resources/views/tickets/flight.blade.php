@@ -112,7 +112,7 @@
         <tr>
             <td width="60%">
                 @if(isset($logoPath) && $logoPath)
-                    <img src="{{ $logoPath }}" style="max-height: 40px; margin-bottom: 10px;" alt="Logo"><br>
+                    <img src="{{ $logoPath }}" style="max-height: 60px; margin-bottom: 10px;" alt="Logo"><br>
                 @endif
                 <div class="company-name">{{ $profile->company_name ?? $company->company_name ?? 'Company Name' }}</div>
                 <div class="company-address">
@@ -161,7 +161,7 @@
             <td width="25%">
                 <div class="flight-details-header">Flight</div>
                 @if($airlineLogoBase64)
-                    <img src="{{ $airlineLogoBase64 }}" style="max-height: 22px; margin-bottom: 5px;">
+                    <img src="{{ $airlineLogoBase64 }}" style="max-height: 18px; margin-bottom: 5px;">
                 @endif
                 <div style="color: #e11d48; font-weight: bold; font-size: 13px; margin-bottom: 3px;">{{ $data['flight']['airline'] ?? 'Airline' }}</div>
                 <div class="font-bold">Flight No: {{ $data['flight']['flight_number'] ?? '' }}</div>
