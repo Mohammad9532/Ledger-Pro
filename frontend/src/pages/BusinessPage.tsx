@@ -51,8 +51,8 @@ export default function BusinessPage() {
 
   const handlePurchase = async () => {
     const cbAmt = parseFloat(cashbackAmount) || 0;
-    if (cbAmt > 0 && (!cashbackAccountId || !cashbackIncomeId)) {
-      alert('Please select both Cashback Wallet and Income Category for the cashback.');
+    if (cbAmt > 0 && !cashbackAccountId) {
+      alert('Please select a Cashback Wallet Asset for the cashback.');
       return;
     }
 
@@ -61,8 +61,7 @@ export default function BusinessPage() {
       const payload = {
         ...purchaseForm,
         cashback_amount: cbAmt,
-        cashback_account_id: cashbackAccountId,
-        cashback_income_account_id: incomeCategories.find(c => String(c.id) === cashbackIncomeId)?.account_id || null
+        cashback_account_id: cashbackAccountId
       };
       await api.post('/business-items', payload);
       setShowPurchase(false); fetchItems(); fetchProfit();
@@ -272,19 +271,14 @@ export default function BusinessPage() {
                     <Input type="number" step="0.01" value={cashbackAmount} onChange={e => setCashbackAmount(e.target.value)} placeholder="0.00" />
                   </div>
                   {parseFloat(cashbackAmount) > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4 mt-4">
                       <div className="space-y-2">
                         <Label>Cashback Wallet Asset</Label>
                         <Select value={cashbackAccountId} onValueChange={setCashbackAccountId}>
                           <SelectTrigger><SelectValue placeholder="Select wallet" /></SelectTrigger>
-                          <SelectContent>{assetAccounts.map((a: any) => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Income Category</Label>
-                        <Select value={cashbackIncomeId} onValueChange={setCashbackIncomeId}>
-                          <SelectTrigger><SelectValue placeholder="Select income" /></SelectTrigger>
-                          <SelectContent>{incomeCategories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                          <SelectContent>
+                            {assetAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}
+                          </SelectContent>
                         </Select>
                       </div>
                     </div>

@@ -50,7 +50,6 @@ class BusinessItemController extends Controller
             'reference_number' => 'nullable|string|max:100',
             'cashback_amount' => 'nullable|numeric|min:0',
             'cashback_account_id' => 'nullable|exists:tenant.accounts,id',
-            'cashback_income_account_id' => 'nullable|exists:tenant.accounts,id',
         ]);
 
         if (empty($validated['is_credit']) && empty($validated['payment_account_id'])) {
@@ -62,15 +61,18 @@ class BusinessItemController extends Controller
 
         try {
             return DB::connection('tenant')->transaction(function () use ($validated) {
+                $purchaseCost = (float) $validated['purchase_cost'];
+                $cashbackAmt = !empty($validated['cashback_amount']) ? (float) $validated['cashback_amount'] : 0;
+                $effectiveCost = bcsub((string)$purchaseCost, (string)$cashbackAmt, 4);
+
                 $entries = [];
-                // 1. Debit Business Inventory for the full purchase cost
+                // 1. Debit Business Inventory for the effective purchase cost
                 $entries[] = [
                     'account_id' => $this->getOrCreateBusinessAccount()->id,
-                    'debit' => $validated['purchase_cost'],
+                    'debit' => $effectiveCost,
                     'credit' => 0
                 ];
 
-                $purchaseCost = (float) $validated['purchase_cost'];
                 $immediatePayment = isset($validated['immediate_payment_amount']) ? (float) $validated['immediate_payment_amount'] : 0;
 
                 if (!empty($validated['is_credit'])) {
@@ -108,19 +110,14 @@ class BusinessItemController extends Controller
                     ];
                 }
 
-                if (!empty($validated['cashback_amount']) && $validated['cashback_amount'] > 0) {
-                    if (empty($validated['cashback_account_id']) || empty($validated['cashback_income_account_id'])) {
-                        throw new InvalidArgumentException('Cashback wallet and income category are required for cashback.');
+                if ($cashbackAmt > 0) {
+                    if (empty($validated['cashback_account_id'])) {
+                        throw new InvalidArgumentException('Cashback wallet is required for cashback.');
                     }
                     $entries[] = [
                         'account_id' => $validated['cashback_account_id'],
-                        'debit' => $validated['cashback_amount'],
+                        'debit' => $cashbackAmt,
                         'credit' => 0
-                    ];
-                    $entries[] = [
-                        'account_id' => $validated['cashback_income_account_id'],
-                        'debit' => 0,
-                        'credit' => $validated['cashback_amount']
                     ];
                 }
 
@@ -135,7 +132,7 @@ class BusinessItemController extends Controller
 
                 $item = BusinessItem::create([
                     'description' => $validated['description'],
-                    'purchase_cost' => $validated['purchase_cost'],
+                    'purchase_cost' => $effectiveCost,
                     'status' => 'purchased',
                     'purchase_transaction_id' => $txn->id,
                     'created_by' => Auth::id(),
