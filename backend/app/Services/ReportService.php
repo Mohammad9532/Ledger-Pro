@@ -369,7 +369,7 @@ class ReportService
         $cards = [];
 
         foreach ($ccAccounts as $account) {
-            $balance = $this->balanceService->getAccountBalance($account->id);
+            $balance = $account->balance;
             // Credit card balance is typically negative (amount owed)
             $outstanding = bcmul($balance, '-1', 4);
 

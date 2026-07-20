@@ -85,8 +85,10 @@ class Account extends TenantModel
      */
     public function getBalanceAttribute(): string
     {
-        $entryBalance = $this->entries()
-            ->selectRaw('COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0) as balance')
+        $entryBalance = TransactionEntry::where('transaction_entries.account_id', $this->id)
+            ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
+            ->whereNull('transactions.deleted_at')
+            ->selectRaw('COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as balance')
             ->value('balance');
 
         return bcadd((string) $this->opening_balance, (string) $entryBalance, 4);
