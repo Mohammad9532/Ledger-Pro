@@ -78,26 +78,29 @@ class BusinessItemController extends Controller
                 if (!empty($validated['is_credit'])) {
                     // Credit Purchase
                     $supplierContact = \App\Models\Contact::with('account')->findOrFail($validated['supplier_contact_id']);
-                    $unpaidBalance = bcsub((string)$purchaseCost, (string)$immediatePayment, 4);
+
+                    // Always credit the supplier for the full purchase cost to establish the liability
+                    $entries[] = [
+                        'account_id' => $supplierContact->account_id,
+                        'debit' => 0,
+                        'credit' => $purchaseCost
+                    ];
 
                     if ($immediatePayment > 0) {
                         if (empty($validated['payment_account_id'])) {
                             throw new InvalidArgumentException('Payment account is required for partial immediate payment.');
                         }
+                        // Debit the supplier for the immediate payment
+                        $entries[] = [
+                            'account_id' => $supplierContact->account_id,
+                            'debit' => $immediatePayment,
+                            'credit' => 0
+                        ];
                         // Credit the payment account for the immediate payment
                         $entries[] = [
                             'account_id' => $validated['payment_account_id'],
                             'debit' => 0,
                             'credit' => $immediatePayment
-                        ];
-                    }
-
-                    if (bccomp($unpaidBalance, '0', 4) > 0) {
-                        // Credit the supplier for the remaining balance
-                        $entries[] = [
-                            'account_id' => $supplierContact->account_id,
-                            'debit' => 0,
-                            'credit' => $unpaidBalance
                         ];
                     }
                 } else {
