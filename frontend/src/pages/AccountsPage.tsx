@@ -18,6 +18,7 @@ const typeIcons: Record<string, any> = {
 interface Account {
   id: number; name: string; type: string; opening_balance: string;
   is_active: boolean; computed_balance: string; is_system: boolean;
+  credit_limit?: string; parent_account_id?: number | null;
 }
 
 export default function AccountsPage() {
@@ -26,7 +27,7 @@ export default function AccountsPage() {
   const [showModal, setShowModal] = useState(false);
   const [showSystem, setShowSystem] = useState(false);
   const [filterType, setFilterType] = useState('all');
-  const [form, setForm] = useState({ name: '', type: 'cash', opening_balance: '0' });
+  const [form, setForm] = useState({ name: '', type: 'cash', opening_balance: '0', credit_limit: '', parent_account_id: '' });
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -44,9 +45,9 @@ export default function AccountsPage() {
       if (editId) {
         await api.put(`/accounts/${editId}`, form);
       } else {
-        await api.post('/accounts', form);
+        await api.post('/accounts', { ...form, parent_account_id: form.parent_account_id || null });
       }
-      setShowModal(false); setForm({ name: '', type: 'cash', opening_balance: '0' }); setEditId(null);
+      setShowModal(false); setForm({ name: '', type: 'cash', opening_balance: '0', credit_limit: '', parent_account_id: '' }); setEditId(null);
       fetchAccounts();
     } catch (err: any) {
       alert(err.response?.data?.message || err.response?.data?.error || 'Failed to save');
@@ -72,7 +73,7 @@ export default function AccountsPage() {
   const openEdit = (a: Account) => {
     // Pre-fill opening_balance with the dynamic opening_balance field from the API.
     // The backend now calculates the true opening balance from the ledger.
-    setForm({ name: a.name, type: a.type, opening_balance: a.opening_balance ?? '0' });
+    setForm({ name: a.name, type: a.type, opening_balance: a.opening_balance ?? '0', credit_limit: a.credit_limit ?? '', parent_account_id: a.parent_account_id ? String(a.parent_account_id) : '' });
     setEditId(a.id); setShowModal(true);
   };
 
@@ -107,7 +108,7 @@ export default function AccountsPage() {
                 {accountTypes.map(t => <SelectItem key={t} value={t}>{getAccountTypeLabel(t)}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button onClick={() => { setEditId(null); setForm({ name: '', type: 'cash', opening_balance: '0' }); setShowModal(true); }}>
+            <Button onClick={() => { setEditId(null); setForm({ name: '', type: 'cash', opening_balance: '0', credit_limit: '', parent_account_id: '' }); setShowModal(true); }}>
               <Plus className="w-4 h-4 mr-2" /> Add Account
             </Button>
           </div>
@@ -194,6 +195,29 @@ export default function AccountsPage() {
                 </p>
               )}
             </div>
+            {form.type === 'credit_card' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Shared with (Primary Card)</Label>
+                  <Select value={form.parent_account_id} onValueChange={v => setForm({ ...form, parent_account_id: v === 'none' ? '' : v })}>
+                    <SelectTrigger><SelectValue placeholder="None (Primary Card)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None (Primary Card)</SelectItem>
+                      {accounts.filter(a => a.type === 'credit_card' && a.id !== editId && !a.parent_account_id).map(a => (
+                        <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Select a primary card if this is a supplementary card.</p>
+                </div>
+                {!form.parent_account_id && (
+                  <div className="space-y-2">
+                    <Label>Credit Limit</Label>
+                    <Input type="number" step="0.01" value={form.credit_limit} onChange={e => setForm({ ...form, credit_limit: e.target.value })} placeholder="Optional" />
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <DialogFooter className="flex flex-col-reverse sm:flex-row justify-between items-center sm:justify-between w-full gap-4 sm:gap-0 mt-4">
             {editId && !accounts.find(a => a.id === editId)?.is_system ? (

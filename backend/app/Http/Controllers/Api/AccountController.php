@@ -73,6 +73,8 @@ class AccountController extends Controller
             'name'            => 'required|string|max:255',
             'type'            => 'required|in:cash,bank,credit_card,person,expense,income,asset,liability,business,equity',
             'opening_balance' => 'nullable|numeric',
+            'credit_limit'    => 'nullable|numeric|min:0',
+            'parent_account_id' => 'nullable|exists:tenant.accounts,id',
             'is_active'       => 'nullable|boolean',
         ]);
 
@@ -84,10 +86,14 @@ class AccountController extends Controller
 
         return DB::transaction(function () use ($validated, $openingBalance, $request) {
             // Store 0 — the real opening balance lives in the ledger
+            $isSupplementary = !empty($validated['parent_account_id']) && $validated['type'] === 'credit_card';
+
             $account = Account::create([
                 'name'            => $validated['name'],
                 'type'            => $validated['type'],
                 'opening_balance' => 0, // Neutralised — balance is in ledger entries
+                'credit_limit'    => ($validated['type'] === 'credit_card' && !$isSupplementary) ? ($validated['credit_limit'] ?? null) : null,
+                'parent_account_id' => $isSupplementary ? $validated['parent_account_id'] : null,
                 'is_active'       => $validated['is_active'] ?? true,
                 'created_by'      => Auth::id(),
                 'updated_by'      => Auth::id(),
@@ -153,6 +159,8 @@ class AccountController extends Controller
             'name'            => 'sometimes|string|max:255',
             'type'            => 'sometimes|in:cash,bank,credit_card,person,expense,income,asset,liability,business,equity',
             'opening_balance' => 'sometimes|numeric',
+            'credit_limit'    => 'nullable|numeric|min:0',
+            'parent_account_id' => 'nullable|exists:tenant.accounts,id',
             'is_active'       => 'sometimes|boolean',
         ]);
 
@@ -206,6 +214,21 @@ class AccountController extends Controller
 
                 // Keep the column at 0 — balance is now in the ledger
                 $validated['opening_balance'] = 0;
+            }
+
+            if (array_key_exists('type', $validated) && $validated['type'] !== 'credit_card') {
+                $validated['credit_limit'] = null;
+                $validated['parent_account_id'] = null;
+            } elseif ($account->type !== 'credit_card' && !isset($validated['type'])) {
+                // If type is not changing and wasn't credit card, ensure we don't set credit_limit
+                unset($validated['credit_limit']);
+                unset($validated['parent_account_id']);
+            } else {
+                // It is a credit card
+                if (!empty($validated['parent_account_id'])) {
+                    // It's supplementary, remove credit limit
+                    $validated['credit_limit'] = null;
+                }
             }
 
             $account->update($validated);

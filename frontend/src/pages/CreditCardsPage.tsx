@@ -84,7 +84,9 @@ export default function CreditCardsPage() {
                   </div>
                   <div>
                     <p className="font-semibold">{card.name}</p>
-                    <p className="text-xs text-muted-foreground">Credit Card</p>
+                    <p className="text-xs text-muted-foreground">
+                      {card.parent_account_id ? `Supplementary to ${card.parent_name}` : 'Credit Card'}
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -92,9 +94,17 @@ export default function CreditCardsPage() {
                     <span className="text-muted-foreground">Outstanding</span>
                     <span className="font-bold text-orange-500">{formatCurrency(card.outstanding)}</span>
                   </div>
+                  {card.available_balance !== null && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Available Credit</span>
+                      <span className="font-medium text-emerald-500">{formatCurrency(card.available_balance)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Balance</span>
-                    <span className="font-medium">{formatCurrency(card.balance)}</span>
+                    <span className="text-muted-foreground">Limit</span>
+                    <span className="font-medium">
+                      {card.parent_account_id ? 'Shared' : (card.credit_limit ? formatCurrency(card.credit_limit) : 'Not Set')}
+                    </span>
                   </div>
                 </div>
                 <Button className="w-full mt-4" variant="outline" onClick={() => { setSelectedCard(card); setSettleForm({ ...settleForm, amount: card.outstanding }); setPaymentSources([{ account_id: '', amount: card.outstanding }]); setShowSettle(true); }}>

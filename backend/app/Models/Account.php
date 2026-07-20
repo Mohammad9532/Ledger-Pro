@@ -16,6 +16,8 @@ class Account extends TenantModel
         'name',
         'type',
         'opening_balance',
+        'credit_limit',
+        'parent_account_id',
         'is_active',
         'contact_id',
         'created_by',
@@ -24,8 +26,39 @@ class Account extends TenantModel
 
     protected $casts = [
         'opening_balance' => 'decimal:4',
+        'credit_limit' => 'decimal:4',
         'is_active' => 'boolean',
     ];
+
+    protected $appends = ['available_balance'];
+
+    public function getAvailableBalanceAttribute(): ?string
+    {
+        if ($this->type !== 'credit_card') {
+            return null;
+        }
+
+        $isSupplementary = !is_null($this->parent_account_id);
+        
+        // Fetch primary account directly to avoid loading 'parent' relation on $this
+        $primaryAccount = $isSupplementary 
+            ? Account::find($this->parent_account_id) 
+            : $this;
+
+        if (is_null($primaryAccount) || is_null($primaryAccount->credit_limit)) {
+            return null;
+        }
+
+        $combinedBalance = $primaryAccount->balance;
+        
+        // Fetch children directly to avoid loading 'children' relation which causes serialization loops
+        $children = Account::where('parent_account_id', $primaryAccount->id)->get();
+        foreach ($children as $child) {
+            $combinedBalance = bcadd($combinedBalance, $child->balance, 4);
+        }
+
+        return bcadd((string)$primaryAccount->credit_limit, $combinedBalance, 4);
+    }
 
     /**
      * Get all ledger entries for this account.
@@ -88,5 +121,21 @@ class Account extends TenantModel
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Get the parent account for a supplementary credit card.
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'parent_account_id');
+    }
+
+    /**
+     * Get the supplementary credit cards linked to this primary card.
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Account::class, 'parent_account_id');
     }
 }

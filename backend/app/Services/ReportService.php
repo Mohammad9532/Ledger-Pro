@@ -378,6 +378,10 @@ class ReportService
                 'name' => $account->name,
                 'balance' => $balance,
                 'outstanding' => bccomp($outstanding, '0', 4) > 0 ? $outstanding : '0.0000',
+                'credit_limit' => $account->credit_limit,
+                'available_balance' => $account->available_balance,
+                'parent_account_id' => $account->parent_account_id,
+                'parent_name' => $account->parent ? $account->parent->name : null,
             ];
         }
 
