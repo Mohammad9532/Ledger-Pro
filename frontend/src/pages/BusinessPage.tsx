@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
-import { Plus, ShoppingBag, TrendingUp, DollarSign, Package, FileText, Download } from 'lucide-react';
+import { Plus, ShoppingBag, TrendingUp, DollarSign, Package, FileText, Download, MoreHorizontal, Ban, Share } from 'lucide-react';
 import { AIRPORTS, AIRLINES } from '@/lib/travelData';
 import { Autocomplete } from '@/components/ui/autocomplete';
 
@@ -236,12 +237,30 @@ export default function BusinessPage() {
                     item.status === 'cancelled' ? 'bg-red-500/10 text-red-500' :
                     'bg-amber-500/10 text-amber-500'
                   }`}>{item.status}</span></td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      {item.status === 'purchased' && <Button size="sm" variant="outline" onClick={() => { setSelectedItem(item); setShowSale(true); }}>Sell</Button>}
-                      {item.status === 'sold' && <Button size="sm" variant="destructive" onClick={() => handleOpenCancel(item)}>Cancel</Button>}
-                      <Button size="sm" variant="ghost" onClick={() => handleOpenDocModal(item)} title="Generate Document"><FileText className="w-4 h-4 text-blue-500" /></Button>
-                    </div>
+                  <td className="p-3 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {item.status === 'purchased' && (
+                          <DropdownMenuItem onClick={() => { setSelectedItem(item); setShowSale(true); }} className="cursor-pointer">
+                            <Share className="mr-2 h-4 w-4" /> Record Sale
+                          </DropdownMenuItem>
+                        )}
+                        {item.status === 'sold' && (
+                          <DropdownMenuItem onClick={() => handleOpenCancel(item)} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-900/20">
+                            <Ban className="mr-2 h-4 w-4" /> Cancel Ticket
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => handleOpenDocModal(item)} className="cursor-pointer">
+                          <FileText className="mr-2 h-4 w-4 text-blue-500" /> Generate Document
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))}
