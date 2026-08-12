@@ -31,6 +31,7 @@ jobs:
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force --database=master --path=database/migrations/master
             php artisan migrate --force
+            php artisan tenants:migrate
             php artisan optimize:clear
 
             # Friend App
