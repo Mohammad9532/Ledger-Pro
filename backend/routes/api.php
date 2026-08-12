@@ -92,6 +92,7 @@ Route::middleware([
     // Business Items
     Route::apiResource('business-items', BusinessItemController::class)->only(['index', 'store', 'show']);
     Route::post('/business-items/{id}/sell', [BusinessItemController::class, 'recordSale']);
+    Route::post('/business-items/{id}/cancel', [BusinessItemController::class, 'recordCancellation']);
     Route::post('/business-items/{id}/documents', [BusinessItemController::class, 'generateDocument']);
     Route::get('/business-profit', [BusinessItemController::class, 'profitReport']);
 
@@ -109,6 +110,7 @@ Route::middleware([
 
     // Reports
     Route::prefix('reports')->group(function () {
+        Route::get('/trial-balance', [ReportController::class, 'trialBalance']);
         Route::get('/balance-sheet', [ReportController::class, 'balanceSheet']);
         Route::get('/profit-loss', [ReportController::class, 'profitAndLoss']);
         Route::get('/cash-flow', [ReportController::class, 'cashFlow']);

@@ -23,13 +23,26 @@ class BusinessItem extends TenantModel
         'created_by',
         'updated_by',
         'metadata',
+        // Cancellation fields
+        'supplier_refund_amount',
+        'supplier_cancellation_fee',
+        'customer_refund_amount',
+        'your_cancellation_charge',
+        'cancellation_date',
+        'cancellation_notes',
+        'cancellation_transaction_id',
     ];
 
     protected $casts = [
-        'purchase_cost' => 'decimal:4',
-        'sale_amount' => 'decimal:4',
-        'profit' => 'decimal:4',
-        'metadata' => 'array',
+        'purchase_cost'             => 'decimal:4',
+        'sale_amount'               => 'decimal:4',
+        'profit'                    => 'decimal:4',
+        'supplier_refund_amount'    => 'decimal:4',
+        'supplier_cancellation_fee' => 'decimal:4',
+        'customer_refund_amount'    => 'decimal:4',
+        'your_cancellation_charge'  => 'decimal:4',
+        'cancellation_date'         => 'date',
+        'metadata'                  => 'array',
     ];
 
     public function buyer(): BelongsTo
@@ -45,6 +58,11 @@ class BusinessItem extends TenantModel
     public function saleTransaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class, 'sale_transaction_id');
+    }
+
+    public function cancellationTransaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'cancellation_transaction_id');
     }
 
     /**

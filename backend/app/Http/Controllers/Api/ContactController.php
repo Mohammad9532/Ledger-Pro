@@ -247,11 +247,13 @@ class ContactController extends Controller
 
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $perPage = $request->get('per_page');
 
         $statement = $this->balanceService->getAccountStatement(
             $contact->account->id,
             $startDate,
-            $endDate
+            $endDate,
+            $perPage ? (int) $perPage : null
         );
 
         return response()->json([

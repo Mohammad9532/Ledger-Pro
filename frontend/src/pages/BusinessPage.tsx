@@ -16,6 +16,7 @@ export default function BusinessPage() {
   const [loading, setLoading] = useState(true);
   const [showPurchase, setShowPurchase] = useState(false);
   const [showSale, setShowSale] = useState(false);
+  const [showCancel, setShowCancel] = useState(false);
   const [showDocModal, setShowDocModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -30,6 +31,7 @@ export default function BusinessPage() {
 
   const [purchaseForm, setPurchaseForm] = useState({ description: '', purchase_cost: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', reference_number: '', is_credit: false, supplier_contact_id: '', immediate_payment_amount: '' });
   const [saleForm, setSaleForm] = useState({ sale_amount: '', buyer_contact_id: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', is_credit: false, reference_number: '' });
+  const [cancelForm, setCancelForm] = useState({ date: new Date().toISOString().slice(0, 10), supplier_refund_amount: '', customer_refund_amount: '', refund_account_id: '', notes: '' });
 
   const [docForm, setDocForm] = useState({
     document_type: 'flight',
@@ -83,6 +85,37 @@ export default function BusinessPage() {
     finally { setSaving(false); }
   };
 
+  const handleOpenCancel = (item: any) => {
+    setSelectedItem(item);
+    setCancelForm({
+      date: new Date().toISOString().slice(0, 10),
+      supplier_refund_amount: '',
+      customer_refund_amount: '',
+      refund_account_id: '',
+      notes: '',
+    });
+    setShowCancel(true);
+  };
+
+  const handleCancel = async () => {
+    if (!selectedItem) return;
+    setSaving(true);
+    try {
+      await api.post(`/business-items/${selectedItem.id}/cancel`, cancelForm);
+      setShowCancel(false); fetchItems(); fetchProfit();
+    } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
+    finally { setSaving(false); }
+  };
+
+  // Derived values for the cancel dialog
+  const supplierFee = selectedItem
+    ? Math.max(0, parseFloat(selectedItem.purchase_cost || 0) - parseFloat(cancelForm.supplier_refund_amount || '0'))
+    : 0;
+  const yourCharge = selectedItem
+    ? Math.max(0, parseFloat(selectedItem.sale_amount || 0) - parseFloat(cancelForm.customer_refund_amount || '0'))
+    : 0;
+  const netProfit = yourCharge - supplierFee;
+
   const handleOpenDocModal = (item: any) => {
     setSelectedItem(item);
     if (item.metadata && item.metadata.document_type === 'flight') {
@@ -132,7 +165,7 @@ export default function BusinessPage() {
   };
 
   const paymentAccounts = accounts.filter((a: any) => ['cash', 'bank', 'credit_card', 'asset', 'liability'].includes(a.type));
-  const receiveAccounts = accounts.filter((a: any) => ['cash', 'bank', 'asset'].includes(a.type));
+  const receiveAccounts = accounts.filter((a: any) => ['cash', 'bank', 'asset', 'credit_card', 'person'].includes(a.type));
   const assetAccounts = accounts.filter((a: any) => ['asset', 'bank', 'cash'].includes(a.type));
 
   const selectedPaymentAccount = accounts.find((a: any) => String(a.id) === purchaseForm.payment_account_id);
@@ -188,12 +221,25 @@ export default function BusinessPage() {
                   <td className="p-3 font-medium">{item.description}</td>
                   <td className="p-3 text-right">{formatCurrency(item.purchase_cost)}</td>
                   <td className="p-3 text-right">{item.sale_amount ? formatCurrency(item.sale_amount) : '-'}</td>
-                  <td className="p-3 text-right">{item.profit ? <span className="text-emerald-500">{formatCurrency(item.profit)}</span> : '-'}</td>
+                  <td className="p-3 text-right">
+                    {item.status === 'cancelled' 
+                      ? (() => {
+                          const net = (parseFloat(item.your_cancellation_charge) || 0) - (parseFloat(item.supplier_cancellation_fee) || 0);
+                          return <span className={net >= 0 ? "text-emerald-500" : "text-red-500"}>{formatCurrency(net)}</span>;
+                        })()
+                      : item.profit ? <span className="text-emerald-500">{formatCurrency(item.profit)}</span> : '-'
+                    }
+                  </td>
                   <td className="p-3">{item.buyer?.name || '-'}</td>
-                  <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === 'sold' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{item.status}</span></td>
+                  <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    item.status === 'sold' ? 'bg-emerald-500/10 text-emerald-500' :
+                    item.status === 'cancelled' ? 'bg-red-500/10 text-red-500' :
+                    'bg-amber-500/10 text-amber-500'
+                  }`}>{item.status}</span></td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       {item.status === 'purchased' && <Button size="sm" variant="outline" onClick={() => { setSelectedItem(item); setShowSale(true); }}>Sell</Button>}
+                      {item.status === 'sold' && <Button size="sm" variant="destructive" onClick={() => handleOpenCancel(item)}>Cancel</Button>}
                       <Button size="sm" variant="ghost" onClick={() => handleOpenDocModal(item)} title="Generate Document"><FileText className="w-4 h-4 text-blue-500" /></Button>
                     </div>
                   </td>
@@ -324,7 +370,103 @@ export default function BusinessPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Cancel & Refund Modal */}
+      <Dialog open={showCancel} onOpenChange={setShowCancel}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel & Refund</DialogTitle>
+            <DialogDescription>
+              Cancelling: <strong>{selectedItem?.description}</strong>
+              {' '}— Sold for {selectedItem ? formatCurrency(selectedItem.sale_amount) : ''}, Cost {selectedItem ? formatCurrency(selectedItem.purchase_cost) : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+
+            {/* Date */}
+            <div className="space-y-2">
+              <Label>Cancellation Date</Label>
+              <Input type="date" value={cancelForm.date} onChange={e => setCancelForm({...cancelForm, date: e.target.value})} />
+            </div>
+
+            {/* Supplier section */}
+            <div className="bg-muted/30 p-4 rounded-lg border border-border space-y-3">
+              <p className="text-sm font-semibold text-muted-foreground">Airline / Supplier</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Refund Received from Airline</Label>
+                  <Input
+                    type="number" step="0.01"
+                    placeholder={`Max: ${selectedItem ? formatCurrency(selectedItem.purchase_cost) : '0'}`}
+                    value={cancelForm.supplier_refund_amount}
+                    onChange={e => setCancelForm({...cancelForm, supplier_refund_amount: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Airline's Cancellation Fee</Label>
+                  <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted text-sm font-medium text-orange-500">
+                    {formatCurrency(supplierFee)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Auto: Cost − Refund</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Customer section */}
+            <div className="bg-muted/30 p-4 rounded-lg border border-border space-y-3">
+              <p className="text-sm font-semibold text-muted-foreground">Customer</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Refund to Customer</Label>
+                  <Input
+                    type="number" step="0.01"
+                    placeholder={`Max: ${selectedItem ? formatCurrency(selectedItem.sale_amount) : '0'}`}
+                    value={cancelForm.customer_refund_amount}
+                    onChange={e => setCancelForm({...cancelForm, customer_refund_amount: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Your Cancellation Charge</Label>
+                  <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted text-sm font-medium text-emerald-500">
+                    {formatCurrency(yourCharge)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Auto: Sale − Refund</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Refund account */}
+            <div className="space-y-2">
+              <Label>Refund Bank / Cash Account</Label>
+              <Select value={cancelForm.refund_account_id} onValueChange={v => setCancelForm({...cancelForm, refund_account_id: v})}>
+                <SelectTrigger><SelectValue placeholder="Select account (airline refund in / customer refund out)" /></SelectTrigger>
+                <SelectContent>{receiveAccounts.map((a: any) => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+
+            {/* Net profit summary box */}
+            <div className={`p-3 rounded-lg border text-sm font-medium flex justify-between items-center ${netProfit >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-red-500/10 border-red-500/30 text-red-500'}`}>
+              <span>Net Profit on Cancellation</span>
+              <span>{formatCurrency(netProfit)}</span>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-2">= Your Charge ({formatCurrency(yourCharge)}) − Airline Fee ({formatCurrency(supplierFee)})</p>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label>Notes (Optional)</Label>
+              <Input placeholder="e.g. Customer cancelled due to visa denial" value={cancelForm.notes} onChange={e => setCancelForm({...cancelForm, notes: e.target.value})} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCancel(false)}>Back</Button>
+            <Button variant="destructive" onClick={handleCancel} disabled={saving}>
+              {saving ? 'Processing...' : 'Confirm Cancellation'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Document Modal */}
+
       <Dialog open={showDocModal} onOpenChange={setShowDocModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

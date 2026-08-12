@@ -12,10 +12,13 @@ import {
 } from 'recharts';
 
 interface DashboardData {
-  balances: { cash: string; bank: string; credit_card: string; receivable: string; payable: string; surplus?: string; asset?: string };
-  today: { income: string; expense: string; profit: string };
-  monthly: { income: string; expense: string; profit: string };
-  monthly_breakdown: Array<{ month: number; month_name: string; income: string; expense: string; profit: string }>;
+  summary: { cash: string; bank: string; credit_card: string; receivable: string; payable: string; surplus?: string; asset?: string; business?: string };
+  monthly: {
+    today: { income: string; expense: string; profit: string };
+    this_month: { income: string; expense: string; profit: string };
+  };
+  charts: { monthly_breakdown: Array<{ month: number; month_name: string; income: string; expense: string; profit: string }> };
+  recent_transactions: any[];
 }
 
 export default function DashboardPage() {
@@ -39,28 +42,33 @@ export default function DashboardPage() {
 
   if (!data) return <p className="text-muted-foreground">Failed to load dashboard data</p>;
 
+  const balances = data.summary;
+  const today    = data.monthly.today;
+  const monthly  = data.monthly.this_month;
+
   const kpiCards = [
-    { label: 'Net Surplus', value: data.balances.surplus || '0', icon: DollarSign, color: parseFloat(data.balances.surplus || '0') >= 0 ? 'from-indigo-500 to-indigo-600' : 'from-rose-500 to-rose-600', textColor: parseFloat(data.balances.surplus || '0') >= 0 ? 'text-indigo-500' : 'text-rose-500' },
-    { label: 'Total Assets', value: data.balances.asset || '0', icon: Wallet, color: 'from-teal-500 to-teal-600', textColor: 'text-teal-500' },
-    { label: 'Cash Balance', value: data.balances.cash, icon: Wallet, color: 'from-emerald-500 to-emerald-600', textColor: 'text-emerald-500' },
-    { label: 'Bank Balance', value: data.balances.bank, icon: Building2, color: 'from-blue-500 to-blue-600', textColor: 'text-blue-500' },
-    { label: 'Credit Card Due', value: data.balances.credit_card, icon: CreditCard, color: 'from-orange-500 to-orange-600', textColor: 'text-orange-500', invert: true },
-    { label: 'Total Receivable', value: data.balances.receivable, icon: ArrowDownLeft, color: 'from-purple-500 to-purple-600', textColor: 'text-purple-500' },
-    { label: 'Total Payable', value: data.balances.payable, icon: ArrowUpRight, color: 'from-rose-500 to-rose-600', textColor: 'text-rose-500', invert: true },
+    { label: 'Net Surplus', value: balances.surplus || '0', icon: DollarSign, color: parseFloat(balances.surplus || '0') >= 0 ? 'from-indigo-500 to-indigo-600' : 'from-rose-500 to-rose-600', textColor: parseFloat(balances.surplus || '0') >= 0 ? 'text-indigo-500' : 'text-rose-500' },
+    { label: 'Total Assets', value: balances.asset || '0', icon: Wallet, color: 'from-teal-500 to-teal-600', textColor: 'text-teal-500' },
+    { label: 'Cash Balance', value: balances.cash, icon: Wallet, color: 'from-emerald-500 to-emerald-600', textColor: 'text-emerald-500' },
+    { label: 'Bank Balance', value: balances.bank, icon: Building2, color: 'from-blue-500 to-blue-600', textColor: 'text-blue-500' },
+    { label: 'Credit Card Due', value: balances.credit_card, icon: CreditCard, color: 'from-orange-500 to-orange-600', textColor: 'text-orange-500', invert: true },
+    { label: 'Total Receivable', value: balances.receivable, icon: ArrowDownLeft, color: 'from-purple-500 to-purple-600', textColor: 'text-purple-500' },
+    { label: 'Total Payable', value: balances.payable, icon: ArrowUpRight, color: 'from-rose-500 to-rose-600', textColor: 'text-rose-500', invert: true },
   ];
 
   const todayCards = [
-    { label: "Today's Income", value: data.today.income, icon: TrendingUp, color: 'text-emerald-500' },
-    { label: "Today's Expense", value: data.today.expense, icon: TrendingDown, color: 'text-rose-500' },
-    { label: "Today's Profit", value: data.today.profit, icon: DollarSign, color: parseFloat(data.today.profit) >= 0 ? 'text-emerald-500' : 'text-rose-500' },
+    { label: "Today's Income",  value: today.income,  icon: TrendingUp,   color: 'text-emerald-500' },
+    { label: "Today's Expense", value: today.expense, icon: TrendingDown,  color: 'text-rose-500' },
+    { label: "Today's Profit",  value: today.profit,  icon: DollarSign,   color: parseFloat(today.profit) >= 0 ? 'text-emerald-500' : 'text-rose-500' },
   ];
 
-  const chartData = data.monthly_breakdown.map(m => ({
+  const chartData = (data.charts.monthly_breakdown || []).map(m => ({
     name: m.month_name,
     income: parseFloat(m.income),
     expense: parseFloat(m.expense),
     profit: parseFloat(m.profit),
   }));
+
 
   return (
     <div className="space-y-6">
@@ -113,7 +121,7 @@ export default function DashboardPage() {
           <div>
             <CardTitle className="text-lg">Monthly Summary</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Income: {formatCurrency(data.monthly.income)} | Expense: {formatCurrency(data.monthly.expense)} | Profit: <span className={parseFloat(data.monthly.profit) >= 0 ? 'text-emerald-500' : 'text-rose-500'}>{formatCurrency(data.monthly.profit)}</span>
+              Income: {formatCurrency(monthly.income)} | Expense: {formatCurrency(monthly.expense)} | Profit: <span className={parseFloat(monthly.profit) >= 0 ? 'text-emerald-500' : 'text-rose-500'}>{formatCurrency(monthly.profit)}</span>
             </p>
           </div>
           <Calendar className="w-5 h-5 text-muted-foreground" />

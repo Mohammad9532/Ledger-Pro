@@ -16,6 +16,12 @@ class ReportController extends Controller
         $this->reportService = $reportService;
     }
 
+    public function trialBalance(Request $request): JsonResponse
+    {
+        $date = $request->get('date');
+        return response()->json($this->reportService->trialBalance($date));
+    }
+
     public function balanceSheet(Request $request): JsonResponse
     {
         $date = $request->get('date');
@@ -24,14 +30,16 @@ class ReportController extends Controller
 
     public function profitAndLoss(Request $request): JsonResponse
     {
-        $request->validate(['start_date' => 'required|date', 'end_date' => 'required|date']);
-        return response()->json($this->reportService->profitAndLoss($request->start_date, $request->end_date));
+        $startDate = $request->get('start_date') ?? now()->startOfMonth()->toDateString();
+        $endDate = $request->get('end_date') ?? now()->toDateString();
+        return response()->json($this->reportService->profitAndLoss($startDate, $endDate));
     }
 
     public function cashFlow(Request $request): JsonResponse
     {
-        $request->validate(['start_date' => 'required|date', 'end_date' => 'required|date']);
-        return response()->json($this->reportService->cashFlow($request->start_date, $request->end_date));
+        $startDate = $request->get('start_date') ?? now()->startOfMonth()->toDateString();
+        $endDate = $request->get('end_date') ?? now()->toDateString();
+        return response()->json($this->reportService->cashFlow($startDate, $endDate));
     }
 
     public function receivable(): JsonResponse

@@ -32,11 +32,17 @@ class BalanceService
     }
 
     /**
-     * Get account statement with running balance.
+     * Get account statement with running balance, optionally paginated.
      */
-    public function getAccountStatement(int $accountId, ?string $startDate = null, ?string $endDate = null): array
+    public function getAccountStatement($accountIdOrModel, ?string $startDate = null, ?string $endDate = null, ?int $perPage = null)
     {
-        $account = Account::findOrFail($accountId);
+        $account = $accountIdOrModel instanceof Account ? $accountIdOrModel : Account::findOrFail($accountIdOrModel);
+        $accountId = $account->id;
+        
+        // Attach computed balance for the frontend header
+        if (!isset($account->computed_balance)) {
+            $account->computed_balance = $this->getAccountBalance($accountId);
+        }
 
         $query = TransactionEntry::where('transaction_entries.account_id', $accountId)
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
@@ -49,9 +55,7 @@ class BalanceService
                 'transactions.reference_number',
                 'transaction_entries.debit',
                 'transaction_entries.credit'
-            )
-            ->orderBy('transactions.date', 'asc')
-            ->orderBy('transactions.id', 'asc');
+            );
 
         if ($startDate) {
             $query->where('transactions.date', '>=', $startDate);
@@ -59,6 +63,74 @@ class BalanceService
         if ($endDate) {
             $query->where('transactions.date', '<=', $endDate);
         }
+
+        if ($perPage) {
+            // Re-order to descending for standard pagination display
+            $query->orderBy('transactions.date', 'desc')
+                  ->orderBy('transactions.id', 'desc');
+                  
+            // Remove previous asc orders
+            $query->getQuery()->orders = null;
+            $query->orderBy('transactions.date', 'desc')->orderBy('transactions.id', 'desc');
+            
+            $paginator = $query->paginate($perPage);
+            
+            // To compute running balance for a descending paginated list, 
+            // we need the closing balance as of the newest transaction on this page.
+            $items = $paginator->items();
+            $statement = [];
+            
+            if (count($items) > 0) {
+                // The newest transaction in this page is the first item ($items[0])
+                $latestTxnDate = $items[0]->date;
+                // Get the balance up to that date. 
+                // Since there might be multiple txns on the same date, getAccountBalance by date might include txns newer than $items[0] if they share the same date.
+                // A more accurate way is to get the total balance of the account up to $items[0]->transaction_id.
+                
+                $currentBalance = TransactionEntry::where('transaction_entries.account_id', $accountId)
+                    ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
+                    ->whereNull('transactions.deleted_at')
+                    ->where(function($q) use ($items) {
+                        $q->where('transactions.date', '<', $items[0]->date)
+                          ->orWhere(function($q2) use ($items) {
+                              $q2->where('transactions.date', '=', $items[0]->date)
+                                 ->where('transactions.id', '<=', $items[0]->transaction_id);
+                          });
+                    })
+                    ->selectRaw('COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as balance')
+                    ->value('balance');
+                    
+                $runningBalance = (string) ($currentBalance ?? '0.0000');
+                
+                foreach ($items as $entry) {
+                    $statement[] = [
+                        'transaction_id' => $entry->transaction_id,
+                        'date' => $entry->date,
+                        'description' => $entry->description,
+                        'type' => $entry->type,
+                        'reference_number' => $entry->reference_number,
+                        'debit' => $entry->debit,
+                        'credit' => $entry->credit,
+                        'balance' => $runningBalance,
+                    ];
+                    
+                    // To get the balance BEFORE this entry (which is the closing balance for the NEXT older entry in our desc list)
+                    $runningBalance = bcsub($runningBalance, (string) $entry->debit, 4);
+                    $runningBalance = bcadd($runningBalance, (string) $entry->credit, 4);
+                }
+            }
+            
+            $paginator->setCollection(collect($statement));
+            
+            return [
+                'account' => $account,
+                'statement' => $paginator
+            ];
+        }
+
+        // Original ASC logic for non-paginated requests (e.g. exports)
+        $query->orderBy('transactions.date', 'asc')
+              ->orderBy('transactions.id', 'asc');
 
         $entries = $query->get();
 
@@ -230,5 +302,19 @@ class BalanceService
         }
 
         return $months;
+    }
+
+    /**
+     * Get recent transactions for the dashboard.
+     */
+    public function getRecentTransactions(int $limit = 5): array
+    {
+        return \App\Models\Transaction::with(['entries.account', 'expenseCategory', 'businessItem'])
+            ->whereNull('deleted_at')
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit($limit)
+            ->get()
+            ->toArray();
     }
 }

@@ -288,8 +288,14 @@ class AccountController extends Controller
     {
         $startDate = $request->get('start_date');
         $endDate   = $request->get('end_date');
+        $perPage   = $request->get('per_page');
 
-        $statement = $this->balanceService->getAccountStatement($id, $startDate, $endDate);
+        $statement = $this->balanceService->getAccountStatement(
+            $id, 
+            $startDate, 
+            $endDate, 
+            $perPage ? (int) $perPage : null
+        );
 
         return response()->json($statement);
     }

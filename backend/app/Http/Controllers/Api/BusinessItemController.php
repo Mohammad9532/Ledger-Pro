@@ -162,6 +162,10 @@ class BusinessItemController extends Controller
             'reference_number' => 'nullable|string|max:100',
         ]);
 
+        if (empty($validated['is_credit']) && empty($validated['payment_account_id'])) {
+            return response()->json(['error' => 'Payment account is required for direct sales.'], 422);
+        }
+
         $item = BusinessItem::findOrFail($id);
 
         try {
@@ -214,6 +218,162 @@ class BusinessItemController extends Controller
         }
     }
 
+    public function recordCancellation(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'date'                     => 'required|date',
+            'supplier_refund_amount'   => 'required|numeric|min:0',
+            'customer_refund_amount'   => 'required|numeric|min:0',
+            'refund_account_id'        => 'nullable|exists:tenant.accounts,id',
+            'notes'                    => 'nullable|string|max:500',
+        ]);
+
+        $item = BusinessItem::findOrFail($id);
+
+        if ($item->status !== 'sold') {
+            return response()->json(['error' => 'Only sold items can be cancelled.'], 422);
+        }
+
+        try {
+            return DB::connection('tenant')->transaction(function () use ($validated, $item) {
+                $saleAmount        = (float) $item->sale_amount;
+                $purchaseCost      = (float) $item->purchase_cost;
+                $supplierRefund    = (float) $validated['supplier_refund_amount'];
+                $customerRefund    = (float) $validated['customer_refund_amount'];
+                $supplierFee       = round($purchaseCost - $supplierRefund, 4); // what airline kept
+                $yourCharge        = round($saleAmount - $customerRefund, 4);   // what you kept
+
+                if ($customerRefund > $saleAmount) {
+                    throw new InvalidArgumentException('Customer refund cannot exceed the original sale amount.');
+                }
+                if ($supplierRefund > $purchaseCost) {
+                    throw new InvalidArgumentException('Supplier refund cannot exceed the original purchase cost.');
+                }
+
+                // Determine if the original sale was a credit sale (buyer hadn't paid cash)
+                $isCreditSale = is_null($item->saleTransaction?->entries
+                    ->where('account_id', '!=', $this->getOrCreateSalesAccount()->id)
+                    ->where('debit', '>', 0)
+                    ->where('account_id', function ($q) { })
+                    ->first());
+
+                // Reload sale transaction with entries to detect credit vs cash
+                $saleTxn = $item->saleTransaction()->with('entries.account')->first();
+                $buyerAccount = $item->buyer_contact_id
+                    ? \App\Models\Contact::with('account')->find($item->buyer_contact_id)?->account
+                    : null;
+
+                $salesAccountId  = $this->getOrCreateSalesAccount()->id;
+                $cogsAccountId   = $this->getOrCreateCogsAccount()->id;
+                $inventoryId     = $this->getOrCreateBusinessAccount()->id;
+                $cancChargeId    = $this->getOrCreateCancellationChargeAccount()->id;
+                $supplierFeeId   = $this->getOrCreateSupplierFeeAccount()->id;
+
+                // Detect whether original sale was credit (buyer account was debited)
+                $wasCredit = false;
+                if ($saleTxn && $buyerAccount) {
+                    $wasCredit = $saleTxn->entries
+                        ->where('account_id', $buyerAccount->id)
+                        ->where('debit', '>', 0)
+                        ->isNotEmpty();
+                }
+
+                /*
+                 * Build double-entry cancellation journal:
+                 *
+                 * Dr  Sales Revenue          sale_amount        (reverse the sale)
+                 * Dr  Supplier Cancellation Fee  supplier_fee   (airline penalty, your expense)
+                 * Cr  Business Inventory     purchase_cost      (clear inventory cost)
+                 * Cr  Cash/Bank OR Buyer A/c customer_refund   (refund paid out or balance reduced)
+                 * Cr  Cancellation Charges   your_charge        (your income, only if > 0)
+                 * Dr  Cash/Bank              supplier_refund    (money received from airline)
+                 *
+                 * Debit total  = sale_amount + supplier_fee + supplier_refund
+                 * Credit total = purchase_cost + customer_refund + your_charge
+                 *
+                 * Since: purchase_cost = supplier_refund + supplier_fee
+                 *   and: sale_amount   = customer_refund  + your_charge
+                 * => Both sides balance automatically ✅
+                 */
+                $entries = [];
+
+                // 1. Reverse the sale: Debit Sales Revenue
+                $entries[] = ['account_id' => $salesAccountId, 'debit' => $saleAmount, 'credit' => 0];
+
+                // 2. Airline refund received into a bank/cash account
+                if ($supplierRefund > 0) {
+                    if (empty($validated['refund_account_id'])) {
+                        throw new InvalidArgumentException('A refund account is required when supplier refund amount is greater than 0.');
+                    }
+                    $entries[] = ['account_id' => $validated['refund_account_id'], 'debit' => $supplierRefund, 'credit' => 0];
+                }
+
+                // 3. Supplier fee (airline's penalty) — your expense
+                if ($supplierFee > 0) {
+                    $entries[] = ['account_id' => $supplierFeeId, 'debit' => $supplierFee, 'credit' => 0];
+                }
+
+                // 4. Clear business inventory cost
+                $entries[] = ['account_id' => $inventoryId, 'debit' => 0, 'credit' => $purchaseCost];
+
+                // 5. Customer refund: credit cash/bank OR reduce buyer's receivable
+                if ($customerRefund > 0) {
+                    if ($wasCredit && $buyerAccount) {
+                        // Credit sale: reduce buyer's receivable (credit their account)
+                        $entries[] = ['account_id' => $buyerAccount->id, 'debit' => 0, 'credit' => $customerRefund];
+                    } else {
+                        // Cash/bank sale: pay money back from refund account
+                        if (empty($validated['refund_account_id'])) {
+                            throw new InvalidArgumentException('A refund account is required to pay the customer refund.');
+                        }
+                        $entries[] = ['account_id' => $validated['refund_account_id'], 'debit' => 0, 'credit' => $customerRefund];
+                    }
+                }
+
+                // 6. Your cancellation charge as income (only if you kept something)
+                if ($yourCharge > 0) {
+                    $entries[] = ['account_id' => $cancChargeId, 'debit' => 0, 'credit' => $yourCharge];
+                }
+
+                // Create the cancellation transaction
+                $txn = $this->transactionService->createTransaction([
+                    'type'        => 'cancellation',
+                    'date'        => $validated['date'],
+                    'amount'      => $saleAmount,
+                    'description' => 'Cancellation: ' . $item->description,
+                    'business_item_id' => $item->id,
+                ], $entries);
+
+                // Update the business item
+                $item->update([
+                    'status'                    => 'cancelled',
+                    'supplier_refund_amount'    => $supplierRefund,
+                    'supplier_cancellation_fee' => $supplierFee,
+                    'customer_refund_amount'    => $customerRefund,
+                    'your_cancellation_charge'  => $yourCharge,
+                    'cancellation_date'         => $validated['date'],
+                    'cancellation_notes'        => $validated['notes'] ?? null,
+                    'cancellation_transaction_id' => $txn->id,
+                    'updated_by'                => Auth::id(),
+                ]);
+
+                return response()->json([
+                    'item'        => $item->fresh()->load(['buyer', 'cancellationTransaction']),
+                    'transaction' => $txn,
+                    'summary' => [
+                        'supplier_refund'    => $supplierRefund,
+                        'supplier_fee'       => $supplierFee,
+                        'customer_refund'    => $customerRefund,
+                        'your_charge'        => $yourCharge,
+                        'net_profit'         => round($yourCharge - $supplierFee, 4),
+                    ],
+                ]);
+            });
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
     public function show(int $id): JsonResponse
     {
         $item = BusinessItem::with(['buyer', 'purchaseTransaction.entries.account', 'saleTransaction.entries.account'])
@@ -223,17 +383,36 @@ class BusinessItemController extends Controller
 
     public function profitReport(): JsonResponse
     {
-        $items = BusinessItem::with('buyer')
-            ->where('status', 'sold')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $items = BusinessItem::all();
 
-        $totalProfit = $items->sum('profit');
-        $totalPurchase = $items->sum('purchase_cost');
-        $totalSales = $items->sum('sale_amount');
+        $totalPurchase = 0;
+        $totalSales = 0;
+        $totalProfit = 0;
+
+        foreach ($items as $item) {
+            if ($item->status === 'cancelled') {
+                // Cancelled items: 
+                // Treat the airline's cancellation fee as the "Purchase Cost"
+                // Treat the cancellation charge to the customer as the "Sale Amount"
+                $supplierFee = $item->supplier_cancellation_fee ?? 0;
+                $yourCharge = $item->your_cancellation_charge ?? 0;
+                
+                $totalPurchase += $supplierFee;
+                $totalSales += $yourCharge;
+                $totalProfit += ($yourCharge - $supplierFee);
+            } else {
+                // Active items: sum regular volume
+                $totalPurchase += $item->purchase_cost;
+                $totalSales += $item->sale_amount;
+                
+                // Add regular profit if sold
+                if (in_array($item->status, ['sold', 'partial'])) {
+                    $totalProfit += $item->profit;
+                }
+            }
+        }
 
         return response()->json([
-            'items' => $items,
             'total_purchase' => (string)$totalPurchase,
             'total_sales' => (string)$totalSales,
             'total_profit' => (string)$totalProfit,
@@ -308,6 +487,30 @@ class BusinessItemController extends Controller
     {
         return \App\Models\Account::firstOrCreate(
             ['name' => 'Cost of Goods Sold', 'type' => 'expense'],
+            ['opening_balance' => 0, 'is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
+        );
+    }
+
+    /**
+     * Income account for cancellation charges you earn from customers.
+     * Tracked separately from Sales Revenue for clear P&L visibility.
+     */
+    private function getOrCreateCancellationChargeAccount(): \App\Models\Account
+    {
+        return \App\Models\Account::firstOrCreate(
+            ['name' => 'Cancellation Charges Income', 'type' => 'income'],
+            ['opening_balance' => 0, 'is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
+        );
+    }
+
+    /**
+     * Expense account for cancellation fees charged by the supplier/airline.
+     * Tracked separately for clear cost analysis.
+     */
+    private function getOrCreateSupplierFeeAccount(): \App\Models\Account
+    {
+        return \App\Models\Account::firstOrCreate(
+            ['name' => 'Supplier Cancellation Fee', 'type' => 'expense'],
             ['opening_balance' => 0, 'is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
         );
     }
