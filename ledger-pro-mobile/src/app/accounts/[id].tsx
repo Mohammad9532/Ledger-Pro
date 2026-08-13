@@ -80,7 +80,7 @@ export default function AccountStatementScreen() {
   return (
     <View className="flex-1 bg-background">
       <View className="flex-row items-center justify-between px-4 pt-14 pb-4 bg-card border-b border-border">
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/accounts')} className="p-2 -ml-2">
           <ArrowLeft size={24} color="#f8fafc" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">{account?.name || 'Account Statement'}</Text>

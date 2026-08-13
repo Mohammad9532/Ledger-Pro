@@ -13,20 +13,38 @@ import { AmountInput } from '../../features/transactions/components/AmountInput'
 import { AccountSelectorSheet } from '../../features/transactions/components/AccountSelectorSheet';
 import { useCreateTransaction, TransactionPayload } from '../../features/transactions/api/transactions';
 import { Account } from '../../features/accounts/api/accounts';
-import { JournalTransactionScreen } from '../../features/transactions/components/JournalTransactionScreen';
+import { ContactSelectorSheet } from '../../features/transactions/components/ContactSelectorSheet';
+import { Contact } from '../../features/accounts/api/contacts';
 
 export default function NewTransactionScreen() {
-  const { type } = useLocalSearchParams<{ type: string }>();
-  const txType = (type || 'expense') as 'expense' | 'income' | 'transfer' | 'journal';
+  const { type, person_id, person_name, account_id, account_name, account_type } = useLocalSearchParams<{ 
+    type: string, person_id?: string, person_name?: string, 
+    account_id?: string, account_name?: string, account_type?: string 
+  }>();
+  const txType = (type || 'expense') as string;
 
   if (txType === 'journal') {
     return <JournalTransactionScreen />;
   }
 
-  return <StandardTransactionScreen txType={txType} />;
+  return (
+    <StandardTransactionScreen 
+      txType={txType} 
+      initialPersonId={person_id} 
+      initialPersonName={person_name} 
+      initialAccountId={account_id}
+      initialAccountName={account_name}
+      initialAccountType={account_type}
+    />
+  );
 }
 
-function StandardTransactionScreen({ txType }: { txType: 'expense' | 'income' | 'transfer' }) {
+function StandardTransactionScreen({ 
+  txType, initialPersonId, initialPersonName, initialAccountId, initialAccountName, initialAccountType 
+}: { 
+  txType: string, initialPersonId?: string, initialPersonName?: string, 
+  initialAccountId?: string, initialAccountName?: string, initialAccountType?: string 
+}) {
   const router = useRouter();
 
   const [amount, setAmount] = useState('');
@@ -34,26 +52,91 @@ function StandardTransactionScreen({ txType }: { txType: 'expense' | 'income' | 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Accounts
-  const [categoryAccount, setCategoryAccount] = useState<Account | null>(null);
-  const [paymentAccount, setPaymentAccount] = useState<Account | null>(null);
+  // General Selection State
+  const defaultAccount = initialAccountId && initialAccountName && initialAccountType 
+    ? { id: Number(initialAccountId), name: initialAccountName, type: initialAccountType as Account['type'] } as Account 
+    : null;
+
+  const [fromAccount, setFromAccount] = useState<Account | null>(txType === 'expense' || txType === 'give_money' || txType === 'transfer' ? defaultAccount : null);
+  const [toAccount, setToAccount] = useState<Account | null>(txType === 'income' || txType === 'receive_money' ? defaultAccount : null);
+  const [category, setCategory] = useState<Account | null>(null);
+  const [person, setPerson] = useState<Contact | null>(
+    initialPersonId && initialPersonName ? { id: Number(initialPersonId), name: initialPersonName } as Contact : null
+  );
+  
+  // CC Multiple Sources State
+  const [ccPaymentSources, setCcPaymentSources] = useState<{ account: Account | null; amount: string }[]>([
+    { account: null, amount: '' }
+  ]);
+  const [activeSourceIndex, setActiveSourceIndex] = useState<number | null>(null);
   
   // Sheet Refs
+  const fromSheetRef = useRef<BottomSheetModal>(null);
+  const toSheetRef = useRef<BottomSheetModal>(null);
   const categorySheetRef = useRef<BottomSheetModal>(null);
-  const paymentSheetRef = useRef<BottomSheetModal>(null);
+  const personSheetRef = useRef<BottomSheetModal>(null);
 
   const { mutate: createTransaction, isPending } = useCreateTransaction();
 
-  const isExpense = txType === 'expense';
-  const isIncome = txType === 'income';
-  const isTransfer = txType === 'transfer';
-
-  // Computed properties based on type
-  const categoryLabel = isExpense ? 'Category' : isIncome ? 'Income Source' : 'To Account';
-  const categoryFilter = isExpense ? 'expense' : isIncome ? 'income' : 'bank';
-  
-  const paymentLabel = isExpense ? 'Paid From' : isIncome ? 'Deposited To' : 'From Account';
-  const paymentFilter = isTransfer ? 'bank' : undefined; // Undefined fetches all, but we might want just cash/bank/cc
+  // Field configurations based on type
+  const config = useMemo(() => {
+    switch (txType) {
+      case 'give_money':
+        return {
+          title: 'Give Money',
+          showPerson: true, personLabel: 'Person',
+          showFrom: true, fromLabel: 'Pay From', fromFilter: ['cash', 'bank', 'credit_card'],
+          showTo: false, showCategory: false,
+        };
+      case 'receive_money':
+        return {
+          title: 'Receive Money',
+          showPerson: true, personLabel: 'Person',
+          showTo: true, toLabel: 'Receive Into', toFilter: ['cash', 'bank'],
+          showFrom: false, showCategory: false,
+        };
+      case 'expense':
+        return {
+          title: 'New Expense',
+          showCategory: true, categoryLabel: 'Category', categoryFilter: ['expense'],
+          showFrom: true, fromLabel: 'Pay From', fromFilter: ['cash', 'bank', 'credit_card', 'asset'],
+          showTo: false, showPerson: false,
+        };
+      case 'income':
+        return {
+          title: 'New Income',
+          showFrom: true, fromLabel: 'Income Source', fromFilter: ['income'],
+          showTo: true, toLabel: 'Receive Into', toFilter: ['cash', 'bank', 'asset'],
+          showPerson: true, personLabel: 'Paid By (Optional)',
+          showCategory: false,
+        };
+      case 'transfer':
+        return {
+          title: 'New Transfer',
+          showFrom: true, fromLabel: 'From Account', fromFilter: ['cash', 'bank', 'credit_card', 'asset', 'liability', 'business'],
+          showTo: true, toLabel: 'To Account', toFilter: ['cash', 'bank', 'credit_card', 'asset', 'liability', 'business'],
+          showCategory: false, showPerson: false,
+        };
+      case 'cc_payment':
+      case 'credit_card_payment':
+        return {
+          title: 'CC Payment',
+          showTo: true, toLabel: 'Credit Card', toFilter: ['credit_card'],
+          showFrom: false, fromLabel: 'Payment Source', fromFilter: ['cash', 'bank', 'asset'],
+          showCategory: false, showPerson: false,
+        };
+      case 'third_party_transfer':
+      case 'settlement':
+        return {
+          title: 'Settlement',
+          showFrom: true, fromLabel: 'Paid By (Person)', fromFilter: ['person'], // Needs person contact handling separately
+          showTo: true, toLabel: 'Received By (Person)', toFilter: ['person'],
+          showCategory: false, showPerson: false,
+        };
+      default:
+        return { title: 'New Transaction', showFrom: false, showTo: false, showCategory: false, showPerson: false };
+    }
+  }, [txType]);
 
   // Draft Recovery
   React.useEffect(() => {
@@ -74,112 +157,144 @@ function StandardTransactionScreen({ txType }: { txType: 'expense' | 'income' | 
     loadDraft();
   }, [txType]);
 
-  // Save Draft
-  React.useEffect(() => {
-    if (amount || description) {
-       AsyncStorage.setItem(`draft_${txType}`, JSON.stringify({amount, description}));
-    }
-  }, [amount, description, txType]);
-
   const handleBack = () => {
-    if (amount || description || categoryAccount || paymentAccount) {
+    const safeBack = () => router.canGoBack() ? router.back() : router.replace('/');
+    if (amount || description) {
       Alert.alert('Discard changes?', 'You have unsaved changes. Are you sure you want to discard them?', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Discard', style: 'destructive', onPress: () => router.back() }
+        { text: 'Discard', style: 'destructive', onPress: safeBack }
       ]);
     } else {
-      router.back();
+      safeBack();
     }
   };
 
   const handleSave = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const parsedAmount = parseFloat(amount);
+    const amt = parseFloat(amount);
     
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    if (isNaN(amt) || amt <= 0) {
       Alert.alert('Validation Error', 'Please enter a valid amount.');
       return;
     }
-    if (!categoryAccount) {
-      Alert.alert('Validation Error', `Please select a ${categoryLabel.toLowerCase()}.`);
-      return;
-    }
-    if (!paymentAccount) {
-      Alert.alert('Validation Error', `Please select a ${paymentLabel.toLowerCase()}.`);
-      return;
-    }
 
-    // Build entries
+    // Build Entries
     let entries: TransactionPayload['entries'] = [];
-    if (isExpense) {
-      entries = [
-        { account_id: categoryAccount.id, debit: parsedAmount, credit: 0 },
-        { account_id: paymentAccount.id, debit: 0, credit: parsedAmount }
-      ];
-    } else if (isIncome) {
-      entries = [
-        { account_id: paymentAccount.id, debit: parsedAmount, credit: 0 }, // Receiving account gets debit
-        { account_id: categoryAccount.id, debit: 0, credit: parsedAmount } // Income category gets credit
-      ];
-    } else if (isTransfer) {
-      entries = [
-        { account_id: categoryAccount.id, debit: parsedAmount, credit: 0 }, // To Account gets debit
-        { account_id: paymentAccount.id, debit: 0, credit: parsedAmount } // From Account gets credit
-      ];
+    let payloadTxType = txType;
+
+    switch (txType) {
+      case 'give_money':
+        if (!person || !fromAccount) { Alert.alert('Error', 'Please select a Person and Pay From account.'); return; }
+        entries = [
+          { account_id: person.account_id, debit: amt, credit: 0 },
+          { account_id: fromAccount.id, debit: 0, credit: amt },
+        ];
+        break;
+      case 'receive_money':
+        if (!person || !toAccount) { Alert.alert('Error', 'Please select a Person and Receive Into account.'); return; }
+        entries = [
+          { account_id: toAccount.id, debit: amt, credit: 0 },
+          { account_id: person.account_id, debit: 0, credit: amt },
+        ];
+        break;
+      case 'expense':
+        if (!category || !fromAccount) { Alert.alert('Error', 'Please select a Category and Pay From account.'); return; }
+        entries = [
+          { account_id: category.id, debit: amt, credit: 0 },
+          { account_id: fromAccount.id, debit: 0, credit: amt },
+        ];
+        break;
+      case 'income':
+        if (!fromAccount || !toAccount) { Alert.alert('Error', 'Please select Income Source and Receive Into account.'); return; }
+        entries = [
+          { account_id: toAccount.id, debit: amt, credit: 0 },
+          { account_id: fromAccount.id, debit: 0, credit: amt },
+        ];
+        break;
+      case 'transfer':
+        if (!fromAccount || !toAccount) { Alert.alert('Error', 'Please select From and To accounts.'); return; }
+        if (fromAccount.id === toAccount.id) { Alert.alert('Error', 'Source and destination must be different.'); return; }
+        entries = [
+          { account_id: toAccount.id, debit: amt, credit: 0 },
+          { account_id: fromAccount.id, debit: 0, credit: amt },
+        ];
+        break;
+      case 'cc_payment':
+      case 'credit_card_payment':
+        if (!toAccount) { Alert.alert('Error', 'Please select a Credit Card.'); return; }
+        
+        const totalSources = ccPaymentSources.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0);
+        if (Math.abs(totalSources - amt) > 0.001) {
+          Alert.alert('Validation Error', 'Total sum of payment sources must equal the Payment Amount.');
+          return;
+        }
+
+        payloadTxType = 'credit_card_payment';
+        entries = [
+          { account_id: toAccount.id, debit: amt, credit: 0 }
+        ];
+
+        for (const source of ccPaymentSources) {
+          const sAmt = parseFloat(source.amount);
+          if (!source.account || isNaN(sAmt) || sAmt <= 0) {
+            Alert.alert('Validation Error', 'All payment sources must have a valid account and amount greater than 0.');
+            return;
+          }
+          entries.push({ account_id: source.account.id, debit: 0, credit: sAmt });
+        }
+        break;
+      case 'third_party_transfer':
+      case 'settlement':
+        if (!fromAccount || !toAccount) { Alert.alert('Error', 'Please select Paid By and Received By accounts.'); return; }
+        payloadTxType = 'settlement';
+        entries = [
+          { account_id: toAccount.id, debit: amt, credit: 0 },
+          { account_id: fromAccount.id, debit: 0, credit: amt },
+        ];
+        break;
     }
 
     const payload: TransactionPayload = {
-      type: txType,
-      amount: parsedAmount,
+      type: payloadTxType as any,
+      amount: amt,
       date: format(date, 'yyyy-MM-dd'),
       description,
       entries
+    };
+
+    if (person && (txType === 'income' || txType === 'give_money' || txType === 'receive_money')) {
+      (payload as any).contact_id = person.id;
+    }
+
+    const handleBackNavigation = () => {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/');
+      }
     };
 
     createTransaction(payload, {
       onSuccess: async () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await AsyncStorage.removeItem(`draft_${txType}`);
-        Toast.show({
-          type: 'success',
-          text1: '✓ Transaction Saved',
-          visibilityTime: 1500,
-        });
-        router.back();
+        Toast.show({ type: 'success', text1: '✓ Transaction Saved', visibilityTime: 1500 });
+        handleBackNavigation();
       },
       onError: (error: any) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save transaction';
-        const validationErrors = error.response?.data?.errors;
-        let details = '';
-        if (validationErrors) {
-          details = '\n' + Object.values(validationErrors).flat().join('\n');
-        }
-        Alert.alert('Error', errorMessage + details);
+        Alert.alert('Error', errorMessage);
       }
     });
   };
 
-  const getHeaderTitle = () => {
-    switch (txType) {
-      case 'expense': return 'New Expense';
-      case 'income': return 'New Income';
-      case 'transfer': return 'New Transfer';
-      default: return 'New Transaction';
-    }
-  };
-
   return (
-    <KeyboardAvoidingView 
-      className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-14 pb-4 border-b border-border bg-card">
-        <TouchableOpacity onPress={handleBack} className="p-2 -ml-2">
-          <ArrowLeft size={24} color="#f8fafc" />
-        </TouchableOpacity>
-        <Text className="text-white text-lg font-bold">{getHeaderTitle()}</Text>
+        <TouchableOpacity onPress={handleBack} className="p-2 -ml-2"><ArrowLeft size={24} color="#f8fafc" /></TouchableOpacity>
+        <Text className="text-white text-lg font-bold">{config.title}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -187,46 +302,53 @@ function StandardTransactionScreen({ txType }: { txType: 'expense' | 'income' | 
         <AmountInput value={amount} onChange={setAmount} />
 
         <View className="px-6 pb-12">
-          {/* Category Selector */}
-          <TouchableOpacity 
-            className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30"
-            onPress={() => categorySheetRef.current?.present()}
-          >
-            <View>
-              <Text className="text-muted text-sm font-medium mb-1">{categoryLabel}</Text>
-              <Text className={`text-base ${categoryAccount ? 'text-white' : 'text-slate-500'}`}>
-                {categoryAccount ? categoryAccount.name : `Select ${categoryLabel}`}
-              </Text>
-            </View>
-            <ChevronRight size={20} color="#64748b" />
-          </TouchableOpacity>
+          {config.showPerson && (
+            <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => personSheetRef.current?.present()}>
+              <View>
+                <Text className="text-muted text-sm font-medium mb-1">{config.personLabel}</Text>
+                <Text className={`text-base ${person ? 'text-white' : 'text-slate-500'}`}>{person ? person.name : `Select ${config.personLabel}`}</Text>
+              </View>
+              <ChevronRight size={20} color="#64748b" />
+            </TouchableOpacity>
+          )}
 
-          {/* Payment Account Selector */}
-          <TouchableOpacity 
-            className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30"
-            onPress={() => paymentSheetRef.current?.present()}
-          >
-            <View>
-              <Text className="text-muted text-sm font-medium mb-1">{paymentLabel}</Text>
-              <Text className={`text-base ${paymentAccount ? 'text-white' : 'text-slate-500'}`}>
-                {paymentAccount ? paymentAccount.name : `Select ${paymentLabel}`}
-              </Text>
-            </View>
-            <ChevronRight size={20} color="#64748b" />
-          </TouchableOpacity>
+          {config.showCategory && (
+            <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => categorySheetRef.current?.present()}>
+              <View>
+                <Text className="text-muted text-sm font-medium mb-1">{config.categoryLabel}</Text>
+                <Text className={`text-base ${category ? 'text-white' : 'text-slate-500'}`}>{category ? category.name : `Select ${config.categoryLabel}`}</Text>
+              </View>
+              <ChevronRight size={20} color="#64748b" />
+            </TouchableOpacity>
+          )}
+
+          {config.showTo && (
+            <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => toSheetRef.current?.present()}>
+              <View>
+                <Text className="text-muted text-sm font-medium mb-1">{config.toLabel}</Text>
+                <Text className={`text-base ${toAccount ? 'text-white' : 'text-slate-500'}`}>{toAccount ? toAccount.name : `Select ${config.toLabel}`}</Text>
+              </View>
+              <ChevronRight size={20} color="#64748b" />
+            </TouchableOpacity>
+          )}
+
+          {config.showFrom && (
+            <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => fromSheetRef.current?.present()}>
+              <View>
+                <Text className="text-muted text-sm font-medium mb-1">{config.fromLabel}</Text>
+                <Text className={`text-base ${fromAccount ? 'text-white' : 'text-slate-500'}`}>{fromAccount ? fromAccount.name : `Select ${config.fromLabel}`}</Text>
+              </View>
+              <ChevronRight size={20} color="#64748b" />
+            </TouchableOpacity>
+          )}
 
           {/* Date Picker */}
-          <TouchableOpacity 
-            className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30"
-            onPress={() => setShowDatePicker(true)}
-          >
+          <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => setShowDatePicker(true)}>
             <View>
               <Text className="text-muted text-sm font-medium mb-1">Date</Text>
               <View className="flex-row items-center">
                 <CalendarIcon size={16} color="#94a3b8" className="mr-2" />
-                <Text className="text-white text-base">
-                  {format(date, 'MMM dd, yyyy')}
-                </Text>
+                <Text className="text-white text-base">{format(date, 'MMM dd, yyyy')}</Text>
               </View>
             </View>
             <ChevronRight size={20} color="#64748b" />
@@ -237,71 +359,129 @@ function StandardTransactionScreen({ txType }: { txType: 'expense' | 'income' | 
             <Text className="text-muted text-sm font-medium mb-2">Description</Text>
             <View className="flex-row items-center">
               <FileText size={16} color="#94a3b8" className="mr-2" />
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="What was this for?"
-                placeholderTextColor="#64748b"
-                className="flex-1 text-white text-base"
-              />
+              <TextInput value={description} onChangeText={setDescription} placeholder="What was this for?" placeholderTextColor="#64748b" className="flex-1 text-white text-base" />
             </View>
           </View>
 
-          {/* Receipt Placeholder */}
-          <View className="py-4">
-            <Text className="text-muted text-sm font-medium mb-2">Attachments</Text>
-            <TouchableOpacity 
-              className="flex-row items-center justify-center p-4 border border-dashed border-slate-700 rounded-xl bg-slate-800/50"
-              activeOpacity={1}
-            >
-              <Text className="text-slate-500 text-sm font-medium">📎 Receipt (Coming Soon)</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Multiple Payment Sources for CC Payment */}
+          {(txType === 'cc_payment' || txType === 'credit_card_payment') ? (
+            <View className="pt-4 border-t border-border mt-4">
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-white font-semibold">Payment Sources</Text>
+                <TouchableOpacity 
+                  className="bg-primary-500/20 px-3 py-1.5 rounded-lg"
+                  onPress={() => setCcPaymentSources([...ccPaymentSources, { account: null, amount: '' }])}
+                >
+                  <Text className="text-primary-500 text-sm font-medium">+ Add Source</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View className="space-y-4">
+                {ccPaymentSources.map((source, idx) => (
+                  <View key={idx} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                    <View className="flex-row items-center justify-between mb-3">
+                      <Text className="text-muted text-sm font-medium">Source {idx + 1}</Text>
+                      {ccPaymentSources.length > 1 ? (
+                        <TouchableOpacity onPress={() => {
+                          const newSources = [...ccPaymentSources];
+                          newSources.splice(idx, 1);
+                          setCcPaymentSources(newSources);
+                        }}>
+                          <Text className="text-rose-500 text-sm">Remove</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+
+                    <TouchableOpacity 
+                      className="flex-row items-center justify-between py-3 border-b border-slate-700 mb-3"
+                      onPress={() => {
+                        setActiveSourceIndex(idx);
+                        fromSheetRef.current?.present();
+                      }}
+                    >
+                      <View>
+                        <Text className={`text-base ${source.account ? 'text-white' : 'text-slate-500'}`}>
+                          {source.account ? source.account.name : 'Select Account'}
+                        </Text>
+                      </View>
+                      <ChevronRight size={20} color="#64748b" />
+                    </TouchableOpacity>
+
+                    <View className="flex-row items-center border-b border-slate-700 py-2">
+                      <Text className="text-muted text-base mr-2">$</Text>
+                      <TextInput 
+                        value={source.amount}
+                        onChangeText={(val) => {
+                          const newSources = [...ccPaymentSources];
+                          newSources[idx].amount = val;
+                          setCcPaymentSources(newSources);
+                        }}
+                        keyboardType="decimal-pad"
+                        placeholder="0.00"
+                        placeholderTextColor="#64748b"
+                        className="flex-1 text-white text-base"
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              {amount && parseFloat(amount) > 0 ? (
+                <View className="mt-4 p-4 rounded-xl bg-slate-800 flex-row justify-between items-center border border-slate-700">
+                  <View>
+                    <Text className="text-muted text-sm mb-1">Total Paid</Text>
+                    <Text className={`font-bold ${Math.abs(ccPaymentSources.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0) - parseFloat(amount)) < 0.001 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      ${ccPaymentSources.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0).toFixed(2)} / ${parseFloat(amount).toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
         </View>
       </ScrollView>
 
       {/* Save Button */}
       <View className="p-4 border-t border-border bg-card">
-        <TouchableOpacity
-          className={`h-14 rounded-xl items-center justify-center ${isPending ? 'bg-primary-500/50' : 'bg-primary-500'}`}
-          onPress={handleSave}
-          disabled={isPending}
-          activeOpacity={0.8}
-        >
-          <Text className="text-white text-base font-bold">
-            {isPending ? 'Saving...' : 'Save Transaction'}
-          </Text>
+        <TouchableOpacity className={`h-14 rounded-xl items-center justify-center ${isPending ? 'bg-primary-500/50' : 'bg-primary-500'}`} onPress={handleSave} disabled={isPending} activeOpacity={0.8}>
+          <Text className="text-white text-base font-bold">{isPending ? 'Saving...' : 'Save Transaction'}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Date Picker Modal */}
+      {/* Modals */}
       {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setDate(selectedDate);
-          }}
-        />
+        <DateTimePicker value={date} mode="date" display="default" onChange={(e, selected) => { setShowDatePicker(false); if (selected) setDate(selected); }} />
       )}
+      <ContactSelectorSheet ref={personSheetRef} title={`Select ${config.personLabel}`} selectedId={person?.id} onSelect={setPerson} />
+      <AccountSelectorSheet ref={categorySheetRef} title={`Select ${config.categoryLabel}`} allowedTypes={config.categoryFilter} selectedId={category?.id} onSelect={setCategory} />
+      <AccountSelectorSheet 
+        ref={fromSheetRef} 
+        title={`Select ${config.fromLabel}`} 
+        allowedTypes={config.fromFilter} 
+        selectedId={(txType === 'cc_payment' || txType === 'credit_card_payment') ? ccPaymentSources[activeSourceIndex ?? 0]?.account?.id : fromAccount?.id} 
+        onSelect={(account) => {
+          if (txType === 'cc_payment' || txType === 'credit_card_payment') {
+            if (activeSourceIndex !== null) {
+              const newSources = [...ccPaymentSources];
+              newSources[activeSourceIndex].account = account;
+              
+              if (amount && parseFloat(amount) > 0 && !newSources[activeSourceIndex].amount) {
+                const currentSum = newSources.reduce((sum, s, i) => i !== activeSourceIndex ? sum + (parseFloat(s.amount) || 0) : sum, 0);
+                const remainder = parseFloat(amount) - currentSum;
+                if (remainder > 0) {
+                  newSources[activeSourceIndex].amount = remainder.toString();
+                }
+              }
 
-      {/* Selectors */}
-      <AccountSelectorSheet 
-        ref={categorySheetRef} 
-        title={`Select ${categoryLabel}`}
-        type={categoryFilter}
-        selectedId={categoryAccount?.id}
-        onSelect={setCategoryAccount}
+              setCcPaymentSources(newSources);
+              setActiveSourceIndex(null);
+            }
+          } else {
+            setFromAccount(account);
+          }
+        }} 
       />
-      <AccountSelectorSheet 
-        ref={paymentSheetRef} 
-        title={`Select ${paymentLabel}`}
-        type={paymentFilter}
-        selectedId={paymentAccount?.id}
-        onSelect={setPaymentAccount}
-      />
+      <AccountSelectorSheet ref={toSheetRef} title={`Select ${config.toLabel}`} allowedTypes={config.toFilter} selectedId={toAccount?.id} onSelect={setToAccount} />
     </KeyboardAvoidingView>
   );
 }

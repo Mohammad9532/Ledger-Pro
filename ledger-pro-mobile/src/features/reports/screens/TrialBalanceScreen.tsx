@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Search, CheckCircle2, AlertCircle } from 'lucide-react-native';
 import { useTrialBalance, TrialBalanceRow } from '../api/reports';
 import { formatCurrency, formatDate } from '../../../utils/format';
+import { DateRangeSelector } from '../../../components/DateRangeSelector';
 
 export default function TrialBalanceScreen() {
   const router = useRouter();
@@ -70,16 +71,26 @@ export default function TrialBalanceScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Search Bar */}
-        <View className="flex-row items-center bg-background rounded-xl px-4 py-3 border border-border">
-          <Search size={20} color="#94a3b8" />
-          <TextInput
-            placeholder="Search accounts..."
-            placeholderTextColor="#64748b"
-            className="flex-1 ml-3 text-white text-base"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1">
+            <DateRangeSelector 
+              startDate={date} 
+              onChange={(s) => setDate(s)} 
+              singleDateOnly={true} 
+            />
+          </View>
+
+          {/* Search Bar */}
+          <View className="flex-1 flex-row items-center bg-background rounded-xl px-3 py-2.5 border border-border">
+            <Search size={18} color="#94a3b8" />
+            <TextInput
+              placeholder="Search..."
+              placeholderTextColor="#64748b"
+              className="flex-1 ml-2 text-white text-sm"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
         </View>
       </View>
 

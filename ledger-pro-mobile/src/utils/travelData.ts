@@ -1,0 +1,62 @@
+export const AIRPORTS = [
+    // India
+    { iata: 'DEL', name: 'Indira Gandhi International Airport, New Delhi', country: 'India' },
+    { iata: 'BOM', name: 'Chhatrapati Shivaji Maharaj International Airport, Mumbai', country: 'India' },
+    { iata: 'BLR', name: 'Kempegowda International Airport, Bengaluru', country: 'India' },
+    { iata: 'HYD', name: 'Rajiv Gandhi International Airport, Hyderabad', country: 'India' },
+    { iata: 'MAA', name: 'Chennai International Airport, Chennai', country: 'India' },
+    { iata: 'CCU', name: 'Netaji Subhas Chandra Bose International Airport, Kolkata', country: 'India' },
+    { iata: 'AMD', name: 'Sardar Vallabhbhai Patel International Airport, Ahmedabad', country: 'India' },
+    { iata: 'COK', name: 'Cochin International Airport, Kochi', country: 'India' },
+    { iata: 'PNQ', name: 'Pune Airport, Pune', country: 'India' },
+    { iata: 'GOI', name: 'Dabolim Airport, Goa', country: 'India' },
+    { iata: 'GOX', name: 'Manohar International Airport, Goa', country: 'India' },
+    { iata: 'LKO', name: 'Chaudhary Charan Singh International Airport, Lucknow', country: 'India' },
+    { iata: 'VNS', name: 'Lal Bahadur Shastri Airport, Varanasi', country: 'India' },
+    { iata: 'TRV', name: 'Trivandrum International Airport, Thiruvananthapuram', country: 'India' },
+    { iata: 'CCJ', name: 'Calicut International Airport, Kozhikode', country: 'India' },
+    { iata: 'JAI', name: 'Jaipur International Airport, Jaipur', country: 'India' },
+    { iata: 'ATQ', name: 'Sri Guru Ram Dass Jee International Airport, Amritsar', country: 'India' },
+    { iata: 'GAU', name: 'Lokpriya Gopinath Bordoloi International Airport, Guwahati', country: 'India' },
+    { iata: 'IXE', name: 'Mangalore International Airport, Mangaluru', country: 'India' },
+
+    // Middle East
+    { iata: 'DXB', name: 'Dubai International Airport, Dubai', country: 'UAE' },
+    { iata: 'DWC', name: 'Al Maktoum International Airport, Dubai', country: 'UAE' },
+    { iata: 'AUH', name: 'Zayed International Airport, Abu Dhabi', country: 'UAE' },
+    { iata: 'SHJ', name: 'Sharjah International Airport, Sharjah', country: 'UAE' },
+    { iata: 'DOH', name: 'Hamad International Airport, Doha', country: 'Qatar' },
+    { iata: 'RUH', name: 'King Khalid International Airport, Riyadh', country: 'Saudi Arabia' },
+    { iata: 'JED', name: 'King Abdulaziz International Airport, Jeddah', country: 'Saudi Arabia' },
+    { iata: 'MED', name: 'Prince Mohammad Bin Abdulaziz International Airport, Medina', country: 'Saudi Arabia' },
+    { iata: 'DMM', name: 'King Fahd International Airport, Dammam', country: 'Saudi Arabia' },
+    { iata: 'MCT', name: 'Muscat International Airport, Muscat', country: 'Oman' },
+    { iata: 'SLL', name: 'Salalah Airport, Salalah', country: 'Oman' },
+    { iata: 'BAH', name: 'Bahrain International Airport, Bahrain', country: 'Bahrain' },
+    { iata: 'KWI', name: 'Kuwait International Airport, Kuwait City', country: 'Kuwait' },
+    { iata: 'AMM', name: 'Queen Alia International Airport, Amman', country: 'Jordan' },
+    { iata: 'BEY', name: 'Beirut-Rafic Hariri International Airport, Beirut', country: 'Lebanon' }
+];
+
+export const AIRLINES = [
+    { iata: 'AI', name: 'Air India' },
+    { iata: 'IX', name: 'Air India Express' },
+    { iata: '6E', name: 'IndiGo' },
+    { iata: 'UK', name: 'Vistara' },
+    { iata: 'SG', name: 'SpiceJet' },
+    { iata: 'I5', name: 'AirAsia India' },
+    { iata: 'QP', name: 'Akasa Air' },
+    
+    { iata: 'EK', name: 'Emirates' },
+    { iata: 'FZ', name: 'flydubai' },
+    { iata: 'EY', name: 'Etihad Airways' },
+    { iata: 'G9', name: 'Air Arabia' },
+    { iata: 'QR', name: 'Qatar Airways' },
+    { iata: 'SV', name: 'Saudia' },
+    { iata: 'XY', name: 'Flynas' },
+    { iata: 'WY', name: 'Oman Air' },
+    { iata: 'GF', name: 'Gulf Air' },
+    { iata: 'KU', name: 'Kuwait Airways' },
+    { iata: 'RJ', name: 'Royal Jordanian' },
+    { iata: 'ME', name: 'Middle East Airlines' }
+];

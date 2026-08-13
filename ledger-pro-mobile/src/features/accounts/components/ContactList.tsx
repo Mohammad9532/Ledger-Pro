@@ -92,21 +92,24 @@ function ContactCard({ item }: { item: Contact }) {
           </TouchableOpacity>
           <TouchableOpacity 
             className="w-1/4 items-center justify-center py-3 border-r border-border"
-            onPress={() => console.log('Receive')}
+            onPress={() => router.push(`/transactions/new?type=receive_money&person_id=${item.id}&person_name=${encodeURIComponent(item.name)}`)}
           >
             <ArrowDownLeft size={18} color="#10b981" />
             <Text className="text-success text-xs font-medium mt-1">Receive</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className="w-1/4 items-center justify-center py-3 border-r border-border"
-            onPress={() => console.log('Give')}
+            onPress={() => router.push(`/transactions/new?type=give_money&person_id=${item.id}&person_name=${encodeURIComponent(item.name)}`)}
           >
             <ArrowUpRight size={18} color="#f97316" />
             <Text className="text-primary-500 text-xs font-medium mt-1">Give</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className="w-1/4 items-center justify-center py-3"
-            onPress={() => console.log('Edit')}
+            onPress={() => {
+              // TODO: Implement Edit Contact modal/screen
+              console.log('Edit Contact:', item.id);
+            }}
           >
             <Pencil size={18} color="#94a3b8" />
             <Text className="text-white text-xs font-medium mt-1">Edit</Text>

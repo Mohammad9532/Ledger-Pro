@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAccounts, Account } from '../api/accounts';
+import { useAccounts, Account, VISIBLE_ACCOUNT_TYPES } from '../api/accounts';
 import { formatCurrency } from '../../../utils/format';
-import { Landmark, CreditCard, Banknote, Briefcase, ChevronRight, ChevronDown, Wallet, FileText, Plus, Pencil } from 'lucide-react-native';
+import { Landmark, CreditCard, Banknote, Briefcase, ChevronRight, ChevronDown, Wallet, FileText, Plus, Pencil, Box, Scale } from 'lucide-react-native';
 
 interface Props {
   searchQuery: string;
@@ -15,7 +15,9 @@ export function AccountList({ searchQuery }: Props) {
 
   const filteredAccounts = useMemo(() => {
     if (!accounts) return [];
-    return accounts.filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return accounts
+      .filter((a) => !a.is_system && VISIBLE_ACCOUNT_TYPES.includes(a.type))
+      .filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [accounts, searchQuery]);
 
   const getIcon = (type: string) => {
@@ -96,14 +98,17 @@ function AccountCard({ item, getIcon }: { item: Account, getIcon: (t: string) =>
           </TouchableOpacity>
           <TouchableOpacity 
             className="flex-1 items-center justify-center py-3 border-r border-border"
-            onPress={() => console.log('New Txn')}
+            onPress={() => router.push(`/transactions/new?type=expense&account_id=${item.id}&account_name=${encodeURIComponent(item.name)}&account_type=${item.type}`)}
           >
             <Plus size={18} color="#f97316" />
             <Text className="text-primary-500 text-xs font-medium mt-1">New Txn</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className="flex-1 items-center justify-center py-3"
-            onPress={() => console.log('Edit')}
+            onPress={() => {
+              // TODO: Implement Edit Account modal/screen
+              console.log('Edit Account:', item.id);
+            }}
           >
             <Pencil size={18} color="#94a3b8" />
             <Text className="text-white text-xs font-medium mt-1">Edit</Text>

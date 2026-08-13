@@ -4,12 +4,13 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, AlertCircle } from 'lucide-react-native';
 import { usePayables, ReceivablePayableRow } from '../api/reports';
 import { formatCurrency } from '../../../utils/format';
+import { DateRangeSelector } from '../../../components/DateRangeSelector';
+import { format } from 'date-fns';
 
 export default function PayablesScreen() {
   const router = useRouter();
   
-  // For now, default to today's date
-  const [asOfDate] = useState(new Date().toISOString().split('T')[0]);
+  const [asOfDate, setAsOfDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const { data, isLoading, error } = usePayables(asOfDate);
 
@@ -36,16 +37,18 @@ export default function PayablesScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border z-10">
-        <View className="flex-row items-center justify-between mb-2">
+        <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <ArrowLeft size={24} color="#f8fafc" />
           </TouchableOpacity>
           <Text className="text-white text-lg font-bold">Payables</Text>
           <View style={{ width: 40 }} />
         </View>
-        <View className="flex-row justify-center">
-          <Text className="text-muted text-sm">As of {asOfDate}</Text>
-        </View>
+        <DateRangeSelector 
+          startDate={asOfDate} 
+          onChange={(s) => setAsOfDate(s)} 
+          singleDateOnly={true} 
+        />
       </View>
 
       {/* List */}

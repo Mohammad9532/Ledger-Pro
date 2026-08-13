@@ -32,9 +32,9 @@ class DashboardController extends Controller
                 'monthly_breakdown' => $monthlyBreakdown,
             ],
             'quick_actions' => [
-                ['id' => 'add_income', 'label' => 'Add Income', 'icon' => 'arrow-down-circle', 'route' => '/(tabs)/transactions/create?type=income'],
-                ['id' => 'add_expense', 'label' => 'Add Expense', 'icon' => 'arrow-up-circle', 'route' => '/(tabs)/transactions/create?type=expense'],
-                ['id' => 'transfer', 'label' => 'Transfer', 'icon' => 'refresh-cw', 'route' => '/(tabs)/transactions/create?type=transfer'],
+                ['id' => 'add_income', 'label' => 'Add Income', 'icon' => 'arrow-down-circle', 'route' => '/transactions/new?type=income'],
+                ['id' => 'add_expense', 'label' => 'Add Expense', 'icon' => 'arrow-up-circle', 'route' => '/transactions/new?type=expense'],
+                ['id' => 'transfer', 'label' => 'Transfer', 'icon' => 'refresh-cw', 'route' => '/transactions/new?type=transfer'],
             ],
             'recent_transactions' => $recentTransactions,
             'notifications' => [],

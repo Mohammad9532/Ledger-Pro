@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Home, Wallet, Plus, BarChart2, Settings } from 'lucide-react-native';
+import { Home, Wallet, Plus, BarChart2, Plane } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { CreateTransactionSheet } from '../../features/transactions/components/CreateTransactionSheet';
@@ -11,56 +11,72 @@ import { useUiStore } from '../../store/uiStore';
 function CustomTabBar({ state, navigation, onFabPress }: { state: any; navigation: any; onFabPress: () => void }) {
   const insets = useSafeAreaInsets();
   
+  const isTabActive = (name: string) => state.routes[state.index].name === name;
+
+  const TabBtn = ({ name, icon: Icon, label }: { name: string; icon: any; label: string }) => {
+    const active = isTabActive(name);
+    return (
+      <TouchableOpacity
+        className="flex-1 items-center justify-center pt-2"
+        onPress={() => {
+          Haptics.selectionAsync();
+          navigation.navigate(name);
+        }}
+      >
+        <Icon size={22} color={active ? '#f97316' : '#64748b'} />
+        <Text style={{ fontSize: 10, marginTop: 3, fontWeight: active ? '700' : '500', color: active ? '#f97316' : '#64748b' }}>
+          {label}
+        </Text>
+        {active && (
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#f97316', marginTop: 3 }} />
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View 
-      className="flex-row bg-card border-t border-border px-4 pt-2"
-      style={{ paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 10) }}
+      style={{
+        flexDirection: 'row',
+        backgroundColor: '#0f172a',
+        borderTopWidth: 1,
+        borderTopColor: '#1e293b',
+        paddingHorizontal: 8,
+        paddingTop: 8,
+        paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 12),
+      }}
     >
-      {/* Home */}
-      <TouchableOpacity 
-        className="flex-1 items-center justify-center"
-        onPress={() => navigation.navigate('index')}
-      >
-        <Home size={24} color={state.index === 0 ? '#f97316' : '#94a3b8'} />
-      </TouchableOpacity>
-      
-      {/* Accounts */}
-      <TouchableOpacity 
-        className="flex-1 items-center justify-center"
-        onPress={() => navigation.navigate('accounts')}
-      >
-        <Wallet size={24} color={state.index === 1 ? '#f97316' : '#94a3b8'} />
-      </TouchableOpacity>
-      
-      {/* Center Action */}
-      <View className="flex-1 items-center justify-center">
-        <TouchableOpacity 
-          className="w-14 h-14 bg-primary-500 rounded-full items-center justify-center shadow-lg -mt-6 border-4 border-background"
+      <TabBtn name="index" icon={Home} label="Home" />
+      <TabBtn name="accounts" icon={Wallet} label="Directory" />
+
+      {/* Center FAB */}
+      <View className="flex-1 items-center justify-center" style={{ marginTop: -20 }}>
+        <TouchableOpacity
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            backgroundColor: '#f97316',
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#f97316',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.5,
+            shadowRadius: 8,
+            elevation: 10,
+          }}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             onFabPress();
           }}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <Plus size={28} color="#fffedd" />
+          <Plus size={26} color="#fff" />
         </TouchableOpacity>
       </View>
-      
-      {/* Reports */}
-      <TouchableOpacity 
-        className="flex-1 items-center justify-center"
-        onPress={() => navigation.navigate('reports')}
-      >
-        <BarChart2 size={24} color={state.index === 2 ? '#f97316' : '#94a3b8'} />
-      </TouchableOpacity>
-      
-      {/* Settings */}
-      <TouchableOpacity 
-        className="flex-1 items-center justify-center"
-        onPress={() => navigation.navigate('settings')}
-      >
-        <Settings size={24} color={state.index === 3 ? '#f97316' : '#94a3b8'} />
-      </TouchableOpacity>
+
+      <TabBtn name="business" icon={Plane} label="Business" />
+      <TabBtn name="reports" icon={BarChart2} label="Reports" />
     </View>
   );
 }
@@ -70,8 +86,6 @@ export default function TabsLayout() {
   const { activeDirectoryTab } = useUiStore();
 
   const handleFabPress = (navigation: any, state: any) => {
-    // For Alpha testing, always open the transaction sheet from any tab.
-    // The adaptive logic (New Account/Contact) will be restored in Phase 6.
     sheetRef.current?.present();
   };
 
@@ -83,8 +97,12 @@ export default function TabsLayout() {
       >
         <Tabs.Screen name="index" />
         <Tabs.Screen name="accounts" />
+        <Tabs.Screen name="business" />
         <Tabs.Screen name="reports" />
-        <Tabs.Screen name="settings" />
+        
+        {/* Hidden from CustomTabBar but accessible via navigation */}
+        <Tabs.Screen name="transactions" options={{ href: null }} />
+        <Tabs.Screen name="settings" options={{ href: null }} />
       </Tabs>
       <CreateTransactionSheet ref={sheetRef} />
     </>

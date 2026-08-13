@@ -52,15 +52,15 @@ export const useContactLedger = (contactId: number) => {
     queryKey: ['contact_ledger', contactId],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await api.get<{ contact: Contact; statement: PaginatedStatement }>(
+      const response = await api.get<{ contact: Contact; statement: { account: Account, statement: PaginatedStatement } }>(
         `/contacts/${contactId}/ledger`,
         { params: { page: pageParam, per_page: 20 } }
       );
       return response.data;
     },
     getNextPageParam: (lastPage) => {
-      if (lastPage.statement.current_page < lastPage.statement.last_page) {
-        return lastPage.statement.current_page + 1;
+      if (lastPage.statement.statement.current_page < lastPage.statement.statement.last_page) {
+        return lastPage.statement.statement.current_page + 1;
       }
       return undefined;
     },

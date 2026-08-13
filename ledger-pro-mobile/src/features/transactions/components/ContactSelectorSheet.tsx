@@ -2,21 +2,20 @@ import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, Pressable, Platform, FlatList } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Search, Check } from 'lucide-react-native';
-import { useAccounts, Account } from '../../accounts/api/accounts';
+import { useContacts, Contact } from '../../accounts/api/contacts';
 import * as Haptics from 'expo-haptics';
 
 interface Props {
-  allowedTypes?: string[];
-  onSelect: (account: Account) => void;
+  onSelect: (contact: Contact) => void;
   selectedId?: number;
   title?: string;
 }
 
-export type AccountSelectorSheetRef = BottomSheetModal;
+export type ContactSelectorSheetRef = BottomSheetModal;
 
-export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allowedTypes, onSelect, selectedId, title = 'Select Account' }, ref) => {
+export const ContactSelectorSheet = forwardRef<BottomSheetModal, Props>(({ onSelect, selectedId, title = 'Select Person' }, ref) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: accounts, isLoading } = useAccounts(); // Fetch all accounts
+  const { data: contacts, isLoading } = useContacts();
   const snapPoints = useMemo(() => ['60%', '90%'], []);
 
   const renderBackdrop = useCallback(
@@ -26,31 +25,20 @@ export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allow
     []
   );
 
-  const filteredAccounts = useMemo(() => {
-    if (!accounts) return [];
-    let result = accounts;
-    
-    // Filter by allowed types if provided
-    if (allowedTypes && allowedTypes.length > 0) {
-      result = result.filter(a => allowedTypes.includes(a.type));
-    }
-    
-    // Filter by search query
-    if (searchQuery) {
-      result = result.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-    
-    return result;
-  }, [accounts, searchQuery, allowedTypes]);
+  const filteredContacts = useMemo(() => {
+    if (!contacts) return [];
+    if (!searchQuery) return contacts;
+    return contacts.filter((c: Contact) => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [contacts, searchQuery]);
 
-  const handleSelect = useCallback((account: Account) => {
+  const handleSelect = useCallback((contact: Contact) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onSelect(account);
+    onSelect(contact);
     // @ts-ignore
     ref?.current?.dismiss();
   }, [onSelect, ref]);
 
-  const renderItem = useCallback(({ item }: { item: Account }) => {
+  const renderItem = useCallback(({ item }: { item: Contact }) => {
     const isSelected = item.id === selectedId;
     return (
       <TouchableOpacity
@@ -59,7 +47,7 @@ export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allow
       >
         <View>
           <Text className={`text-base font-medium ${isSelected ? 'text-primary-500' : 'text-white'}`}>{item.name}</Text>
-          <Text className="text-muted text-xs capitalize mt-1">{item.type.replace(/_/g, ' ')}</Text>
+          <Text className="text-muted text-xs capitalize mt-1">Person</Text>
         </View>
         {isSelected && <Check size={20} color="#f97316" />}
       </TouchableOpacity>
@@ -87,15 +75,15 @@ export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allow
         </View>
       ) : Platform.OS === 'web' ? (
         <FlatList
-          data={filteredAccounts}
-          keyExtractor={(item: Account) => item.id.toString()}
+          data={filteredContacts}
+          keyExtractor={(item: Contact) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 40 }}
         />
       ) : (
         <BottomSheetFlatList
-          data={filteredAccounts}
-          keyExtractor={(item: Account) => item.id.toString()}
+          data={filteredContacts}
+          keyExtractor={(item: Contact) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 40 }}
         />
@@ -145,4 +133,4 @@ export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allow
   );
 });
 
-AccountSelectorSheet.displayName = 'AccountSelectorSheet';
+ContactSelectorSheet.displayName = 'ContactSelectorSheet';

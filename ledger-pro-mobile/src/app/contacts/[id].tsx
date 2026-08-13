@@ -25,7 +25,7 @@ export default function ContactProfileScreen() {
 
   const ledgerEntries = useMemo(() => {
     if (!ledgerData) return [];
-    return ledgerData.pages.flatMap((page) => page.statement.data);
+    return ledgerData.pages.flatMap((page) => page.statement.statement.data);
   }, [ledgerData]);
 
   if (isLoadingSummary) {
@@ -50,7 +50,7 @@ export default function ContactProfileScreen() {
   const renderHeader = () => (
     <View className="bg-card px-4 pt-14 pb-4 border-b border-border">
       <View className="flex-row items-center justify-between mb-4">
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/people')} className="p-2 -ml-2">
           <ArrowLeft size={24} color="#f8fafc" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">Contact Profile</Text>
@@ -187,8 +187,11 @@ export default function ContactProfileScreen() {
       ) : (
         <FlatList
           data={ledgerEntries}
-          keyExtractor={(item) => item.transaction_id.toString()}
-          renderItem={renderLedgerEntry}
+          keyExtractor={(item, index) => item?.transaction_id ? item.transaction_id.toString() : index.toString()}
+          renderItem={({ item }) => {
+            if (!item) return null;
+            return renderLedgerEntry({ item });
+          }}
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) {
               fetchNextPage();

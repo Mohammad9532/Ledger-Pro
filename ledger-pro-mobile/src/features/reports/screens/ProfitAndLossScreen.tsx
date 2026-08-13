@@ -4,13 +4,14 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, AlertCircle } from 'lucide-react-native';
 import { useProfitAndLoss, ProfitAndLossRow } from '../api/reports';
 import { formatCurrency } from '../../../utils/format';
+import { DateRangeSelector } from '../../../components/DateRangeSelector';
+import { format, startOfMonth } from 'date-fns';
 
 export default function ProfitAndLossScreen() {
   const router = useRouter();
   
-  // Hardcoded date range for MVP. Can be replaced with a date picker later.
-  const [startDate] = useState('2026-07-01');
-  const [endDate] = useState('2026-07-31');
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const { data, isLoading, error } = useProfitAndLoss(startDate, endDate);
 
@@ -43,16 +44,18 @@ export default function ProfitAndLossScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border z-10">
-        <View className="flex-row items-center justify-between mb-2">
+        <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <ArrowLeft size={24} color="#f8fafc" />
           </TouchableOpacity>
           <Text className="text-white text-lg font-bold">Profit & Loss</Text>
           <View style={{ width: 40 }} />
         </View>
-        <View className="flex-row justify-center">
-          <Text className="text-muted text-sm">{startDate}  to  {endDate}</Text>
-        </View>
+        <DateRangeSelector 
+          startDate={startDate} 
+          endDate={endDate} 
+          onChange={(s, e) => { setStartDate(s); if(e) setEndDate(e); }} 
+        />
       </View>
 
       {/* List */}

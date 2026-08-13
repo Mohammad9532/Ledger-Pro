@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/api';
 
 export interface TransactionPayload {
@@ -25,6 +25,38 @@ export const useCreateTransaction = () => {
       // Invalidate relevant queries to fetch fresh data
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
+  });
+};
+
+export interface TransactionListResponse {
+  data: Array<{
+    id: number;
+    reference: string;
+    date: string;
+    type: string;
+    description: string;
+    amount: string;
+    entries: Array<{
+      account_id: number;
+      account_name: string;
+      debit: string;
+      credit: string;
+    }>;
+  }>;
+  current_page: number;
+  last_page: number;
+}
+
+export const useTransactions = (page: number = 1, searchQuery?: string) => {
+  return useQuery({
+    queryKey: ['transactions', page, searchQuery],
+    queryFn: async (): Promise<TransactionListResponse> => {
+      const response = await api.get('/transactions', {
+        params: { page, search: searchQuery }
+      });
+      return response.data;
+    }
   });
 };

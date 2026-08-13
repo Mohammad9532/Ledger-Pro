@@ -2,8 +2,9 @@ import React, { forwardRef, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Modal, Pressable, Platform, StyleSheet } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, RefreshCw, BookOpen, FileText, Plane } from 'lucide-react-native';
+import { ArrowDownLeft, ArrowUpRight, RefreshCw, CreditCard, ExternalLink } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type CreateTransactionSheetRef = BottomSheetModal;
 
@@ -32,16 +33,17 @@ export const CreateTransactionSheet = forwardRef<BottomSheetModal>((props, ref) 
   );
 
   const actions = [
-    { id: 'income', label: 'Income', icon: <ArrowDownLeft size={24} color="#10b981" />, route: '/transactions/new?type=income' },
+    { id: 'give_money', label: 'Give Money', icon: <ArrowUpRight size={24} color="#ef4444" />, route: '/transactions/new?type=give_money' },
+    { id: 'receive_money', label: 'Receive Money', icon: <ArrowDownLeft size={24} color="#10b981" />, route: '/transactions/new?type=receive_money' },
     { id: 'expense', label: 'Expense', icon: <ArrowUpRight size={24} color="#ef4444" />, route: '/transactions/new?type=expense' },
-    { id: 'transfer', label: 'Transfer', icon: <RefreshCw size={24} color="#3b82f6" />, route: '/transactions/new?type=transfer' },
-    { id: 'journal', label: 'Journal', icon: <BookOpen size={24} color="#8b5cf6" />, route: '/transactions/new?type=journal' },
-    { id: 'invoice', label: 'Invoice', icon: <FileText size={24} color="#f59e0b" />, route: '/(tabs)' }, // Future
-    { id: 'flight', label: 'Flight Ticket', icon: <Plane size={24} color="#06b6d4" />, route: '/(tabs)' }, // Future
+    { id: 'income', label: 'Income', icon: <ArrowDownLeft size={24} color="#10b981" />, route: '/transactions/new?type=income' },
+    { id: 'transfer', label: 'Account Transfer', icon: <RefreshCw size={24} color="#3b82f6" />, route: '/transactions/new?type=transfer' },
+    { id: 'cc_payment', label: 'CC Payment', icon: <CreditCard size={24} color="#8b5cf6" />, route: '/transactions/new?type=cc_payment' },
+    { id: 'third_party_transfer', label: 'Third Party Transfer', icon: <ExternalLink size={24} color="#f59e0b" />, route: '/transactions/new?type=third_party_transfer' },
   ];
 
   const content = (
-    <View className="flex-1 p-6">
+    <View className="p-6 pb-8">
       <Text className="text-white text-xl font-bold mb-6">Create New</Text>
       
       <View className="flex-row flex-wrap justify-between">
@@ -62,45 +64,35 @@ export const CreateTransactionSheet = forwardRef<BottomSheetModal>((props, ref) 
     </View>
   );
 
-  if (Platform.OS === 'web') {
-    // Basic Web Fallback
-    const [visible, setVisible] = React.useState(false);
+  // Use standard Modal for reliable cross-platform behavior
+  const [visible, setVisible] = React.useState(false);
+  const insets = useSafeAreaInsets();
 
-    // Expose a pseudo-ref for web to mimic bottom sheet API
-    React.useImperativeHandle(ref, () => ({
-      present: () => setVisible(true),
-      dismiss: () => setVisible(false),
-      close: () => setVisible(false),
-      collapse: () => {},
-      expand: () => {},
-      forceClose: () => setVisible(false),
-      snapToIndex: () => {},
-      snapToPosition: () => {}
-    } as any));
-
-    return (
-      <Modal visible={visible} transparent animationType="slide" onRequestClose={() => setVisible(false)}>
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setVisible(false)}>
-          <Pressable className="w-full bg-slate-900 rounded-t-3xl border-t border-slate-700 h-2/3" onPress={(e) => e.stopPropagation()}>
-            <View className="w-12 h-1.5 bg-slate-600 rounded-full self-center mt-4 mb-2" />
-            {content}
-          </Pressable>
-        </Pressable>
-      </Modal>
-    );
-  }
+  // Expose a pseudo-ref to mimic bottom sheet API
+  React.useImperativeHandle(ref, () => ({
+    present: () => setVisible(true),
+    dismiss: () => setVisible(false),
+    close: () => setVisible(false),
+    collapse: () => {},
+    expand: () => {},
+    forceClose: () => setVisible(false),
+    snapToIndex: () => {},
+    snapToPosition: () => {}
+  } as any));
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      index={0}
-      snapPoints={snapPoints}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: '#1e293b' }}
-      handleIndicatorStyle={{ backgroundColor: '#64748b' }}
-    >
-      {content}
-    </BottomSheetModal>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={() => setVisible(false)}>
+      <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setVisible(false)}>
+        <Pressable 
+          className="w-full bg-slate-900 rounded-t-3xl border-t border-slate-700" 
+          style={{ paddingBottom: Math.max(insets.bottom, 32) }}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View className="w-12 h-1.5 bg-slate-600 rounded-full self-center mt-4 mb-2" />
+          {content}
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 });
 

@@ -4,11 +4,13 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react-native';
 import { useBalanceSheet, BalanceSheetRow } from '../api/reports';
 import { formatCurrency, formatDate } from '../../../utils/format';
+import { DateRangeSelector } from '../../../components/DateRangeSelector';
+import { format } from 'date-fns';
 
 export default function BalanceSheetScreen() {
   const router = useRouter();
   
-  const [date] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const { data, isLoading, error } = useBalanceSheet(date);
 
@@ -44,16 +46,18 @@ export default function BalanceSheetScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border z-10">
-        <View className="flex-row items-center justify-between mb-2">
+        <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <ArrowLeft size={24} color="#f8fafc" />
           </TouchableOpacity>
           <Text className="text-white text-lg font-bold">Balance Sheet</Text>
           <View style={{ width: 40 }} />
         </View>
-        <View className="flex-row justify-center">
-          <Text className="text-muted text-sm">As of {formatDate(date)}</Text>
-        </View>
+        <DateRangeSelector 
+          startDate={date} 
+          onChange={(s) => setDate(s)} 
+          singleDateOnly={true} 
+        />
       </View>
 
       {/* List */}

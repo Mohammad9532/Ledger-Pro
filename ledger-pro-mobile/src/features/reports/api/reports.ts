@@ -140,7 +140,88 @@ export const useCashFlow = (startDate?: string, endDate?: string) => {
   });
 };
 
+export interface ExpenseSummaryCategory {
+  category_name: string | null;
+  count: number;
+  total: string;
+}
 
+export interface ExpenseSummaryResult {
+  categories: ExpenseSummaryCategory[];
+  grand_total: string;
+  period: { start: string; end: string };
+}
+
+export const useExpenseSummary = (startDate?: string, endDate?: string, includeBusiness = false) =>
+  useQuery({
+    queryKey: ['expense-summary', startDate, endDate, includeBusiness],
+    queryFn: async (): Promise<ExpenseSummaryResult> => {
+      const res = await api.get('/reports/expense-summary', {
+        params: { start_date: startDate, end_date: endDate, include_business: includeBusiness },
+      });
+      return res.data;
+    },
+  });
+
+export interface IncomeSummaryItem {
+  id: number;
+  name: string;
+  amount: string;
+}
+
+export interface IncomeSummaryResult {
+  items: IncomeSummaryItem[];
+  total: string;
+  period: { start: string; end: string };
+}
+
+export const useIncomeSummary = (startDate?: string, endDate?: string) =>
+  useQuery({
+    queryKey: ['income-summary', startDate, endDate],
+    queryFn: async (): Promise<IncomeSummaryResult> => {
+      const res = await api.get('/reports/income-summary', {
+        params: { start_date: startDate, end_date: endDate },
+      });
+      return res.data;
+    },
+  });
+
+export interface CreditCardSummaryItem {
+  id: number;
+  name: string;
+  balance: string;
+  outstanding: string;
+  credit_limit: string | null;
+  available_balance: string | null;
+  parent_account_id: number | null;
+  parent_name: string | null;
+}
+
+export const useCreditCardSummary = () =>
+  useQuery({
+    queryKey: ['credit-card-summary'],
+    queryFn: async (): Promise<CreditCardSummaryItem[]> => {
+      const res = await api.get('/reports/credit-card-summary');
+      return res.data;
+    },
+  });
+
+export interface AccountForCC {
+  id: number;
+  name: string;
+  type: string;
+}
+
+export const useAccountsForCC = () =>
+  useQuery({
+    queryKey: ['accounts-for-cc'],
+    queryFn: async (): Promise<AccountForCC[]> => {
+      const res = await api.get('/accounts');
+      return (res.data as AccountForCC[]).filter(
+        (a) => !['income', 'expense', 'system'].includes(a.type)
+      );
+    },
+  });
 export interface ReceivablePayableRow {
   id: number;
   name: string;

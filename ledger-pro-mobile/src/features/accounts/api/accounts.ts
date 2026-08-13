@@ -4,11 +4,17 @@ import api from '../../../api/api';
 export interface Account {
   id: number;
   name: string;
-  type: 'cash' | 'bank' | 'credit_card' | 'person' | 'expense' | 'income' | 'asset' | 'liability' | 'business' | 'equity';
+  type: 'cash' | 'bank' | 'credit_card' | 'person' | 'expense' | 'income' | 'asset' | 'liability' | 'business' | 'equity' | string;
   is_active: boolean;
+  is_system: boolean;
   computed_balance: string;
   opening_balance: string;
+  credit_limit?: string | null;
+  parent_account_id?: number | null;
 }
+
+// Types visible in the Accounts directory (matches web app filter)
+export const VISIBLE_ACCOUNT_TYPES = ['cash', 'bank', 'credit_card', 'asset', 'liability', 'business', 'equity'];
 
 export interface StatementEntry {
   transaction_id: number;

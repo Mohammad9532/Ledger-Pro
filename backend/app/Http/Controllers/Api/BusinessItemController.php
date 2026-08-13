@@ -230,77 +230,82 @@ class BusinessItemController extends Controller
 
         $item = BusinessItem::findOrFail($id);
 
-        if ($item->status !== 'sold') {
-            return response()->json(['error' => 'Only sold items can be cancelled.'], 422);
+        if (!in_array($item->status, ['sold', 'purchased'])) {
+            return response()->json(['error' => 'Only sold or purchased items can be cancelled.'], 422);
         }
 
         try {
             return DB::connection('tenant')->transaction(function () use ($validated, $item) {
-                $saleAmount        = (float) $item->sale_amount;
+                $isSold = $item->status === 'sold';
+
+                $saleAmount        = $isSold ? (float) $item->sale_amount : 0;
                 $purchaseCost      = (float) $item->purchase_cost;
                 $supplierRefund    = (float) $validated['supplier_refund_amount'];
-                $customerRefund    = (float) $validated['customer_refund_amount'];
+                
+                // If purchased, customer refund must logically be 0
+                $customerRefund    = $isSold ? (float) $validated['customer_refund_amount'] : 0;
+                
                 $supplierFee       = round($purchaseCost - $supplierRefund, 4); // what airline kept
-                $yourCharge        = round($saleAmount - $customerRefund, 4);   // what you kept
+                $yourCharge        = $isSold ? round($saleAmount - $customerRefund, 4) : 0;   // what you kept
 
-                if ($customerRefund > $saleAmount) {
+                if ($isSold && $customerRefund > $saleAmount) {
                     throw new InvalidArgumentException('Customer refund cannot exceed the original sale amount.');
                 }
                 if ($supplierRefund > $purchaseCost) {
                     throw new InvalidArgumentException('Supplier refund cannot exceed the original purchase cost.');
                 }
 
-                // Determine if the original sale was a credit sale (buyer hadn't paid cash)
-                $isCreditSale = is_null($item->saleTransaction?->entries
-                    ->where('account_id', '!=', $this->getOrCreateSalesAccount()->id)
-                    ->where('debit', '>', 0)
-                    ->where('account_id', function ($q) { })
-                    ->first());
-
-                // Reload sale transaction with entries to detect credit vs cash
-                $saleTxn = $item->saleTransaction()->with('entries.account')->first();
-                $buyerAccount = $item->buyer_contact_id
-                    ? \App\Models\Contact::with('account')->find($item->buyer_contact_id)?->account
-                    : null;
-
+                $entries = [];
                 $salesAccountId  = $this->getOrCreateSalesAccount()->id;
                 $cogsAccountId   = $this->getOrCreateCogsAccount()->id;
                 $inventoryId     = $this->getOrCreateBusinessAccount()->id;
                 $cancChargeId    = $this->getOrCreateCancellationChargeAccount()->id;
                 $supplierFeeId   = $this->getOrCreateSupplierFeeAccount()->id;
 
-                // Detect whether original sale was credit (buyer account was debited)
-                $wasCredit = false;
-                if ($saleTxn && $buyerAccount) {
-                    $wasCredit = $saleTxn->entries
-                        ->where('account_id', $buyerAccount->id)
-                        ->where('debit', '>', 0)
-                        ->isNotEmpty();
+                if ($isSold) {
+                    // Reverse the sale
+                    // Determine if the original sale was a credit sale (buyer hadn't paid cash)
+                    $saleTxn = $item->saleTransaction()->with('entries.account')->first();
+                    $buyerAccount = $item->buyer_contact_id
+                        ? \App\Models\Contact::with('account')->find($item->buyer_contact_id)?->account
+                        : null;
+
+                    $wasCredit = false;
+                    if ($saleTxn && $buyerAccount) {
+                        $wasCredit = $saleTxn->entries
+                            ->where('account_id', $buyerAccount->id)
+                            ->where('debit', '>', 0)
+                            ->isNotEmpty();
+                    }
+
+                    // 1. Reverse the sale: Debit Sales Revenue
+                    $entries[] = ['account_id' => $salesAccountId, 'debit' => $saleAmount, 'credit' => 0];
+
+                    // 2. Reverse COGS: Credit COGS
+                    $entries[] = ['account_id' => $cogsAccountId, 'debit' => 0, 'credit' => $purchaseCost];
+
+                    // 3. Customer refund: credit cash/bank OR reduce buyer's receivable
+                    if ($customerRefund > 0) {
+                        if ($wasCredit && $buyerAccount) {
+                            $entries[] = ['account_id' => $buyerAccount->id, 'debit' => 0, 'credit' => $customerRefund];
+                        } else {
+                            if (empty($validated['refund_account_id'])) {
+                                throw new InvalidArgumentException('A refund account is required to pay the customer refund.');
+                            }
+                            $entries[] = ['account_id' => $validated['refund_account_id'], 'debit' => 0, 'credit' => $customerRefund];
+                        }
+                    }
+
+                    // 4. Your cancellation charge as income
+                    if ($yourCharge > 0) {
+                        $entries[] = ['account_id' => $cancChargeId, 'debit' => 0, 'credit' => $yourCharge];
+                    }
+                } else {
+                    // Item was purchased but NOT sold. We need to clear inventory.
+                    $entries[] = ['account_id' => $inventoryId, 'debit' => 0, 'credit' => $purchaseCost];
                 }
 
-                /*
-                 * Build double-entry cancellation journal:
-                 *
-                 * Dr  Sales Revenue          sale_amount        (reverse the sale)
-                 * Dr  Supplier Cancellation Fee  supplier_fee   (airline penalty, your expense)
-                 * Cr  Business Inventory     purchase_cost      (clear inventory cost)
-                 * Cr  Cash/Bank OR Buyer A/c customer_refund   (refund paid out or balance reduced)
-                 * Cr  Cancellation Charges   your_charge        (your income, only if > 0)
-                 * Dr  Cash/Bank              supplier_refund    (money received from airline)
-                 *
-                 * Debit total  = sale_amount + supplier_fee + supplier_refund
-                 * Credit total = purchase_cost + customer_refund + your_charge
-                 *
-                 * Since: purchase_cost = supplier_refund + supplier_fee
-                 *   and: sale_amount   = customer_refund  + your_charge
-                 * => Both sides balance automatically ✅
-                 */
-                $entries = [];
-
-                // 1. Reverse the sale: Debit Sales Revenue
-                $entries[] = ['account_id' => $salesAccountId, 'debit' => $saleAmount, 'credit' => 0];
-
-                // 2. Airline refund received into a bank/cash account
+                // Airline refund received into a bank/cash account
                 if ($supplierRefund > 0) {
                     if (empty($validated['refund_account_id'])) {
                         throw new InvalidArgumentException('A refund account is required when supplier refund amount is greater than 0.');
@@ -308,38 +313,18 @@ class BusinessItemController extends Controller
                     $entries[] = ['account_id' => $validated['refund_account_id'], 'debit' => $supplierRefund, 'credit' => 0];
                 }
 
-                // 3. Supplier fee (airline's penalty) — your expense
+                // Supplier fee (airline's penalty) — your expense
                 if ($supplierFee > 0) {
                     $entries[] = ['account_id' => $supplierFeeId, 'debit' => $supplierFee, 'credit' => 0];
                 }
 
-                // 4. Clear business inventory cost
-                $entries[] = ['account_id' => $inventoryId, 'debit' => 0, 'credit' => $purchaseCost];
-
-                // 5. Customer refund: credit cash/bank OR reduce buyer's receivable
-                if ($customerRefund > 0) {
-                    if ($wasCredit && $buyerAccount) {
-                        // Credit sale: reduce buyer's receivable (credit their account)
-                        $entries[] = ['account_id' => $buyerAccount->id, 'debit' => 0, 'credit' => $customerRefund];
-                    } else {
-                        // Cash/bank sale: pay money back from refund account
-                        if (empty($validated['refund_account_id'])) {
-                            throw new InvalidArgumentException('A refund account is required to pay the customer refund.');
-                        }
-                        $entries[] = ['account_id' => $validated['refund_account_id'], 'debit' => 0, 'credit' => $customerRefund];
-                    }
-                }
-
-                // 6. Your cancellation charge as income (only if you kept something)
-                if ($yourCharge > 0) {
-                    $entries[] = ['account_id' => $cancChargeId, 'debit' => 0, 'credit' => $yourCharge];
-                }
-
                 // Create the cancellation transaction
+                $txnAmount = $isSold ? $saleAmount : $purchaseCost;
+                
                 $txn = $this->transactionService->createTransaction([
                     'type'        => 'cancellation',
                     'date'        => $validated['date'],
-                    'amount'      => $saleAmount,
+                    'amount'      => $txnAmount,
                     'description' => 'Cancellation: ' . $item->description,
                     'business_item_id' => $item->id,
                 ], $entries);

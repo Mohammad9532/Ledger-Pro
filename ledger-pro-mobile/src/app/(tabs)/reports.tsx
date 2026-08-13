@@ -1,118 +1,138 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'react-native-expo-router'; // Wait, let's just use expo-router
 import { router } from 'expo-router';
-import { BarChart2, PieChart, TrendingUp, TrendingDown, BookOpen, Layers, Settings, FileText } from 'lucide-react-native';
+import { BarChart2, TrendingUp, TrendingDown, BookOpen, Layers, FileText, ChevronRight, Receipt, CreditCard } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const REPORT_ITEMS = [
   {
     id: 'trial-balance',
     title: 'Trial Balance',
     icon: BarChart2,
-    active: true,
     route: '/reports/trial-balance',
-    description: 'Verify total debits and credits.',
+    description: 'Verify total debits and credits',
+    colors: ['#3b82f6', '#1d4ed8'] as [string, string],
   },
   {
     id: 'profit-loss',
     title: 'Profit & Loss',
     icon: TrendingUp,
-    active: true,
     route: '/reports/profit-loss',
-    description: 'Income, expenses, and net profit.',
+    description: 'Income, expenses, and net profit',
+    colors: ['#10b981', '#059669'] as [string, string],
   },
   {
     id: 'balance-sheet',
     title: 'Balance Sheet',
     icon: Layers,
-    active: true,
     route: '/reports/balance-sheet',
-    description: 'Assets, liabilities, and equity.',
+    description: 'Assets, liabilities, and equity',
+    colors: ['#8b5cf6', '#6d28d9'] as [string, string],
   },
   {
     id: 'cash-flow',
     title: 'Cash Flow',
     icon: TrendingDown,
-    active: true,
     route: '/reports/cash-flow',
-    description: 'Inflow and outflow of cash.',
+    description: 'Inflow and outflow of cash',
+    colors: ['#06b6d4', '#0891b2'] as [string, string],
   },
   {
     id: 'receivables',
     title: 'Receivables',
     icon: FileText,
-    active: true,
     route: '/reports/receivables',
-    description: 'Money owed to the business.',
+    description: 'Money owed to the business',
+    colors: ['#10b981', '#059669'] as [string, string],
   },
   {
     id: 'payables',
     title: 'Payables',
     icon: FileText,
-    active: true,
     route: '/reports/payables',
-    description: 'Money the business owes.',
+    description: 'Money the business owes',
+    colors: ['#ef4444', '#dc2626'] as [string, string],
+  },
+  {
+    id: 'expense-summary',
+    title: 'Expense Summary',
+    icon: Receipt,
+    route: '/reports/expense-summary',
+    description: 'Category-wise expense breakdown',
+    colors: ['#f59e0b', '#d97706'] as [string, string],
+  },
+  {
+    id: 'income-summary',
+    title: 'Income Summary',
+    icon: TrendingUp,
+    route: '/reports/income-summary',
+    description: 'Income source analysis',
+    colors: ['#10b981', '#059669'] as [string, string],
+  },
+  {
+    id: 'credit-cards',
+    title: 'Credit Cards',
+    icon: CreditCard,
+    route: '/reports/credit-cards',
+    description: 'Outstanding balances & pay bills',
+    colors: ['#ec4899', '#be185d'] as [string, string],
   },
   {
     id: 'general-ledger',
     title: 'General Ledger',
     icon: BookOpen,
-    active: false,
-    description: 'Detailed transaction history.',
+    route: '/transactions',
+    description: 'Detailed transaction history',
+    colors: ['#64748b', '#475569'] as [string, string],
   },
 ];
 
 export default function ReportsScreen() {
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: '#0a0f1a' }}>
       {/* Header */}
-      <View className="bg-card pt-14 pb-4 px-4 border-b border-border">
-        <Text className="text-white text-2xl font-bold">Financial Reports</Text>
+      <View style={{ backgroundColor: '#0f172a', paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#1e293b' }}>
+        <Text style={{ color: '#f8fafc', fontSize: 26, fontWeight: '800' }}>Financial Reports</Text>
+        <Text style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>View your business performance</Text>
       </View>
 
-      <ScrollView className="flex-1 px-4 py-4" contentContainerStyle={{ paddingBottom: 100 }}>
-        
-        {/* Active Reports */}
-        <Text className="text-white text-lg font-bold mb-4 mt-2">Available Reports</Text>
-        <View className="flex-row flex-wrap justify-between">
-          {REPORT_ITEMS.filter(r => r.active).map(report => {
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+        <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 8 }}>
+          Available Reports
+        </Text>
+
+        <View style={{ backgroundColor: '#1e293b', borderRadius: 20, borderWidth: 1, borderColor: '#334155', overflow: 'hidden' }}>
+          {REPORT_ITEMS.map((report, index, arr) => {
             const Icon = report.icon;
+            const isLast = index === arr.length - 1;
             return (
               <TouchableOpacity
                 key={report.id}
-                className="bg-card w-[48%] rounded-2xl p-4 mb-4 border border-border"
                 onPress={() => router.push(report.route as any)}
+                activeOpacity={0.7}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 16,
+                  borderBottomWidth: isLast ? 0 : 1,
+                  borderBottomColor: '#0f172a',
+                }}
               >
-                <View className="bg-primary-500/20 w-12 h-12 rounded-xl items-center justify-center mb-3">
-                  <Icon size={24} color="#f97316" />
+                <LinearGradient
+                  colors={report.colors}
+                  style={{ width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}
+                >
+                  <Icon size={22} color="#fff" />
+                </LinearGradient>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#f8fafc', fontWeight: '700', fontSize: 15 }}>{report.title}</Text>
+                  <Text style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>{report.description}</Text>
                 </View>
-                <Text className="text-white font-bold mb-1">{report.title}</Text>
-                <Text className="text-muted text-xs">{report.description}</Text>
+                <ChevronRight size={18} color="#334155" />
               </TouchableOpacity>
             );
           })}
         </View>
-
-        {/* Coming Soon */}
-        <Text className="text-muted text-lg font-bold mb-4 mt-6">Coming Soon</Text>
-        <View className="flex-row flex-wrap justify-between">
-          {REPORT_ITEMS.filter(r => !r.active).map(report => {
-            const Icon = report.icon;
-            return (
-              <View
-                key={report.id}
-                className="bg-card/50 w-[48%] rounded-2xl p-4 mb-4 border border-border/50 opacity-60"
-              >
-                <View className="bg-slate-800 w-12 h-12 rounded-xl items-center justify-center mb-3">
-                  <Icon size={24} color="#94a3b8" />
-                </View>
-                <Text className="text-white font-bold mb-1">{report.title}</Text>
-                <Text className="text-muted text-xs">{report.description}</Text>
-              </View>
-            );
-          })}
-        </View>
-
       </ScrollView>
     </View>
   );

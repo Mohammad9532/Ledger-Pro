@@ -35,7 +35,7 @@ export default function ForgotPasswordScreen() {
       Alert.alert(
         'Email Sent',
         'If an account with that email exists, we have sent a password reset link.',
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ text: 'OK', onPress: () => router.canGoBack() ? router.back() : router.replace('/login') }]
       );
     } catch (error: any) {
       Alert.alert(
@@ -91,7 +91,7 @@ export default function ForgotPasswordScreen() {
               title="Back to Sign In"
               variant="ghost"
               size="sm"
-              onPress={() => router.back()}
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/login')}
             />
           </View>
         </AppCard>

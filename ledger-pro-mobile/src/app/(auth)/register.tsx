@@ -144,7 +144,7 @@ export default function RegisterScreen() {
               title="Already have an account? Sign In"
               variant="ghost"
               size="sm"
-              onPress={() => router.back()}
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/login')}
             />
           </View>
         </AppCard>
