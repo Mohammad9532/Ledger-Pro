@@ -1,14 +1,16 @@
 {
   "expo": {
-    "name": "ledger-pro-mobile",
-    "slug": "ledger-pro-mobile",
+    "name": "Ledger Pro",
+    "slug": "ledger-pro",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ledgerpromobile",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.beingreal.ledgerpro",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +20,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.ledgerpromobile"
+      "package": "com.beingreal.ledgerpro",
+      "versionCode": 1
     },
     "web": {
       "output": "static",
@@ -40,6 +43,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "49a4e584-dddd-47fc-9464-a0ccc5ca8aa3"
+      }
     }
   }
 }

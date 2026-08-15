@@ -10,15 +10,17 @@
         "EXPO_PUBLIC_ENVIRONMENT": "development"
       }
     },
-    "preview": {
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_ENVIRONMENT": "staging"
-      }
-    },
+   "preview": {
+  "distribution": "internal",
+  "env": {
+    "EXPO_PUBLIC_ENVIRONMENT": "production",
+    "EXPO_PUBLIC_API_URL": "https://accounts.beingreal.in/api"
+  }
+},
     "production": {
       "env": {
-        "EXPO_PUBLIC_ENVIRONMENT": "production"
+        "EXPO_PUBLIC_ENVIRONMENT": "production",
+        "EXPO_PUBLIC_API_URL": "https://accounts.beingreal.in/api"
       }
     }
   },
