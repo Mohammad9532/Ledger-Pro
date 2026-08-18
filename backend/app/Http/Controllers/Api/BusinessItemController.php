@@ -420,6 +420,39 @@ class BusinessItemController extends Controller
         
         $item->update(['metadata' => $metadata]);
 
+        // Normalize segments for backward compatibility
+        if (empty($metadata['segments']) || !is_array($metadata['segments'])) {
+            // Legacy format: build a single segment from flight + journey
+            $seg = [];
+            if (!empty($metadata['flight'])) {
+                $seg = array_merge($seg, [
+                    'airline' => $metadata['flight']['airline'] ?? '',
+                    'flight_number' => $metadata['flight']['flight_number'] ?? '',
+                    'pnr' => $metadata['flight']['pnr'] ?? '',
+                    'ticket_number' => $metadata['flight']['ticket_number'] ?? '',
+                    'class' => $metadata['flight']['class'] ?? 'Economy',
+                    'seat' => $metadata['flight']['seat'] ?? '',
+                    'baggage' => $metadata['flight']['baggage'] ?? '30 Kg',
+                    'cabin_baggage' => $metadata['flight']['cabin_baggage'] ?? '7 Kg',
+                ]);
+            }
+            if (!empty($metadata['journey'])) {
+                $seg = array_merge($seg, [
+                    'from' => $metadata['journey']['from'] ?? '',
+                    'to' => $metadata['journey']['to'] ?? '',
+                    'departure' => $metadata['journey']['departure'] ?? '',
+                    'arrival' => $metadata['journey']['arrival'] ?? '',
+                    'terminal' => $metadata['journey']['terminal'] ?? '',
+                    'gate' => $metadata['journey']['gate'] ?? '',
+                ]);
+            }
+            $metadata['segments'] = [array_merge([
+                'airline' => '', 'flight_number' => '', 'pnr' => '', 'ticket_number' => '',
+                'class' => 'Economy', 'seat' => '', 'baggage' => '30 Kg', 'cabin_baggage' => '7 Kg',
+                'from' => '', 'to' => '', 'departure' => '', 'arrival' => '', 'terminal' => '', 'gate' => ''
+            ], $seg)];
+        }
+
         // Generate PDF
         $company = auth()->user()->company;
         $profile = \App\Models\Tenant\CompanyProfile::first();
@@ -430,6 +463,8 @@ class BusinessItemController extends Controller
         }
 
         if ($validated['document_type'] === 'flight') {
+            $firstSegPnr = $metadata['segments'][0]['pnr'] ?? 'N/A';
+            
             $pdf = Pdf::loadView('tickets.flight', [
                 'company' => $company,
                 'profile' => $profile,
@@ -437,13 +472,14 @@ class BusinessItemController extends Controller
                 'data' => $metadata,
                 'companyName' => $profile->company_name ?? ($company->company_name ?? 'Company'),
                 'title' => 'E-Ticket Confirmation',
-                'period' => 'Booking Ref: ' . ($metadata['flight']['pnr'] ?? 'N/A'),
+                'period' => 'Booking Ref: ' . ($firstSegPnr),
                 'generatedAt' => now()->format('Y-m-d H:i:s'),
                 'currency' => $profile->currency_code ?? 'INR',
                 'logoPath' => $logoPath,
             ]);
             
-            $passengerName = $metadata['passenger']['first_name'] ?? 'Ticket';
+            $passengers = $metadata['passengers'] ?? [];
+            $passengerName = !empty($passengers) ? ($passengers[0]['first_name'] ?? 'Ticket') : 'Ticket';
             $filename = 'Flight_Itinerary_' . Str::slug($passengerName) . '.pdf';
             
             return $pdf->download($filename);

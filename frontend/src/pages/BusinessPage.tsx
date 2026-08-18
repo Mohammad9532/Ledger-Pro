@@ -34,11 +34,15 @@ export default function BusinessPage() {
   const [saleForm, setSaleForm] = useState({ sale_amount: '', buyer_contact_id: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', is_credit: false, reference_number: '' });
   const [cancelForm, setCancelForm] = useState({ date: new Date().toISOString().slice(0, 10), supplier_refund_amount: '', customer_refund_amount: '', refund_account_id: '', notes: '' });
 
+  const defaultSegment = () => ({ airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '30 Kg', cabin_baggage: '7 Kg', from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', same_as_first: false });
+
   const [docForm, setDocForm] = useState({
     document_type: 'flight',
     passengers: [{ title: 'Mr', first_name: '', last_name: '', passport: '' }],
-    flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '' },
-    journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10) }
+    segments: [defaultSegment()] as any[],
+    status: 'Confirmed',
+    booking_date: new Date().toISOString().slice(0, 10),
+    fare: ''
   });
   const [generatingDoc, setGeneratingDoc] = useState(false);
 
@@ -120,19 +124,34 @@ export default function BusinessPage() {
   const handleOpenDocModal = (item: any) => {
     setSelectedItem(item);
     if (item.metadata && item.metadata.document_type === 'flight') {
-      const passengers = item.metadata.passengers || (item.metadata.passenger ? [item.metadata.passenger] : [{ title: 'Mr', first_name: '', last_name: '', passport: '' }]);
+      const m = item.metadata;
+      const passengers = m.passengers || (m.passenger ? [m.passenger] : [{ title: 'Mr', first_name: '', last_name: '', passport: '' }]);
+      let segments: any[];
+      if (m.segments && Array.isArray(m.segments) && m.segments.length > 0) {
+        segments = m.segments.map((s: any) => ({ ...defaultSegment(), ...s }));
+      } else {
+        // Legacy: convert single flight+journey into one segment
+        const seg = defaultSegment();
+        if (m.flight) { Object.assign(seg, { airline: m.flight.airline || '', flight_number: m.flight.flight_number || '', pnr: m.flight.pnr || '', ticket_number: m.flight.ticket_number || '', class: m.flight.class || 'Economy', seat: m.flight.seat || '', baggage: m.flight.baggage || '30 Kg', cabin_baggage: m.flight.cabin_baggage || '7 Kg' }); }
+        if (m.journey) { Object.assign(seg, { from: m.journey.from || '', to: m.journey.to || '', departure: m.journey.departure || '', arrival: m.journey.arrival || '', terminal: m.journey.terminal || '', gate: m.journey.gate || '' }); }
+        segments = [seg];
+      }
       setDocForm({
         document_type: 'flight',
-        passengers: passengers,
-        flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '', ...item.metadata.flight },
-        journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10), ...item.metadata.journey }
+        passengers,
+        segments,
+        status: m.status || m.flight?.status || 'Confirmed',
+        booking_date: m.booking_date || m.journey?.booking_date || new Date().toISOString().slice(0, 10),
+        fare: m.fare || m.flight?.fare || ''
       });
     } else {
       setDocForm({
         document_type: 'flight',
         passengers: [{ title: 'Mr', first_name: '', last_name: '', passport: '' }],
-        flight: { airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '', cabin_baggage: '', status: 'Confirmed', booking_agent: '', fare: '' },
-        journey: { from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', booking_date: new Date().toISOString().slice(0, 10) }
+        segments: [defaultSegment()],
+        status: 'Confirmed',
+        booking_date: new Date().toISOString().slice(0, 10),
+        fare: ''
       });
     }
     setShowDocModal(true);
@@ -509,10 +528,10 @@ export default function BusinessPage() {
                     </Button>
                   </div>
                   
-                  {docForm.passengers.map((pax, idx) => (
+                  {docForm.passengers.map((pax: any, idx: number) => (
                     <div key={idx} className="relative p-3 border border-border rounded bg-muted/20">
                       {docForm.passengers.length > 1 && (
-                        <button type="button" className="absolute top-2 right-2 text-red-500 text-xs font-bold" onClick={() => setDocForm({...docForm, passengers: docForm.passengers.filter((_, i) => i !== idx)})}>
+                        <button type="button" className="absolute top-2 right-2 text-red-500 text-xs font-bold" onClick={() => setDocForm({...docForm, passengers: docForm.passengers.filter((_: any, i: number) => i !== idx)})}>
                           ✕ Remove
                         </button>
                       )}
@@ -527,68 +546,111 @@ export default function BusinessPage() {
                   ))}
                 </div>
 
+                {/* Booking Info (shared) */}
                 <div className="border border-border p-4 rounded-lg space-y-4">
-                  <h3 className="font-semibold border-b pb-2">Flight Details</h3>
+                  <h3 className="font-semibold border-b pb-2">Booking Info</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Airline</Label>
-                      <Autocomplete
-                        value={docForm.flight.airline}
-                        onChange={(val) => setDocForm({...docForm, flight: {...docForm.flight, airline: val}})}
-                        placeholder="e.g. Air India (AI)"
-                        options={AIRLINES.map(a => ({
-                          label: a.name,
-                          value: `${a.name} (${a.iata})`,
-                          logoUrl: `https://pics.avs.io/150/40/${a.iata}.png`,
-                          subLabel: `IATA: ${a.iata}`
-                        }))}
-                      />
-                    </div>
-                    <div className="space-y-2"><Label>Flight No.</Label><Input value={docForm.flight.flight_number} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, flight_number: e.target.value}})} placeholder="e.g. EK501" /></div>
-                    <div className="space-y-2"><Label>PNR</Label><Input value={docForm.flight.pnr} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, pnr: e.target.value}})} placeholder="Booking Ref" /></div>
-                    <div className="space-y-2"><Label>Ticket No.</Label><Input value={docForm.flight.ticket_number} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, ticket_number: e.target.value}})} /></div>
-                    <div className="space-y-2"><Label>Class</Label><Input value={docForm.flight.class} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, class: e.target.value}})} placeholder="Economy" /></div>
-                    <div className="space-y-2"><Label>Seat</Label><Input value={docForm.flight.seat} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, seat: e.target.value}})} /></div>
-                    <div className="space-y-2"><Label>Status</Label><Input value={docForm.flight.status} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, status: e.target.value}})} placeholder="Confirmed" /></div>
-                    <div className="space-y-2"><Label>Check-in Bag</Label><Input value={docForm.flight.baggage} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, baggage: e.target.value}})} placeholder="e.g. 30 Kg" /></div>
-                    <div className="space-y-2"><Label>Cabin Bag</Label><Input value={docForm.flight.cabin_baggage} onChange={e => setDocForm({...docForm, flight: {...docForm.flight, cabin_baggage: e.target.value}})} placeholder="e.g. 7 Kg" /></div>
+                    <div className="space-y-2"><Label>Status</Label><Input value={docForm.status} onChange={e => setDocForm({...docForm, status: e.target.value})} placeholder="Confirmed" /></div>
+                    <div className="space-y-2"><Label>Booking Date</Label><Input type="date" value={docForm.booking_date} onChange={e => setDocForm({...docForm, booking_date: e.target.value})} /></div>
+                    <div className="space-y-2"><Label>Fare (Optional)</Label><Input value={docForm.fare} onChange={e => setDocForm({...docForm, fare: e.target.value})} placeholder="e.g. 12500" /></div>
                   </div>
                 </div>
 
+                {/* Flight Segments */}
                 <div className="border border-border p-4 rounded-lg space-y-4">
-                  <h3 className="font-semibold border-b pb-2">Journey Details</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>From</Label>
-                      <Autocomplete
-                        value={docForm.journey.from}
-                        onChange={(val) => setDocForm({...docForm, journey: {...docForm.journey, from: val}})}
-                        placeholder="Origin Airport"
-                        options={AIRPORTS.map(a => ({
-                          label: `${a.name} (${a.iata})`,
-                          value: `${a.name} (${a.iata})`,
-                          subLabel: a.country
-                        }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>To</Label>
-                      <Autocomplete
-                        value={docForm.journey.to}
-                        onChange={(val) => setDocForm({...docForm, journey: {...docForm.journey, to: val}})}
-                        placeholder="Destination Airport"
-                        options={AIRPORTS.map(a => ({
-                          label: `${a.name} (${a.iata})`,
-                          value: `${a.name} (${a.iata})`,
-                          subLabel: a.country
-                        }))}
-                      />
-                    </div>
-                    <div className="space-y-2"><Label>Departure Time</Label><Input type="datetime-local" value={docForm.journey.departure} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, departure: e.target.value}})} /></div>
-                    <div className="space-y-2"><Label>Arrival Time</Label><Input type="datetime-local" value={docForm.journey.arrival} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, arrival: e.target.value}})} /></div>
-                    <div className="space-y-2"><Label>Terminal</Label><Input value={docForm.journey.terminal} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, terminal: e.target.value}})} /></div>
-                    <div className="space-y-2"><Label>Gate</Label><Input value={docForm.journey.gate} onChange={e => setDocForm({...docForm, journey: {...docForm.journey, gate: e.target.value}})} /></div>
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <h3 className="font-semibold">Flight Segments</h3>
+                    <Button variant="outline" size="sm" onClick={() => setDocForm({...docForm, segments: [...docForm.segments, defaultSegment()]})}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Segment (Via)
+                    </Button>
                   </div>
+
+                  {docForm.segments.map((seg: any, sIdx: number) => {
+                    const updateSeg = (field: string, val: any) => {
+                      const newSegs = [...docForm.segments];
+                      newSegs[sIdx] = { ...newSegs[sIdx], [field]: val };
+                      setDocForm({...docForm, segments: newSegs});
+                    };
+                    const isFirst = sIdx === 0;
+                    const firstSeg = docForm.segments[0];
+                    const isSame = seg.same_as_first && !isFirst;
+
+                    return (
+                      <div key={sIdx} className="relative p-4 border border-border rounded-lg bg-muted/10 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-sm font-bold text-primary">SEGMENT {sIdx + 1}{seg.from && seg.to ? `: ${seg.from.match(/\(([^)]+)\)/)?.[1] || seg.from} → ${seg.to.match(/\(([^)]+)\)/)?.[1] || seg.to}` : ''}</h4>
+                          <div className="flex items-center gap-2">
+                            {!isFirst && (
+                              <label className="flex items-center gap-1.5 text-xs cursor-pointer bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
+                                <input type="checkbox" checked={!!seg.same_as_first} onChange={e => {
+                                  const newSegs = [...docForm.segments];
+                                  const checked = e.target.checked;
+                                  newSegs[sIdx] = checked
+                                    ? { ...newSegs[sIdx], same_as_first: true, airline: firstSeg.airline, pnr: firstSeg.pnr, ticket_number: firstSeg.ticket_number, class: firstSeg.class, baggage: firstSeg.baggage, cabin_baggage: firstSeg.cabin_baggage }
+                                    : { ...newSegs[sIdx], same_as_first: false };
+                                  setDocForm({...docForm, segments: newSegs});
+                                }} className="rounded" />
+                                <span className="text-blue-600 dark:text-blue-400 font-medium">Same as Seg 1</span>
+                              </label>
+                            )}
+                            {docForm.segments.length > 1 && (
+                              <button type="button" className="text-red-500 text-xs font-bold px-2 py-1 border border-red-500/20 rounded bg-red-500/10" onClick={() => setDocForm({...docForm, segments: docForm.segments.filter((_: any, i: number) => i !== sIdx)})}>
+                                ✕ Remove
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          <div className="space-y-2">
+                            <Label>Airline</Label>
+                            <Autocomplete
+                              value={isSame ? firstSeg.airline : seg.airline}
+                              onChange={(val) => updateSeg('airline', val)}
+                              placeholder="e.g. Air India (AI)"
+                              options={AIRLINES.map(a => ({ label: a.name, value: `${a.name} (${a.iata})`, logoUrl: `https://pics.avs.io/150/40/${a.iata}.png`, subLabel: `IATA: ${a.iata}` }))}
+                            />
+                          </div>
+                          <div className="space-y-2"><Label>Flight No.</Label><Input value={seg.flight_number} onChange={e => updateSeg('flight_number', e.target.value)} placeholder="e.g. EK501" /></div>
+                          <div className="space-y-2"><Label>PNR</Label><Input value={isSame ? firstSeg.pnr : seg.pnr} onChange={e => updateSeg('pnr', e.target.value)} placeholder="Booking Ref" disabled={isSame} /></div>
+                          <div className="space-y-2"><Label>Ticket No.</Label><Input value={isSame ? firstSeg.ticket_number : seg.ticket_number} onChange={e => updateSeg('ticket_number', e.target.value)} disabled={isSame} /></div>
+                          <div className="space-y-2"><Label>Class</Label><Input value={isSame ? firstSeg.class : seg.class} onChange={e => updateSeg('class', e.target.value)} placeholder="Economy" disabled={isSame} /></div>
+                          <div className="space-y-2"><Label>Seat</Label><Input value={seg.seat} onChange={e => updateSeg('seat', e.target.value)} /></div>
+                          <div className="space-y-2"><Label>Check-in Bag</Label><Input value={isSame ? firstSeg.baggage : seg.baggage} onChange={e => updateSeg('baggage', e.target.value)} placeholder="30 Kg" disabled={isSame} /></div>
+                          <div className="space-y-2"><Label>Cabin Bag</Label><Input value={isSame ? firstSeg.cabin_baggage : seg.cabin_baggage} onChange={e => updateSeg('cabin_baggage', e.target.value)} placeholder="7 Kg" disabled={isSame} /></div>
+                        </div>
+
+                        {/* Journey for this segment */}
+                        <div className="border-t border-border pt-3 mt-3">
+                          <h5 className="text-xs font-bold text-muted-foreground mb-3">ROUTE & SCHEDULE</h5>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>From</Label>
+                              <Autocomplete
+                                value={seg.from}
+                                onChange={(val) => updateSeg('from', val)}
+                                placeholder="Origin Airport"
+                                options={AIRPORTS.map(a => ({ label: `${a.name} (${a.iata})`, value: `${a.name} (${a.iata})`, subLabel: a.country }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>To</Label>
+                              <Autocomplete
+                                value={seg.to}
+                                onChange={(val) => updateSeg('to', val)}
+                                placeholder="Destination Airport"
+                                options={AIRPORTS.map(a => ({ label: `${a.name} (${a.iata})`, value: `${a.name} (${a.iata})`, subLabel: a.country }))}
+                              />
+                            </div>
+                            <div className="space-y-2"><Label>Departure</Label><Input type="datetime-local" value={seg.departure} onChange={e => updateSeg('departure', e.target.value)} /></div>
+                            <div className="space-y-2"><Label>Arrival</Label><Input type="datetime-local" value={seg.arrival} onChange={e => updateSeg('arrival', e.target.value)} /></div>
+                            <div className="space-y-2"><Label>Terminal</Label><Input value={seg.terminal} onChange={e => updateSeg('terminal', e.target.value)} /></div>
+                            <div className="space-y-2"><Label>Gate</Label><Input value={seg.gate} onChange={e => updateSeg('gate', e.target.value)} /></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             )}

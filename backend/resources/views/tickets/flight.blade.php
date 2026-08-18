@@ -20,7 +20,7 @@
         .company-name { font-size: 16px; font-weight: bold; color: #000; margin-bottom: 5px; }
         .company-address { font-size: 11px; color: #555; line-height: 1.3; }
         
-        .pnr-text { font-size: 16px; font-weight: bold; color: #1e3a8a; /* dark blue */ text-align: right; margin-bottom: 25px; }
+        .pnr-text { font-size: 16px; font-weight: bold; color: #1e3a8a; text-align: right; margin-bottom: 25px; }
         .booking-details { text-align: right; font-size: 11px; color: #555; }
         
         .divider-thick { border-top: 4px solid #1e40af; margin: 15px 0; }
@@ -62,6 +62,16 @@
             );
             width: 150px;
         }
+
+        .segment-label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #1e40af;
+            background: #eff6ff;
+            padding: 4px 10px;
+            margin: 15px 0 5px 0;
+            border-left: 3px solid #1e40af;
+        }
     </style>
 </head>
 <body>
@@ -75,37 +85,27 @@
             return strtoupper(substr($str, 0, 3));
         }
         
-        $fromCode = extractCode($data['journey']['from'] ?? 'ORG');
-        $toCode = extractCode($data['journey']['to'] ?? 'DST');
+        // Segments are always available (normalized by controller)
+        $segments = $data['segments'] ?? [];
         
-        $airlineStr = $data['flight']['airline'] ?? '';
-        $airlineCode = '';
-        if (preg_match('/\((.*?)\)/', $airlineStr, $matches)) {
-            $airlineCode = strtoupper(trim($matches[1]));
+        // Build full route string e.g. DEL → DXB → LHR
+        $routeCodes = [];
+        foreach ($segments as $si => $seg) {
+            if ($si === 0 && !empty($seg['from'])) {
+                $routeCodes[] = extractCode($seg['from']);
+            }
+            if (!empty($seg['to'])) {
+                $routeCodes[] = extractCode($seg['to']);
+            }
         }
-        
-        $airlineLogoBase64 = null;
-        if ($airlineCode) {
-            try {
-                $ctx = stream_context_create(['http' => ['timeout' => 3]]);
-                $logoData = @file_get_contents("https://pics.avs.io/150/40/{$airlineCode}.png", false, $ctx);
-                if ($logoData) {
-                    $airlineLogoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
-                }
-            } catch (\Exception $e) {}
-        }
+        $routeStr = implode(' → ', $routeCodes);
         
         $passengers = isset($data['passengers']) && is_array($data['passengers']) 
             ? $data['passengers'] 
             : (isset($data['passenger']) ? [$data['passenger']] : []);
         
-        $pnr = $data['flight']['pnr'] ?? 'N/A';
-        
-        $depDateStr = isset($data['journey']['departure']) && $data['journey']['departure'] ? strtotime($data['journey']['departure']) : null;
-        $arrDateStr = isset($data['journey']['arrival']) && $data['journey']['arrival'] ? strtotime($data['journey']['arrival']) : null;
-        
-        $depDate = $depDateStr ? date('l', $depDateStr) . '<br><b>' . date('d M Y', $depDateStr) . '</b><br><b>' . date('h:i A', $depDateStr) . '</b>' : '<b>-</b>';
-        $arrDate = $arrDateStr ? date('l', $arrDateStr) . '<br><b>' . date('d M Y', $arrDateStr) . '</b><br><b>' . date('h:i A', $arrDateStr) . '</b>' : '<b>-</b>';
+        $firstPnr = $segments[0]['pnr'] ?? 'N/A';
+        $bookingStatus = $data['status'] ?? ($data['flight']['status'] ?? 'Confirmed');
     @endphp
 
     <table class="header-table">
@@ -121,9 +121,9 @@
                 </div>
             </td>
             <td width="40%">
-                <div class="pnr-text">PNR: {{ strtoupper($pnr) }}</div>
+                <div class="pnr-text">PNR: {{ strtoupper($firstPnr) }}</div>
                 <div class="booking-details">
-                    Booking Id : {{ strtoupper(substr(md5($pnr), 0, 6)) }}<br>
+                    Booking Id : {{ strtoupper(substr(md5($firstPnr), 0, 6)) }}<br>
                     Issued Date : {{ date('D d M Y') }}
                 </div>
             </td>
@@ -142,7 +142,7 @@
         @foreach($passengers as $index => $p)
         <tr>
             <td>{{ $index + 1 }}. {{ trim(($p['title'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['last_name'] ?? '')) }}</td>
-            <td>{{ $data['flight']['ticket_number'] ?? $pnr }}</td>
+            <td>{{ $segments[0]['ticket_number'] ?? $firstPnr }}</td>
             <td>-</td>
         </tr>
         @endforeach
@@ -151,42 +151,79 @@
     <div class="divider-dashed"></div>
 
     <div class="flight-route">
-        <span style="font-size: 16px;">&#x2708;</span> &nbsp;&nbsp; {{ $fromCode }} - {{ $toCode }}
+        <span style="font-size: 16px;">&#x2708;</span> &nbsp;&nbsp; {{ $routeStr ?: 'ORG - DST' }}
     </div>
 
-    <div class="divider-thin"></div>
+    {{-- Render each segment --}}
+    @foreach($segments as $sIdx => $seg)
+        @php
+            $fromCode = extractCode($seg['from'] ?? 'ORG');
+            $toCode = extractCode($seg['to'] ?? 'DST');
+            
+            $airlineStr = $seg['airline'] ?? '';
+            $airlineCode = '';
+            if (preg_match('/\((.*?)\)/', $airlineStr, $matches)) {
+                $airlineCode = strtoupper(trim($matches[1]));
+            }
+            
+            $airlineLogoBase64 = null;
+            if ($airlineCode) {
+                try {
+                    $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+                    $logoData = @file_get_contents("https://pics.avs.io/150/40/{$airlineCode}.png", false, $ctx);
+                    if ($logoData) {
+                        $airlineLogoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                    }
+                } catch (\Exception $e) {}
+            }
+            
+            $depDateStr = !empty($seg['departure']) ? strtotime($seg['departure']) : null;
+            $arrDateStr = !empty($seg['arrival']) ? strtotime($seg['arrival']) : null;
+            
+            $depDate = $depDateStr ? date('l', $depDateStr) . '<br><b>' . date('d M Y', $depDateStr) . '</b><br><b>' . date('h:i A', $depDateStr) . '</b>' : '<b>-</b>';
+            $arrDate = $arrDateStr ? date('l', $arrDateStr) . '<br><b>' . date('d M Y', $arrDateStr) . '</b><br><b>' . date('h:i A', $arrDateStr) . '</b>' : '<b>-</b>';
+            
+            $segPnr = $seg['pnr'] ?? $firstPnr;
+        @endphp
 
-    <table class="flight-details-table">
-        <tr>
-            <td width="25%">
-                <div class="flight-details-header">Flight</div>
-                @if($airlineLogoBase64)
-                    <img src="{{ $airlineLogoBase64 }}" style="max-height: 18px; margin-bottom: 5px;">
-                @endif
-                <div style="color: #e11d48; font-weight: bold; font-size: 13px; margin-bottom: 3px;">{{ $data['flight']['airline'] ?? 'Airline' }}</div>
-                <div class="font-bold">Flight No: {{ $data['flight']['flight_number'] ?? '' }}</div>
-                <div style="color: #666; margin-top: 2px;">{{ $data['flight']['class'] ?? 'Economy Class' }}</div>
-            </td>
-            <td width="25%">
-                <div class="flight-details-header">Departure</div>
-                <div class="font-bold" style="margin-top: 2px; margin-bottom: 10px;">{{ $data['journey']['from'] ?? '-' }}</div>
-                <div>{!! $depDate !!}</div>
-            </td>
-            <td width="25%">
-                <div class="flight-details-header">Arrival</div>
-                <div class="font-bold" style="margin-top: 2px; margin-bottom: 10px;">{{ $data['journey']['to'] ?? '-' }}</div>
-                <div>{!! $arrDate !!}</div>
-            </td>
-            <td width="25%">
-                <div class="flight-details-header">Status</div>
-                <div class="status-confirmed">{{ strtoupper($data['flight']['status'] ?? 'CONFIRMED') }}</div>
-                <div style="color: #666; margin-top: 3px;">Airline PNR: {{ strtoupper($pnr) }}</div>
-                <div style="color: #666; margin-top: 3px;">Baggage: {{ $data['flight']['baggage'] ?? 'Check-in' }}</div>
-                <div style="color: #666; margin-top: 3px;">Cabin: {{ $data['flight']['cabin_baggage'] ?? '7 Kg' }}</div>
-                <div style="color: #666; margin-top: 3px;">Non Refundable</div>
-            </td>
-        </tr>
-    </table>
+        @if(count($segments) > 1)
+            <div class="segment-label">SEGMENT {{ $sIdx + 1 }}: {{ $fromCode }} → {{ $toCode }}</div>
+        @endif
+
+        <div class="divider-thin"></div>
+
+        <table class="flight-details-table">
+            <tr>
+                <td width="25%">
+                    <div class="flight-details-header">Flight</div>
+                    @if($airlineLogoBase64)
+                        <img src="{{ $airlineLogoBase64 }}" style="max-height: 18px; margin-bottom: 5px;">
+                    @endif
+                    <div style="color: #e11d48; font-weight: bold; font-size: 13px; margin-bottom: 3px;">{{ $seg['airline'] ?? 'Airline' }}</div>
+                    <div class="font-bold">Flight No: {{ $seg['flight_number'] ?? '' }}</div>
+                    <div style="color: #666; margin-top: 2px;">{{ $seg['class'] ?? 'Economy Class' }}</div>
+                </td>
+                <td width="25%">
+                    <div class="flight-details-header">Departure</div>
+                    <div class="font-bold" style="margin-top: 2px; margin-bottom: 10px;">{{ $seg['from'] ?? '-' }}</div>
+                    <div>{!! $depDate !!}</div>
+                </td>
+                <td width="25%">
+                    <div class="flight-details-header">Arrival</div>
+                    <div class="font-bold" style="margin-top: 2px; margin-bottom: 10px;">{{ $seg['to'] ?? '-' }}</div>
+                    <div>{!! $arrDate !!}</div>
+                </td>
+                <td width="25%">
+                    <div class="flight-details-header">Status</div>
+                    <div class="status-confirmed">{{ strtoupper($bookingStatus) }}</div>
+                    <div style="color: #666; margin-top: 3px;">Airline PNR: {{ strtoupper($segPnr) }}</div>
+                    <div style="color: #666; margin-top: 3px;">Baggage: {{ $seg['baggage'] ?? 'Check-in' }}</div>
+                    <div style="color: #666; margin-top: 3px;">Cabin: {{ $seg['cabin_baggage'] ?? '7 Kg' }}</div>
+                    <div style="color: #666; margin-top: 3px;">Non Refundable</div>
+                </td>
+            </tr>
+        </table>
+    @endforeach
 
     <div class="divider-dashed"></div>
 
@@ -199,7 +236,7 @@
         @foreach($passengers as $p)
         <tr>
             <td style="vertical-align: middle;">{{ trim(($p['title'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['last_name'] ?? '')) }}</td>
-            <td style="vertical-align: middle; text-align: center;">{{ $fromCode }}-{{ $toCode }}</td>
+            <td style="vertical-align: middle; text-align: center;">{{ $routeStr }}</td>
             <td class="barcode-container">
                 <!-- CSS Based Barcode representation -->
                 <div class="barcode-bars"></div>
@@ -221,8 +258,8 @@
 
     <div class="section-title">Baggage Information</div>
     <ul class="terms-list">
-        <li><b>Free Cabin Baggage Allowance:</b> As per Bureau of Civil Aviation Security (BCAS) guidelines traveling passenger may carry maximum {{ $data['flight']['cabin_baggage'] ?? '7 Kgs' }} per person per flight (only one piece measuring not more than 55 cm x 35 cm x 25 cm, including laptops or duty free shopping bags). The dimensions of the checked Baggage should not exceed 158 cm (62 inches) in overall dimensions (L + W + H).</li>
-        <li><b>Check-in Baggage:</b> {{ $data['flight']['baggage'] ?? 'Subject to airline policy' }}.</li>
+        <li><b>Free Cabin Baggage Allowance:</b> As per Bureau of Civil Aviation Security (BCAS) guidelines traveling passenger may carry maximum {{ $segments[0]['cabin_baggage'] ?? '7 Kgs' }} per person per flight (only one piece measuring not more than 55 cm x 35 cm x 25 cm, including laptops or duty free shopping bags). The dimensions of the checked Baggage should not exceed 158 cm (62 inches) in overall dimensions (L + W + H).</li>
+        <li><b>Check-in Baggage:</b> {{ $segments[0]['baggage'] ?? 'Subject to airline policy' }}.</li>
     </ul>
 
 </body>
