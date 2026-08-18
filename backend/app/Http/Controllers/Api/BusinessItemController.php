@@ -598,7 +598,7 @@ class BusinessItemController extends Controller
                 $incomeEntries[] = ['account_id' => $serviceIncomeId, 'debit' => 0, 'credit' => $validated['amount']];
 
                 $incomeTxn = $this->transactionService->createTransaction([
-                    'type'             => 'service_income',
+                    'type'             => 'income',
                     'date'             => $validated['date'],
                     'amount'           => $validated['amount'],
                     'description'      => 'Service Income: ' . $validated['description'],
@@ -618,7 +618,7 @@ class BusinessItemController extends Controller
                     ];
 
                     $expenseTxn = $this->transactionService->createTransaction([
-                        'type'             => 'service_expense',
+                        'type'             => 'expense',
                         'date'             => $validated['date'],
                         'amount'           => $validated['expense_amount'],
                         'description'      => $expDesc,
