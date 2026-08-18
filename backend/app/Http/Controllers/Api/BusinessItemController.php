@@ -535,4 +535,73 @@ class BusinessItemController extends Controller
             ['opening_balance' => 0, 'is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
         );
     }
+
+    /**
+     * Record a standalone service charge to a party's account.
+     * Accounting:
+     *   Credit sale: Debit Party Account, Credit Service Income
+     *   Cash sale:   Debit Cash/Bank,     Credit Service Income
+     */
+    public function storeServiceCharge(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'description'        => 'required|string|max:255',
+            'amount'             => 'required|numeric|min:0.01',
+            'date'               => 'required|date',
+            'contact_id'         => 'required|exists:tenant.contacts,id',
+            'is_credit'          => 'nullable|boolean',
+            'payment_account_id' => 'nullable|exists:tenant.accounts,id',
+            'reference_number'   => 'nullable|string|max:100',
+            'notes'              => 'nullable|string|max:500',
+        ]);
+
+        $isCredit = $validated['is_credit'] ?? false;
+
+        if (!$isCredit && empty($validated['payment_account_id'])) {
+            return response()->json(['error' => 'Payment account is required for immediate payment.'], 422);
+        }
+
+        try {
+            return DB::connection('tenant')->transaction(function () use ($validated, $isCredit) {
+                $contact = \App\Models\Contact::with('account')->findOrFail($validated['contact_id']);
+                $serviceIncomeId = $this->getOrCreateServiceIncomeAccount()->id;
+
+                $entries = [];
+
+                if ($isCredit) {
+                    // Credit sale: party owes you
+                    $entries[] = ['account_id' => $contact->account_id, 'debit' => $validated['amount'], 'credit' => 0];
+                } else {
+                    // Cash sale: money received immediately
+                    $entries[] = ['account_id' => $validated['payment_account_id'], 'debit' => $validated['amount'], 'credit' => 0];
+                }
+
+                // Credit Service Income
+                $entries[] = ['account_id' => $serviceIncomeId, 'debit' => 0, 'credit' => $validated['amount']];
+
+                $txn = $this->transactionService->createTransaction([
+                    'type'             => 'service_income',
+                    'date'             => $validated['date'],
+                    'amount'           => $validated['amount'],
+                    'description'      => 'Service: ' . $validated['description'],
+                    'reference_number' => $validated['reference_number'] ?? null,
+                ], $entries);
+
+                return response()->json([
+                    'message'     => 'Service charge recorded successfully.',
+                    'transaction' => $txn,
+                ], 201);
+            });
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    private function getOrCreateServiceIncomeAccount(): \App\Models\Account
+    {
+        return \App\Models\Account::firstOrCreate(
+            ['name' => 'Service Income', 'type' => 'income'],
+            ['opening_balance' => 0, 'is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
+        );
+    }
 }

@@ -95,6 +95,7 @@ Route::middleware([
     Route::post('/business-items/{id}/cancel', [BusinessItemController::class, 'recordCancellation']);
     Route::post('/business-items/{id}/documents', [BusinessItemController::class, 'generateDocument']);
     Route::get('/business-profit', [BusinessItemController::class, 'profitReport']);
+    Route::post('/service-charges', [BusinessItemController::class, 'storeServiceCharge']);
 
     // Reconciliation
     Route::get('/reconciliation/accounts', [ReconciliationController::class, 'accounts']);

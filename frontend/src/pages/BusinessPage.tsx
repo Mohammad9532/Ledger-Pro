@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
-import { Plus, ShoppingBag, TrendingUp, DollarSign, Package, FileText, Download, MoreHorizontal, Ban, Share } from 'lucide-react';
+import { Plus, ShoppingBag, TrendingUp, DollarSign, Package, FileText, Download, MoreHorizontal, Ban, Share, Wrench } from 'lucide-react';
 import { AIRPORTS, AIRLINES } from '@/lib/travelData';
 import { Autocomplete } from '@/components/ui/autocomplete';
 
@@ -19,6 +19,7 @@ export default function BusinessPage() {
   const [showSale, setShowSale] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [showDocModal, setShowDocModal] = useState(false);
+  const [showService, setShowService] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -33,6 +34,7 @@ export default function BusinessPage() {
   const [purchaseForm, setPurchaseForm] = useState({ description: '', purchase_cost: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', reference_number: '', is_credit: false, supplier_contact_id: '', immediate_payment_amount: '' });
   const [saleForm, setSaleForm] = useState({ sale_amount: '', buyer_contact_id: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', is_credit: false, reference_number: '' });
   const [cancelForm, setCancelForm] = useState({ date: new Date().toISOString().slice(0, 10), supplier_refund_amount: '', customer_refund_amount: '', refund_account_id: '', notes: '' });
+  const [serviceForm, setServiceForm] = useState({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '' });
 
   const defaultSegment = () => ({ airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '30 Kg', cabin_baggage: '7 Kg', from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', same_as_first: false });
 
@@ -184,6 +186,17 @@ export default function BusinessPage() {
     }
   };
 
+  const handleServiceCharge = async () => {
+    setSaving(true);
+    try {
+      await api.post('/service-charges', serviceForm);
+      setShowService(false);
+      setServiceForm({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '' });
+      fetchItems(); fetchProfit();
+    } catch (err: any) { alert(err.response?.data?.error || 'Failed to record service charge'); }
+    finally { setSaving(false); }
+  };
+
   const paymentAccounts = accounts.filter((a: any) => ['cash', 'bank', 'credit_card', 'asset', 'liability'].includes(a.type));
   const receiveAccounts = accounts.filter((a: any) => ['cash', 'bank', 'asset', 'credit_card', 'person'].includes(a.type));
   const assetAccounts = accounts.filter((a: any) => ['asset', 'bank', 'cash'].includes(a.type));
@@ -198,7 +211,10 @@ export default function BusinessPage() {
           <h1 className="text-2xl font-bold">Business Trading</h1>
           <p className="text-muted-foreground text-sm mt-1">Track purchases, sales, and profits</p>
         </div>
-        <Button onClick={() => setShowPurchase(true)}><Plus className="w-4 h-4 mr-2" /> New Purchase</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setServiceForm({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '' }); setShowService(true); }}><Wrench className="w-4 h-4 mr-2" /> Service Charge</Button>
+          <Button onClick={() => setShowPurchase(true)}><Plus className="w-4 h-4 mr-2" /> New Purchase</Button>
+        </div>
       </div>
 
       {/* Profit Summary */}
@@ -497,6 +513,62 @@ export default function BusinessPage() {
             <Button variant="destructive" onClick={handleCancel} disabled={saving}>
               {saving ? 'Processing...' : 'Confirm Cancellation'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Service Charge Modal */}
+      <Dialog open={showService} onOpenChange={setShowService}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Service Charge</DialogTitle>
+            <DialogDescription>Charge a party for a service you provided</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2"><Label>Service Description</Label><Input value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})} placeholder="e.g., App Development, Visa Processing" /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Amount</Label><Input type="number" step="0.01" value={serviceForm.amount} onChange={e => setServiceForm({...serviceForm, amount: e.target.value})} placeholder="0.00" /></div>
+              <div className="space-y-2"><Label>Date</Label><Input type="date" value={serviceForm.date} onChange={e => setServiceForm({...serviceForm, date: e.target.value})} /></div>
+            </div>
+            <div className="space-y-2"><Label>Party (Client)</Label>
+              <Select value={serviceForm.contact_id} onValueChange={v => setServiceForm({...serviceForm, contact_id: v})}>
+                <SelectTrigger><SelectValue placeholder="Select party" /></SelectTrigger>
+                <SelectContent>{contacts.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Mode</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="servicePayMode" checked={serviceForm.is_credit} onChange={() => setServiceForm({...serviceForm, is_credit: true, payment_account_id: ''})} /> Credit (Party pays later)
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="servicePayMode" checked={!serviceForm.is_credit} onChange={() => setServiceForm({...serviceForm, is_credit: false})} /> Paid Now
+                </label>
+              </div>
+            </div>
+
+            {!serviceForm.is_credit && (
+              <div className="space-y-2"><Label>Receive Into</Label>
+                <Select value={serviceForm.payment_account_id} onValueChange={v => setServiceForm({...serviceForm, payment_account_id: v})}>
+                  <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                  <SelectContent>{receiveAccounts.map((a: any) => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2"><Label>Notes (Optional)</Label><Input value={serviceForm.notes} onChange={e => setServiceForm({...serviceForm, notes: e.target.value})} placeholder="Any additional details" /></div>
+
+            {serviceForm.is_credit && serviceForm.contact_id && serviceForm.amount && (
+              <div className="p-3 rounded-lg border bg-amber-500/10 border-amber-500/30 text-sm">
+                <span className="text-amber-500 font-medium">→ {formatCurrency(parseFloat(serviceForm.amount) || 0)} will be added to {contacts.find((c: any) => String(c.id) === serviceForm.contact_id)?.name || 'party'}'s account as receivable</span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowService(false)}>Cancel</Button>
+            <Button onClick={handleServiceCharge} disabled={saving}>{saving ? 'Recording...' : 'Record Service'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
