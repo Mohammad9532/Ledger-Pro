@@ -537,59 +537,99 @@ class BusinessItemController extends Controller
     }
 
     /**
-     * Record a standalone service charge to a party's account.
+    /**
+     * Record a standalone service charge to a party's account, with optional direct expense.
      * Accounting:
-     *   Credit sale: Debit Party Account, Credit Service Income
-     *   Cash sale:   Debit Cash/Bank,     Credit Service Income
+     *   Income:
+     *     Credit sale: Debit Party Account, Credit Service Income
+     *     Cash sale:   Debit Cash/Bank,     Credit Service Income
+     *   Expense (Optional):
+     *     Debit Service Expense, Credit Cash/Bank/Credit Card
      */
     public function storeServiceCharge(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'description'        => 'required|string|max:255',
-            'amount'             => 'required|numeric|min:0.01',
-            'date'               => 'required|date',
-            'contact_id'         => 'required|exists:tenant.contacts,id',
-            'is_credit'          => 'nullable|boolean',
-            'payment_account_id' => 'nullable|exists:tenant.accounts,id',
-            'reference_number'   => 'nullable|string|max:100',
-            'notes'              => 'nullable|string|max:500',
+            'description'                => 'required|string|max:255',
+            'amount'                     => 'required|numeric|min:0.01',
+            'date'                       => 'required|date',
+            'contact_id'                 => 'required|exists:tenant.contacts,id',
+            'is_credit'                  => 'nullable|boolean',
+            'payment_account_id'         => 'nullable|exists:tenant.accounts,id',
+            'reference_number'           => 'nullable|string|max:100',
+            'notes'                      => 'nullable|string|max:500',
+            'has_expense'                => 'nullable|boolean',
+            'expense_amount'             => 'nullable|numeric|min:0.01',
+            'expense_payment_account_id' => 'nullable|exists:tenant.accounts,id',
+            'expense_description'        => 'nullable|string|max:255',
         ]);
 
         $isCredit = $validated['is_credit'] ?? false;
+        $hasExpense = $validated['has_expense'] ?? false;
 
         if (!$isCredit && empty($validated['payment_account_id'])) {
             return response()->json(['error' => 'Payment account is required for immediate payment.'], 422);
         }
 
+        if ($hasExpense) {
+            if (empty($validated['expense_amount']) || floatval($validated['expense_amount']) <= 0) {
+                return response()->json(['error' => 'Expense amount is required when adding a service expense.'], 422);
+            }
+            if (empty($validated['expense_payment_account_id'])) {
+                return response()->json(['error' => 'Expense payment account is required.'], 422);
+            }
+        }
+
         try {
-            return DB::connection('tenant')->transaction(function () use ($validated, $isCredit) {
+            return DB::connection('tenant')->transaction(function () use ($validated, $isCredit, $hasExpense) {
                 $contact = \App\Models\Contact::with('account')->findOrFail($validated['contact_id']);
                 $serviceIncomeId = $this->getOrCreateServiceIncomeAccount()->id;
 
-                $entries = [];
+                $incomeEntries = [];
 
                 if ($isCredit) {
                     // Credit sale: party owes you
-                    $entries[] = ['account_id' => $contact->account_id, 'debit' => $validated['amount'], 'credit' => 0];
+                    $incomeEntries[] = ['account_id' => $contact->account_id, 'debit' => $validated['amount'], 'credit' => 0];
                 } else {
                     // Cash sale: money received immediately
-                    $entries[] = ['account_id' => $validated['payment_account_id'], 'debit' => $validated['amount'], 'credit' => 0];
+                    $incomeEntries[] = ['account_id' => $validated['payment_account_id'], 'debit' => $validated['amount'], 'credit' => 0];
                 }
 
                 // Credit Service Income
-                $entries[] = ['account_id' => $serviceIncomeId, 'debit' => 0, 'credit' => $validated['amount']];
+                $incomeEntries[] = ['account_id' => $serviceIncomeId, 'debit' => 0, 'credit' => $validated['amount']];
 
-                $txn = $this->transactionService->createTransaction([
+                $incomeTxn = $this->transactionService->createTransaction([
                     'type'             => 'service_income',
                     'date'             => $validated['date'],
                     'amount'           => $validated['amount'],
-                    'description'      => 'Service: ' . $validated['description'],
+                    'description'      => 'Service Income: ' . $validated['description'],
                     'reference_number' => $validated['reference_number'] ?? null,
-                ], $entries);
+                ], $incomeEntries);
+
+                $expenseTxn = null;
+                if ($hasExpense) {
+                    $serviceExpenseId = $this->getOrCreateServiceExpenseAccount()->id;
+                    $expDesc = !empty($validated['expense_description']) 
+                        ? $validated['expense_description'] 
+                        : 'Cost for Service: ' . $validated['description'];
+
+                    $expenseEntries = [
+                        ['account_id' => $serviceExpenseId, 'debit' => $validated['expense_amount'], 'credit' => 0],
+                        ['account_id' => $validated['expense_payment_account_id'], 'debit' => 0, 'credit' => $validated['expense_amount']],
+                    ];
+
+                    $expenseTxn = $this->transactionService->createTransaction([
+                        'type'             => 'service_expense',
+                        'date'             => $validated['date'],
+                        'amount'           => $validated['expense_amount'],
+                        'description'      => $expDesc,
+                        'reference_number' => $validated['reference_number'] ?? null,
+                    ], $expenseEntries);
+                }
 
                 return response()->json([
-                    'message'     => 'Service charge recorded successfully.',
-                    'transaction' => $txn,
+                    'message'             => 'Service charge recorded successfully.',
+                    'transaction'         => $incomeTxn,
+                    'expense_transaction' => $expenseTxn,
                 ], 201);
             });
         } catch (InvalidArgumentException $e) {
@@ -601,6 +641,14 @@ class BusinessItemController extends Controller
     {
         return \App\Models\Account::firstOrCreate(
             ['name' => 'Service Income', 'type' => 'income'],
+            ['opening_balance' => 0, 'is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
+        );
+    }
+
+    private function getOrCreateServiceExpenseAccount(): \App\Models\Account
+    {
+        return \App\Models\Account::firstOrCreate(
+            ['name' => 'Direct Service Expenses', 'type' => 'expense'],
             ['opening_balance' => 0, 'is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
         );
     }

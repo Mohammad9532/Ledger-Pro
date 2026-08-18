@@ -34,7 +34,7 @@ export default function BusinessPage() {
   const [purchaseForm, setPurchaseForm] = useState({ description: '', purchase_cost: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', reference_number: '', is_credit: false, supplier_contact_id: '', immediate_payment_amount: '' });
   const [saleForm, setSaleForm] = useState({ sale_amount: '', buyer_contact_id: '', date: new Date().toISOString().slice(0, 10), payment_account_id: '', is_credit: false, reference_number: '' });
   const [cancelForm, setCancelForm] = useState({ date: new Date().toISOString().slice(0, 10), supplier_refund_amount: '', customer_refund_amount: '', refund_account_id: '', notes: '' });
-  const [serviceForm, setServiceForm] = useState({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '' });
+  const [serviceForm, setServiceForm] = useState({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '', has_expense: false, expense_amount: '', expense_payment_account_id: '', expense_description: '' });
 
   const defaultSegment = () => ({ airline: '', flight_number: '', pnr: '', ticket_number: '', class: 'Economy', seat: '', baggage: '30 Kg', cabin_baggage: '7 Kg', from: '', to: '', departure: '', arrival: '', terminal: '', gate: '', same_as_first: false });
 
@@ -191,7 +191,7 @@ export default function BusinessPage() {
     try {
       await api.post('/service-charges', serviceForm);
       setShowService(false);
-      setServiceForm({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '' });
+      setServiceForm({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '', has_expense: false, expense_amount: '', expense_payment_account_id: '', expense_description: '' });
       fetchItems(); fetchProfit();
     } catch (err: any) { alert(err.response?.data?.error || 'Failed to record service charge'); }
     finally { setSaving(false); }
@@ -212,7 +212,7 @@ export default function BusinessPage() {
           <p className="text-muted-foreground text-sm mt-1">Track purchases, sales, and profits</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setServiceForm({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '' }); setShowService(true); }}><Wrench className="w-4 h-4 mr-2" /> Service Charge</Button>
+          <Button variant="outline" onClick={() => { setServiceForm({ description: '', amount: '', date: new Date().toISOString().slice(0, 10), contact_id: '', is_credit: true, payment_account_id: '', reference_number: '', notes: '', has_expense: false, expense_amount: '', expense_payment_account_id: '', expense_description: '' }); setShowService(true); }}><Wrench className="w-4 h-4 mr-2" /> Service Charge</Button>
           <Button onClick={() => setShowPurchase(true)}><Plus className="w-4 h-4 mr-2" /> New Purchase</Button>
         </div>
       </div>
@@ -560,9 +560,71 @@ export default function BusinessPage() {
 
             <div className="space-y-2"><Label>Notes (Optional)</Label><Input value={serviceForm.notes} onChange={e => setServiceForm({...serviceForm, notes: e.target.value})} placeholder="Any additional details" /></div>
 
-            {serviceForm.is_credit && serviceForm.contact_id && serviceForm.amount && (
-              <div className="p-3 rounded-lg border bg-amber-500/10 border-amber-500/30 text-sm">
-                <span className="text-amber-500 font-medium">→ {formatCurrency(parseFloat(serviceForm.amount) || 0)} will be added to {contacts.find((c: any) => String(c.id) === serviceForm.contact_id)?.name || 'party'}'s account as receivable</span>
+            {/* Direct Expense Section */}
+            <div className="pt-2 border-t space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={serviceForm.has_expense} 
+                  onChange={e => setServiceForm({...serviceForm, has_expense: e.target.checked})} 
+                  className="rounded"
+                />
+                Include direct expense for this service? (e.g. domain purchase, API fee)
+              </label>
+
+              {serviceForm.has_expense && (
+                <div className="p-3 border rounded-lg bg-muted/20 space-y-3">
+                  <div className="space-y-2">
+                    <Label>Expense Description (Optional)</Label>
+                    <Input 
+                      value={serviceForm.expense_description} 
+                      onChange={e => setServiceForm({...serviceForm, expense_description: e.target.value})} 
+                      placeholder="e.g., Domain purchase from Namecheap" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Expense Cost</Label>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        value={serviceForm.expense_amount} 
+                        onChange={e => setServiceForm({...serviceForm, expense_amount: e.target.value})} 
+                        placeholder="0.00" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Paid From Account</Label>
+                      <Select 
+                        value={serviceForm.expense_payment_account_id} 
+                        onValueChange={v => setServiceForm({...serviceForm, expense_payment_account_id: v})}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                        <SelectContent>{paymentAccounts.map((a: any) => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Summary Box */}
+            {serviceForm.amount && (
+              <div className="p-3 rounded-lg border bg-amber-500/10 border-amber-500/30 text-sm space-y-1">
+                {serviceForm.is_credit && serviceForm.contact_id && (
+                  <div className="text-amber-500 font-medium">
+                    → {formatCurrency(parseFloat(serviceForm.amount) || 0)} will be added to {contacts.find((c: any) => String(c.id) === serviceForm.contact_id)?.name || 'party'}'s account as receivable
+                  </div>
+                )}
+                {serviceForm.has_expense && serviceForm.expense_amount && (
+                  <div className="text-xs text-muted-foreground pt-1 border-t border-amber-500/20 flex justify-between">
+                    <span>Income: {formatCurrency(parseFloat(serviceForm.amount) || 0)}</span>
+                    <span>Cost: {formatCurrency(parseFloat(serviceForm.expense_amount) || 0)}</span>
+                    <span className="font-bold text-emerald-500">
+                      Profit: {formatCurrency((parseFloat(serviceForm.amount) || 0) - (parseFloat(serviceForm.expense_amount) || 0))}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
