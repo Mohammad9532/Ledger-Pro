@@ -26,10 +26,14 @@ class ContactController extends Controller
         $this->transactionService = $transactionService;
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $status = $request->query('status', 'active');
+        $isArchived = $status === 'archived';
+
         $contacts = Contact::with('account')
             ->whereNull('deleted_at')
+            ->where('is_archived', $isArchived)
             ->orderBy('name')
             ->get();
 
@@ -222,6 +226,21 @@ class ContactController extends Controller
     public function destroy(int $id): JsonResponse
     {
         $contact = Contact::findOrFail($id);
+
+        if ($contact->account) {
+            $hasFinancialHistory = TransactionEntry::where('account_id', $contact->account->id)
+                ->whereHas('transaction', function ($q) {
+                    $q->where('type', '!=', 'opening_balance')
+                      ->whereNull('deleted_at');
+                })->exists();
+
+            if ($hasFinancialHistory) {
+                return response()->json([
+                    'error' => 'Contacts with financial history cannot be deleted. Archive the contact instead.'
+                ], 422);
+            }
+        }
+
         $contact->update(['updated_by' => Auth::id()]);
         $contact->delete(); // Soft delete
 
@@ -232,6 +251,121 @@ class ContactController extends Controller
         }
 
         return response()->json(['message' => 'Contact deleted']);
+    }
+
+    public function archive(int $id): JsonResponse
+    {
+        $contact = Contact::with('account')->findOrFail($id);
+        
+        if (!$contact->account || $contact->account->type !== 'person') {
+            return response()->json(['error' => 'Invalid contact account'], 422);
+        }
+
+        $balance = $this->balanceService->getAccountBalance($contact->account->id);
+        if ((float) $balance !== 0.0) {
+            return response()->json([
+                'error' => 'Cannot archive this contact because the account has an outstanding balance.'
+            ], 422);
+        }
+
+        $contact->update(['is_archived' => true, 'updated_by' => Auth::id()]);
+        $contact->account->update(['is_active' => false, 'updated_by' => Auth::id()]);
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'auditable_type' => Contact::class,
+            'auditable_id' => $contact->id,
+            'action' => 'archived',
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Contact archived successfully', 'contact' => $contact]);
+    }
+
+    public function restore(int $id): JsonResponse
+    {
+        $contact = Contact::with('account')->findOrFail($id);
+
+        $contact->update(['is_archived' => false, 'updated_by' => Auth::id()]);
+        if ($contact->account) {
+            $contact->account->update(['is_active' => true, 'updated_by' => Auth::id()]);
+        }
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'auditable_type' => Contact::class,
+            'auditable_id' => $contact->id,
+            'action' => 'restored',
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Contact restored successfully', 'contact' => $contact]);
+    }
+
+    public function balanceAdjustment(Request $request, int $id): JsonResponse
+    {
+        $contact = Contact::with('account')->findOrFail($id);
+        if (!$contact->account) {
+            return response()->json(['error' => 'Contact has no ledger account'], 422);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'adjustment_type' => 'required|string',
+            'account_id' => 'required|integer',
+            'notes' => 'nullable|string',
+        ]);
+
+        $offsetAccount = Account::findOrFail($validated['account_id']);
+        
+        $currentBalanceStr = $this->balanceService->getAccountBalance($contact->account->id);
+        $currentBalance = (float) $currentBalanceStr;
+        $adjustmentAmount = (float) $validated['amount'];
+
+        if ($currentBalance == 0) {
+            return response()->json(['error' => 'Contact balance is already zero'], 422);
+        }
+
+        if ($adjustmentAmount > abs($currentBalance)) {
+            return response()->json(['error' => 'Adjustment amount cannot exceed current balance'], 422);
+        }
+
+        $entries = [];
+        
+        if ($currentBalance > 0) {
+            // Customer owes us (Receivable). We are writing it off.
+            // Debit Expense, Credit Person
+            if ($offsetAccount->type !== 'expense') {
+                return response()->json(['error' => 'Offset account must be an expense account for receivable write-offs'], 422);
+            }
+            $entries[] = ['account_id' => $offsetAccount->id, 'debit' => $adjustmentAmount, 'credit' => 0];
+            $entries[] = ['account_id' => $contact->account->id, 'debit' => 0, 'credit' => $adjustmentAmount];
+        } else {
+            // We owe customer (Customer Credit/Payable). We are releasing it.
+            // Debit Person, Credit Income
+            if ($offsetAccount->type !== 'income') {
+                return response()->json(['error' => 'Offset account must be an income account for liability releases'], 422);
+            }
+            $entries[] = ['account_id' => $contact->account->id, 'debit' => $adjustmentAmount, 'credit' => 0];
+            $entries[] = ['account_id' => $offsetAccount->id, 'debit' => 0, 'credit' => $adjustmentAmount];
+        }
+
+        return DB::transaction(function () use ($request, $contact, $validated, $entries, $adjustmentAmount) {
+            $transaction = $this->transactionService->createTransaction([
+                'type' => 'journal',
+                'amount' => $adjustmentAmount,
+                'date' => now()->toDateString(),
+                'description' => $validated['notes'] ?? 'Balance Adjustment',
+                'contact_id' => $contact->id
+            ], $entries);
+
+            return response()->json([
+                'message' => 'Balance adjusted successfully',
+                'transaction' => $transaction
+            ]);
+        });
     }
 
     /**

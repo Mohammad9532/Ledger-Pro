@@ -4,11 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { formatCurrency, formatDate, getTransactionTypeLabel } from '@/lib/utils';
 import api from '@/lib/api';
 import {
   ArrowLeft, Phone, FileText, ShoppingBag, DollarSign,
-  TrendingUp, Banknote, AlertCircle, Package, ArrowDownLeft, ArrowUpRight, Download
+  TrendingUp, Banknote, AlertCircle, Package, ArrowDownLeft, ArrowUpRight, Download, SlidersHorizontal
 } from 'lucide-react';
 
 interface SummaryData {
@@ -32,6 +35,10 @@ export default function PersonLedgerPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [activeTab, setActiveTab] = useState('summary');
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [adjustForm, setAdjustForm] = useState({ amount: '', account_id: '', notes: '' });
+  const [adjusting, setAdjusting] = useState(false);
+  const [accounts, setAccounts] = useState<any[]>([]);
 
   const fetchLedger = () => {
     const params = new URLSearchParams();
@@ -46,6 +53,33 @@ export default function PersonLedgerPage() {
     api.get(`/contacts/${id}/summary`).then(res => {
       setSummary(res.data);
     });
+  };
+
+  const handleAdjustBalance = async () => {
+    if (!adjustForm.amount || !adjustForm.account_id) {
+      alert('Please fill out amount and account');
+      return;
+    }
+    setAdjusting(true);
+    const balance = parseFloat(summary?.outstanding || '0');
+    const type = balance > 0 ? 'write_off' : 'release_liability';
+
+    try {
+      await api.post(`/contacts/${id}/balance-adjustment`, {
+        amount: adjustForm.amount,
+        account_id: adjustForm.account_id,
+        notes: adjustForm.notes,
+        adjustment_type: type
+      });
+      setShowAdjustModal(false);
+      setAdjustForm({ amount: '', account_id: '', notes: '' });
+      fetchLedger();
+      fetchSummary();
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.response?.data?.error || 'Failed to adjust balance');
+    } finally {
+      setAdjusting(false);
+    }
   };
 
   const handleExport = async (format: string) => {
@@ -112,9 +146,11 @@ export default function PersonLedgerPage() {
     Promise.all([
       api.get(`/contacts/${id}/ledger`),
       api.get(`/contacts/${id}/summary`),
-    ]).then(([ledgerRes, summaryRes]) => {
+      api.get('/accounts')
+    ]).then(([ledgerRes, summaryRes, accountsRes]) => {
       setData(ledgerRes.data);
       setSummary(summaryRes.data);
+      setAccounts(accountsRes.data);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
@@ -196,13 +232,18 @@ export default function PersonLedgerPage() {
             </div>
           </div>
         </div>
-        <div className="ml-0 sm:ml-auto text-left sm:text-right bg-muted/30 p-3 sm:p-0 rounded-lg w-full sm:w-auto border sm:border-transparent border-border">
+        <div className="ml-0 sm:ml-auto text-left sm:text-right bg-muted/30 p-3 sm:p-0 rounded-lg w-full sm:w-auto border sm:border-transparent border-border flex flex-col gap-2">
           <div className="flex justify-between sm:block">
             <span className="text-sm text-muted-foreground">{closingBal > 0 ? 'They owe you' : closingBal < 0 ? 'You owe them' : 'Settled'}</span>
             <span className={`text-xl sm:text-2xl font-bold ${closingBal > 0 ? 'text-emerald-500' : closingBal < 0 ? 'text-rose-500' : 'text-muted-foreground'}`}>
               {formatCurrency(Math.abs(closingBal))}
             </span>
           </div>
+          {closingBal !== 0 && (
+            <Button variant="outline" size="sm" onClick={() => setShowAdjustModal(true)} className="w-full sm:w-auto mt-1 flex gap-2 items-center justify-center">
+              <SlidersHorizontal className="w-4 h-4" /> Adjust Balance
+            </Button>
+          )}
         </div>
       </div>
 
@@ -367,6 +408,52 @@ export default function PersonLedgerPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Adjust Balance Modal */}
+      <Dialog open={showAdjustModal} onOpenChange={setShowAdjustModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adjust Balance</DialogTitle>
+            <DialogDescription>
+              {closingBal > 0 ? 'Write off customer receivable' : 'Release customer credit / payable'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-muted p-3 rounded-md mb-4 flex justify-between items-center">
+              <span className="text-sm font-medium">Current Balance:</span>
+              <span className={`font-bold ${closingBal > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{formatCurrency(Math.abs(closingBal))}</span>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Adjustment Amount (max: {Math.abs(closingBal)})</Label>
+              <Input type="number" min="0.01" step="0.01" max={Math.abs(closingBal)} value={adjustForm.amount} onChange={e => setAdjustForm({ ...adjustForm, amount: e.target.value })} placeholder="0.00" />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Offsetting Account ({closingBal > 0 ? 'Expense' : 'Income'})</Label>
+              <Select value={adjustForm.account_id} onValueChange={(v) => setAdjustForm({ ...adjustForm, account_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select account..." /></SelectTrigger>
+                <SelectContent>
+                  {accounts.filter(a => closingBal > 0 ? a.type === 'expense' : a.type === 'income').map(a => (
+                    <SelectItem key={a.id} value={a.id.toString()}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Notes (Optional)</Label>
+              <Input value={adjustForm.notes} onChange={e => setAdjustForm({ ...adjustForm, notes: e.target.value })} placeholder="Reason for adjustment" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdjustModal(false)}>Cancel</Button>
+            <Button onClick={handleAdjustBalance} disabled={adjusting}>
+              {adjusting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Adjust'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -78,6 +78,9 @@ Route::middleware([
     Route::apiResource('contacts', ContactController::class);
     Route::get('/contacts/{id}/ledger', [ContactController::class, 'ledger']);
     Route::get('/contacts/{id}/summary', [ContactController::class, 'summary']);
+    Route::post('/contacts/{id}/archive', [ContactController::class, 'archive']);
+    Route::post('/contacts/{id}/restore', [ContactController::class, 'restore']);
+    Route::post('/contacts/{id}/balance-adjustment', [ContactController::class, 'balanceAdjustment']);
 
     // Transactions
     Route::apiResource('transactions', TransactionController::class);

@@ -26,11 +26,11 @@ export interface ContactSummary {
   sold_items: any[];
 }
 
-export const useContacts = () => {
+export const useContacts = (status: 'active' | 'archived' = 'active') => {
   return useQuery({
-    queryKey: ['contacts'],
+    queryKey: ['contacts', status],
     queryFn: async () => {
-      const response = await api.get<Contact[]>('/contacts');
+      const response = await api.get<Contact[]>(`/contacts?status=${status}`);
       return response.data;
     },
     staleTime: 5 * 60 * 1000,

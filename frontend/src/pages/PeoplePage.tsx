@@ -24,13 +24,15 @@ export default function PeoplePage() {
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'active'|'archived'>('active');
   const navigate = useNavigate();
 
   const fetchContacts = () => {
-    api.get('/contacts').then(res => { setContacts(res.data); setLoading(false); });
+    setLoading(true);
+    api.get(`/contacts?status=${activeTab}`).then(res => { setContacts(res.data); setLoading(false); });
   };
 
-  useEffect(() => { fetchContacts(); }, []);
+  useEffect(() => { fetchContacts(); }, [activeTab]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -63,6 +65,38 @@ export default function PeoplePage() {
     }
   };
 
+  const handleArchive = async () => {
+    if (!editId) return;
+    if (!confirm('Are you sure you want to archive this person?')) return;
+    
+    setSaving(true);
+    try {
+      await api.post(`/contacts/${editId}/archive`);
+      setShowModal(false);
+      fetchContacts();
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.response?.data?.error || 'Failed to archive');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!editId) return;
+    if (!confirm('Are you sure you want to restore this person?')) return;
+    
+    setSaving(true);
+    try {
+      await api.post(`/contacts/${editId}/restore`);
+      setShowModal(false);
+      fetchContacts();
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.response?.data?.error || 'Failed to restore');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const filtered = contacts.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -78,6 +112,21 @@ export default function PeoplePage() {
             <Plus className="w-4 h-4 mr-2" /> Add Person
           </Button>
         </div>
+      </div>
+
+      <div className="flex gap-4 border-b border-border mb-4">
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`pb-2 px-1 text-sm font-medium ${activeTab === 'active' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Active
+        </button>
+        <button
+          onClick={() => setActiveTab('archived')}
+          className={`pb-2 px-1 text-sm font-medium ${activeTab === 'archived' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Archived
+        </button>
       </div>
 
       {loading ? (
@@ -153,17 +202,30 @@ export default function PeoplePage() {
           </div>
           <DialogFooter className="flex flex-col-reverse sm:flex-row justify-between items-center sm:justify-between w-full gap-4 sm:gap-0 mt-4">
             {editId ? (
-              <Button type="button" variant="destructive" onClick={handleDelete} disabled={saving}>
-                Delete
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="destructive" onClick={handleDelete} disabled={saving}>
+                  Delete
+                </Button>
+                {activeTab === 'active' ? (
+                  <Button type="button" variant="secondary" onClick={handleArchive} disabled={saving}>
+                    Archive
+                  </Button>
+                ) : (
+                  <Button type="button" variant="default" onClick={handleRestore} disabled={saving}>
+                    Restore
+                  </Button>
+                )}
+              </div>
             ) : (
               <div /> // Spacer for flex layout
             )}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : editId ? 'Update' : 'Create'}
-              </Button>
+              {activeTab === 'active' && (
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : editId ? 'Update' : 'Create'}
+                </Button>
+              )}
             </div>
           </DialogFooter>
         </DialogContent>

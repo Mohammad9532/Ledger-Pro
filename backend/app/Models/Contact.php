@@ -17,8 +17,13 @@ class Contact extends TenantModel
         'phone',
         'notes',
         'account_id',
+        'is_archived',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+        'is_archived' => 'boolean',
     ];
 
     /**

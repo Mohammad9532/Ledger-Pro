@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import api from '../../api/api';
 
 import { AmountInput } from '../../features/transactions/components/AmountInput';
 import { AccountSelectorSheet } from '../../features/transactions/components/AccountSelectorSheet';
@@ -69,6 +70,11 @@ function StandardTransactionScreen({
     { account: null, amount: '' }
   ]);
   const [activeSourceIndex, setActiveSourceIndex] = useState<number | null>(null);
+
+  // Overpayment State
+  const [selectedPersonBalance, setSelectedPersonBalance] = useState<number | null>(null);
+  const [overpaymentHandling, setOverpaymentHandling] = useState<'customer_credit' | 'income' | ''>('');
+  const [overpaymentIncomeAccount, setOverpaymentIncomeAccount] = useState<Account | null>(null);
   
   // Sheet Refs
   const fromSheetRef = useRef<BottomSheetModal>(null);
@@ -77,6 +83,17 @@ function StandardTransactionScreen({
   const personSheetRef = useRef<BottomSheetModal>(null);
 
   const { mutate: createTransaction, isPending } = useCreateTransaction();
+
+  React.useEffect(() => {
+    if (person && (txType === 'receive_money' || txType === 'give_money')) {
+      api.get(`/contacts/${person.id}`).then(res => {
+         const bal = parseFloat(res.data.computed_balance || '0');
+         setSelectedPersonBalance(bal);
+      }).catch(() => setSelectedPersonBalance(null));
+    } else {
+      setSelectedPersonBalance(null);
+    }
+  }, [person?.id, txType]);
 
   // Field configurations based on type
   const config = useMemo(() => {
@@ -192,10 +209,14 @@ function StandardTransactionScreen({
         break;
       case 'receive_money':
         if (!person || !toAccount) { Alert.alert('Error', 'Please select a Person and Receive Into account.'); return; }
-        entries = [
-          { account_id: toAccount.id, debit: amt, credit: 0 },
-          { account_id: person.account_id, debit: 0, credit: amt },
-        ];
+        const isOverpayment = selectedPersonBalance !== null && amt > selectedPersonBalance;
+        if (isOverpayment && !overpaymentHandling) {
+          Alert.alert('Error', 'Please select how to handle the overpayment.'); return;
+        }
+        if (isOverpayment && overpaymentHandling === 'income' && !overpaymentIncomeAccount) {
+          Alert.alert('Error', 'Please select an income account for the overpayment.'); return;
+        }
+        // Handled semantically, no manual entries for receive_money
         break;
       case 'expense':
         if (!category || !fromAccount) { Alert.alert('Error', 'Please select a Category and Pay From account.'); return; }
@@ -254,16 +275,29 @@ function StandardTransactionScreen({
         break;
     }
 
-    const payload: TransactionPayload = {
-      type: payloadTxType as any,
+    const payload: any = {
+      type: payloadTxType,
       amount: amt,
       date: format(date, 'yyyy-MM-dd'),
       description,
-      entries
     };
 
+    if (txType === 'receive_money') {
+      const isOverpayment = selectedPersonBalance !== null && amt > selectedPersonBalance;
+      payload.bank_account_id = toAccount?.id;
+      payload.person_account_id = person?.account_id;
+      if (isOverpayment) {
+         payload.overpayment_handling = overpaymentHandling;
+         if (overpaymentHandling === 'income') {
+            payload.income_account_id = overpaymentIncomeAccount?.id;
+         }
+      }
+    } else {
+      payload.entries = entries;
+    }
+
     if (person && (txType === 'income' || txType === 'give_money' || txType === 'receive_money')) {
-      (payload as any).contact_id = person.id;
+      payload.contact_id = person.id;
     }
 
     const handleBackNavigation = () => {
@@ -341,6 +375,69 @@ function StandardTransactionScreen({
               <ChevronRight size={20} color="#64748b" />
             </TouchableOpacity>
           )}
+
+          {/* Overpayment UI */}
+          {(() => {
+            const amt = parseFloat(amount) || 0;
+            if (txType === 'receive_money' && person && selectedPersonBalance !== null && amt > selectedPersonBalance) {
+              const extra = amt - Math.max(0, selectedPersonBalance);
+              return (
+                <View className="pt-4 border-t border-border mt-2">
+                  <View className="mb-4">
+                    <Text className="font-semibold text-rose-500 text-base mb-2">Overpayment Detected</Text>
+                    <View className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                      <Text className="text-muted text-sm mb-1">Customer Outstanding: <Text className="font-bold text-white">${Math.max(0, selectedPersonBalance).toFixed(2)}</Text></Text>
+                      <Text className="text-muted text-sm mb-1">Amount Received: <Text className="font-bold text-emerald-500">${amt.toFixed(2)}</Text></Text>
+                      <Text className="text-muted text-sm">Extra Received: <Text className="font-bold text-rose-500">${extra.toFixed(2)}</Text></Text>
+                    </View>
+                  </View>
+
+                  <Text className="text-white font-medium mb-3">How should the extra amount be handled?</Text>
+                  
+                  <View className="space-y-3">
+                    <TouchableOpacity 
+                      className={`p-3 rounded-xl border flex-row items-start ${overpaymentHandling === 'customer_credit' ? 'border-primary-500 bg-primary-500/10' : 'border-slate-700 bg-slate-800/50'}`}
+                      onPress={() => setOverpaymentHandling('customer_credit')}
+                    >
+                      <View className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 mt-0.5 ${overpaymentHandling === 'customer_credit' ? 'border-primary-500' : 'border-slate-500'}`}>
+                        {overpaymentHandling === 'customer_credit' && <View className="w-2.5 h-2.5 rounded-full bg-primary-500" />}
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-white font-medium">Keep as Customer Credit</Text>
+                        <Text className="text-slate-400 text-xs mt-1">The extra amount remains as a credit on the customer's account for future use.</Text>
+                      </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      className={`p-3 rounded-xl border flex-row items-start ${overpaymentHandling === 'income' ? 'border-primary-500 bg-primary-500/10' : 'border-slate-700 bg-slate-800/50'}`}
+                      onPress={() => setOverpaymentHandling('income')}
+                    >
+                      <View className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 mt-0.5 ${overpaymentHandling === 'income' ? 'border-primary-500' : 'border-slate-500'}`}>
+                        {overpaymentHandling === 'income' && <View className="w-2.5 h-2.5 rounded-full bg-primary-500" />}
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-white font-medium">Adjust as Income</Text>
+                        <Text className="text-slate-400 text-xs mt-1">The extra amount is recognized as income.</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+
+                  {overpaymentHandling === 'income' && (
+                    <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border mt-4" onPress={() => categorySheetRef.current?.present()}>
+                      <View>
+                        <Text className="text-muted text-sm font-medium mb-1">Income Account</Text>
+                        <Text className={`text-base ${overpaymentIncomeAccount ? 'text-white' : 'text-slate-500'}`}>
+                          {overpaymentIncomeAccount ? overpaymentIncomeAccount.name : 'Select Income Account'}
+                        </Text>
+                      </View>
+                      <ChevronRight size={20} color="#64748b" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            }
+            return null;
+          })()}
 
           {/* Date Picker */}
           <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => setShowDatePicker(true)}>
@@ -453,7 +550,19 @@ function StandardTransactionScreen({
         <DateTimePicker value={date} mode="date" display="default" onChange={(e, selected) => { setShowDatePicker(false); if (selected) setDate(selected); }} />
       )}
       <ContactSelectorSheet ref={personSheetRef} title={`Select ${config.personLabel}`} selectedId={person?.id} onSelect={setPerson} />
-      <AccountSelectorSheet ref={categorySheetRef} title={`Select ${config.categoryLabel}`} allowedTypes={config.categoryFilter} selectedId={category?.id} onSelect={setCategory} />
+      <AccountSelectorSheet 
+        ref={categorySheetRef} 
+        title={overpaymentHandling === 'income' ? 'Select Income Account' : `Select ${config.categoryLabel}`} 
+        allowedTypes={overpaymentHandling === 'income' ? ['income'] : config.categoryFilter} 
+        selectedId={overpaymentHandling === 'income' ? overpaymentIncomeAccount?.id : category?.id} 
+        onSelect={(acc) => {
+          if (overpaymentHandling === 'income') {
+            setOverpaymentIncomeAccount(acc);
+          } else {
+            setCategory(acc);
+          }
+        }} 
+      />
       <AccountSelectorSheet 
         ref={fromSheetRef} 
         title={`Select ${config.fromLabel}`} 

@@ -11,14 +11,15 @@ interface Props {
 
 export function ContactList({ searchQuery }: Props) {
   const router = useRouter();
-  const { data: contacts, isLoading, refetch } = useContacts();
+  const [activeTab, setActiveTab] = React.useState<'active'|'archived'>('active');
+  const { data: contacts, isLoading, refetch } = useContacts(activeTab);
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
     return contacts.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [contacts, searchQuery]);
 
-  const renderItem = ({ item }: { item: Contact }) => <ContactCard item={item} />;
+  const renderItem = ({ item }: { item: Contact }) => <ContactCard item={item} activeTab={activeTab} />;
 
   const EmptyState = () => (
     <View className="flex-1 items-center justify-center pt-20 px-6">
@@ -33,8 +34,23 @@ export function ContactList({ searchQuery }: Props) {
   );
 
   return (
-    <FlatList
-      data={filteredContacts}
+    <View className="flex-1">
+      <View className="flex-row mx-4 mt-2 mb-4 bg-slate-800 rounded-lg p-1">
+        <TouchableOpacity 
+          className={`flex-1 py-2 rounded-md items-center ${activeTab === 'active' ? 'bg-primary-500' : ''}`}
+          onPress={() => setActiveTab('active')}
+        >
+          <Text className={`font-medium ${activeTab === 'active' ? 'text-white' : 'text-slate-400'}`}>Active</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          className={`flex-1 py-2 rounded-md items-center ${activeTab === 'archived' ? 'bg-primary-500' : ''}`}
+          onPress={() => setActiveTab('archived')}
+        >
+          <Text className={`font-medium ${activeTab === 'archived' ? 'text-white' : 'text-slate-400'}`}>Archived</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={filteredContacts}
       keyExtractor={(item) => item.id.toString()}
       renderItem={renderItem}
       contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
@@ -43,10 +59,11 @@ export function ContactList({ searchQuery }: Props) {
         <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#f97316" />
       }
     />
+    </View>
   );
 }
 
-function ContactCard({ item }: { item: Contact }) {
+function ContactCard({ item, activeTab }: { item: Contact; activeTab: 'active'|'archived' }) {
   const router = useRouter();
   const [expanded, setExpanded] = React.useState(false);
 
@@ -90,20 +107,24 @@ function ContactCard({ item }: { item: Contact }) {
             <FileText size={18} color="#94a3b8" />
             <Text className="text-white text-xs font-medium mt-1">Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            className="w-1/4 items-center justify-center py-3 border-r border-border"
-            onPress={() => router.push(`/transactions/new?type=receive_money&person_id=${item.id}&person_name=${encodeURIComponent(item.name)}`)}
-          >
-            <ArrowDownLeft size={18} color="#10b981" />
-            <Text className="text-success text-xs font-medium mt-1">Receive</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            className="w-1/4 items-center justify-center py-3 border-r border-border"
-            onPress={() => router.push(`/transactions/new?type=give_money&person_id=${item.id}&person_name=${encodeURIComponent(item.name)}`)}
-          >
-            <ArrowUpRight size={18} color="#f97316" />
-            <Text className="text-primary-500 text-xs font-medium mt-1">Give</Text>
-          </TouchableOpacity>
+          {activeTab === 'active' && (
+            <>
+              <TouchableOpacity 
+                className="w-1/4 items-center justify-center py-3 border-r border-border"
+                onPress={() => router.push(`/transactions/new?type=receive_money&person_id=${item.id}&person_name=${encodeURIComponent(item.name)}`)}
+              >
+                <ArrowDownLeft size={18} color="#10b981" />
+                <Text className="text-success text-xs font-medium mt-1">Receive</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                className="w-1/4 items-center justify-center py-3 border-r border-border"
+                onPress={() => router.push(`/transactions/new?type=give_money&person_id=${item.id}&person_name=${encodeURIComponent(item.name)}`)}
+              >
+                <ArrowUpRight size={18} color="#f97316" />
+                <Text className="text-primary-500 text-xs font-medium mt-1">Give</Text>
+              </TouchableOpacity>
+            </>
+          )}
           <TouchableOpacity 
             className="w-1/4 items-center justify-center py-3"
             onPress={() => {

@@ -14,7 +14,7 @@ class BalanceService
      * including the opening_balance transaction created when the account was set up.
      * The accounts.opening_balance column is always 0 — the ledger is the sole source of truth.
      */
-    public function getAccountBalance(int $accountId, ?string $date = null): string
+    public function getAccountBalance(int $accountId, ?string $date = null, ?int $excludeTransactionId = null): string
     {
         $query = TransactionEntry::where('transaction_entries.account_id', $accountId)
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
@@ -22,6 +22,10 @@ class BalanceService
 
         if ($date) {
             $query->where('transactions.date', '<=', $date);
+        }
+        
+        if ($excludeTransactionId) {
+            $query->where('transactions.id', '!=', $excludeTransactionId);
         }
 
         $balance = $query->selectRaw(

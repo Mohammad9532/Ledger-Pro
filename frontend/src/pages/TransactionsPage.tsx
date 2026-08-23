@@ -52,6 +52,11 @@ export default function TransactionsPage() {
   const [investmentChargeCategoryId, setInvestmentChargeCategoryId] = useState('');
   const [ccPaymentSources, setCcPaymentSources] = useState([{ account_id: '', amount: '' }]);
 
+  // Overpayment State
+  const [selectedPersonBalance, setSelectedPersonBalance] = useState<number | null>(null);
+  const [overpaymentHandling, setOverpaymentHandling] = useState<'customer_credit' | 'income' | ''>('');
+  const [overpaymentIncomeId, setOverpaymentIncomeId] = useState('');
+
   const fetchTransactions = () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), per_page: '15' });
@@ -73,6 +78,17 @@ export default function TransactionsPage() {
     api.get('/expense-categories').then(res => setCategories(res.data));
     api.get('/income-categories').then(res => setIncomeCategories(res.data));
   }, []);
+
+  useEffect(() => {
+    if (form.person_id && form.person_id !== 'none' && (txType === 'receive_money' || txType === 'give_money')) {
+      api.get(`/contacts/${form.person_id}`).then(res => {
+         const bal = parseFloat(res.data.computed_balance || '0');
+         setSelectedPersonBalance(bal);
+      }).catch(() => setSelectedPersonBalance(null));
+    } else {
+      setSelectedPersonBalance(null);
+    }
+  }, [form.person_id, txType]);
 
   const buildEntries = () => {
     const amt = parseFloat(form.amount);
@@ -111,10 +127,7 @@ export default function TransactionsPage() {
       case 'receive_money': {
         const person = contacts.find(c => String(c.id) === form.person_id);
         if (!person?.account?.id || !form.to_account) return null;
-        return [
-          { account_id: parseInt(form.to_account), debit: amt, credit: 0 },
-          { account_id: person.account.id, debit: 0, credit: amt },
-        ];
+        return []; // Handled semantically
       }
       case 'expense': {
         const cat = categories.find(c => String(c.id) === form.category_id);
@@ -203,22 +216,56 @@ export default function TransactionsPage() {
   };
 
   const handleSave = async () => {
-    const entries = buildEntries();
-    if (!entries) { alert('Please fill all required fields'); return; }
+    const amt = parseFloat(form.amount);
+    
+    if (txType === 'receive_money') {
+       if (isNaN(amt) || amt <= 0 || !form.to_account || !form.person_id) {
+          alert('Please fill all required fields'); return;
+       }
+       const isOverpayment = selectedPersonBalance !== null && amt > selectedPersonBalance;
+       if (isOverpayment && !overpaymentHandling) {
+          alert('Please select how to handle the overpayment.'); return;
+       }
+       if (isOverpayment && overpaymentHandling === 'income' && !overpaymentIncomeId) {
+          alert('Please select an income account for the overpayment.'); return;
+       }
+    } else {
+       const entries = buildEntries();
+       if (!entries) { alert('Please fill all required fields'); return; }
+    }
+
     setSaving(true);
     try {
-      await api.post('/transactions', {
-        type: txType, date: form.date, amount: parseFloat(form.amount),
+      const isOverpayment = txType === 'receive_money' && selectedPersonBalance !== null && amt > selectedPersonBalance;
+      const person = txType === 'receive_money' ? contacts.find(c => String(c.id) === form.person_id) : null;
+      
+      const payload: any = {
+        type: txType, date: form.date, amount: amt,
         description: form.description, reference_number: form.reference_number,
         expense_category_id: form.category_id ? parseInt(form.category_id) : null,
         contact_id: (form.person_id && form.person_id !== 'none') ? parseInt(form.person_id) : null,
-        entries,
-      });
+      };
+
+      if (txType === 'receive_money') {
+         payload.bank_account_id = parseInt(form.to_account);
+         payload.person_account_id = person?.account?.id;
+         if (isOverpayment) {
+            payload.overpayment_handling = overpaymentHandling;
+            if (overpaymentHandling === 'income') {
+                payload.income_account_id = parseInt(overpaymentIncomeId);
+            }
+         }
+      } else {
+         payload.entries = buildEntries();
+      }
+
+      await api.post('/transactions', payload);
       setShowModal(false);
       setForm({ date: new Date().toISOString().slice(0, 10), amount: '', description: '', reference_number: '', from_account: '', to_account: '', person_id: '', category_id: '' });
       setCashbackAmount(''); setApplyCashbackToCustomer(false); setCashbackAccountId(''); setCashbackIncomeId('');
       setInvestmentChargeAmount(''); setInvestmentChargeCategoryId('');
       setCcPaymentSources([{ account_id: '', amount: '' }]);
+      setOverpaymentHandling(''); setOverpaymentIncomeId('');
       fetchTransactions();
     } catch (err: any) {
       alert(err.response?.data?.error || err.response?.data?.message || 'Failed to create transaction');
@@ -507,13 +554,66 @@ export default function TransactionsPage() {
             )}
 
             {txType === 'receive_money' && (
-              <div className="space-y-2">
-                <Label>Receive Into</Label>
-                <Select value={form.to_account} onValueChange={v => setForm({...form, to_account: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
-                  <SelectContent>{cashBankAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label>Receive Into</Label>
+                  <Select value={form.to_account} onValueChange={v => setForm({...form, to_account: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                    <SelectContent>{cashBankAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                {(() => {
+                   const amt = parseFloat(form.amount) || 0;
+                   if (form.person_id && selectedPersonBalance !== null && amt > selectedPersonBalance) {
+                     const extra = amt - Math.max(0, selectedPersonBalance);
+                     return (
+                        <div className="pt-4 border-t border-border mt-4">
+                          <div className="mb-4">
+                            <Label className="font-semibold text-rose-500">Overpayment Detected</Label>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              Customer Outstanding: <span className="font-bold text-foreground">{formatCurrency(Math.max(0, selectedPersonBalance))}</span><br/>
+                              Amount Received: <span className="font-bold text-emerald-500">{formatCurrency(amt)}</span><br/>
+                              Extra Received: <span className="font-bold text-rose-500">{formatCurrency(extra)}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4 bg-muted/30 p-4 rounded-lg border border-border">
+                            <Label className="block mb-2 font-medium">How should the extra amount be handled?</Label>
+                            
+                            <div className="space-y-4">
+                               <label className={`flex items-start gap-3 p-3 rounded border cursor-pointer transition-colors ${overpaymentHandling === 'customer_credit' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'}`}>
+                                 <input type="radio" name="overpayment" checked={overpaymentHandling === 'customer_credit'} onChange={() => setOverpaymentHandling('customer_credit')} className="mt-1" />
+                                 <div>
+                                    <div className="font-medium text-sm">Keep as Customer Credit</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">The extra amount remains as a credit on the customer's account for future use.</div>
+                                 </div>
+                               </label>
+
+                               <label className={`flex items-start gap-3 p-3 rounded border cursor-pointer transition-colors ${overpaymentHandling === 'income' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'}`}>
+                                 <input type="radio" name="overpayment" checked={overpaymentHandling === 'income'} onChange={() => setOverpaymentHandling('income')} className="mt-1" />
+                                 <div>
+                                    <div className="font-medium text-sm">Adjust as Income</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">The extra amount is recognized as income and clears the customer balance to zero.</div>
+                                 </div>
+                               </label>
+                            </div>
+                            
+                            {overpaymentHandling === 'income' && (
+                               <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
+                                 <Label>Income Account</Label>
+                                 <Select value={overpaymentIncomeId} onValueChange={setOverpaymentIncomeId}>
+                                   <SelectTrigger><SelectValue placeholder="Select income account" /></SelectTrigger>
+                                   <SelectContent>{incomeAccounts.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}</SelectContent>
+                                 </Select>
+                               </div>
+                            )}
+                          </div>
+                        </div>
+                     );
+                   }
+                   return null;
+                })()}
+              </>
             )}
 
             {txType === 'expense' && (

@@ -5,6 +5,8 @@ import { ArrowLeft, Phone, Mail, FileText, ChevronDown, ChevronUp } from 'lucide
 import { useContactSummary, useContactLedger } from '../../features/accounts/api/contacts';
 import { StatementEntry } from '../../features/accounts/api/accounts';
 import { formatCurrency, formatDate } from '../../utils/format';
+import { Alert } from 'react-native';
+import api from '../../../api/api';
 
 export default function ContactProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -13,6 +15,7 @@ export default function ContactProfileScreen() {
 
   const [activeTab, setActiveTab] = useState<'summary' | 'ledger'>('summary');
   const [showDetails, setShowDetails] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
 
   const { data: summaryData, isLoading: isLoadingSummary } = useContactSummary(contactId);
   const { 
@@ -47,6 +50,33 @@ export default function ContactProfileScreen() {
       : 'Settled';
   const balanceColor = balance > 0 ? 'text-success' : balance < 0 ? 'text-danger' : 'text-white';
 
+  const handleArchiveToggle = async () => {
+    Alert.alert(
+      contact.is_archived ? 'Restore Contact' : 'Archive Contact',
+      `Are you sure you want to ${contact.is_archived ? 'restore' : 'archive'} this contact?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: contact.is_archived ? 'Restore' : 'Archive', 
+          style: contact.is_archived ? 'default' : 'destructive',
+          onPress: async () => {
+            try {
+              if (contact.is_archived) {
+                await api.post(`/contacts/${contact.id}/restore`);
+              } else {
+                await api.post(`/contacts/${contact.id}/archive`);
+              }
+              // router.replace would be ideal, or just let it refresh if we invalidate queries
+              router.back();
+            } catch (err: any) {
+              Alert.alert('Error', err.response?.data?.message || err.response?.data?.error || 'Failed to update contact');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderHeader = () => (
     <View className="bg-card px-4 pt-14 pb-4 border-b border-border">
       <View className="flex-row items-center justify-between mb-4">
@@ -54,8 +84,10 @@ export default function ContactProfileScreen() {
           <ArrowLeft size={24} color="#f8fafc" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">Contact Profile</Text>
-        <TouchableOpacity className="p-2">
-          <Text className="text-primary-500 font-bold">Edit</Text>
+        <TouchableOpacity className="p-2" onPress={handleArchiveToggle}>
+          <Text className={contact.is_archived ? "text-success font-bold" : "text-danger font-bold"}>
+            {contact.is_archived ? 'Restore' : 'Archive'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -65,6 +97,15 @@ export default function ContactProfileScreen() {
         </View>
         <Text className="text-white text-2xl font-bold mb-1">{contact.name}</Text>
         <Text className={`${balanceColor} font-bold text-lg`}>{balanceText}</Text>
+        
+        {balance !== 0 && !contact.is_archived && (
+          <TouchableOpacity 
+            className="mt-3 bg-slate-800 px-4 py-2 rounded-full border border-slate-700"
+            onPress={() => Alert.alert('Adjust Balance', 'Please use the web application to adjust balances with specific accounting categories.')}
+          >
+            <Text className="text-primary-500 font-bold text-sm">Adjust Balance</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <TouchableOpacity 
