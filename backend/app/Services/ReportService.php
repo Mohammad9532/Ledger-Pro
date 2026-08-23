@@ -33,7 +33,7 @@ class ReportService
     {
         $date = $date ?? now()->toDateString();
         
-        $accounts = DB::table('accounts')
+        $accounts = DB::connection('tenant')->table('accounts')
             ->leftJoin('transaction_entries', 'accounts.id', '=', 'transaction_entries.account_id')
             ->leftJoin('transactions', function($join) use ($date) {
                 $join->on('transaction_entries.transaction_id', '=', 'transactions.id')
@@ -46,7 +46,7 @@ class ReportService
                 accounts.type,
                 accounts.deleted_at,
                 accounts.is_active,
-                COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as net_balance
+                COALESCE(SUM(CASE WHEN transactions.id IS NOT NULL THEN transaction_entries.debit ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN transactions.id IS NOT NULL THEN transaction_entries.credit ELSE 0 END), 0) as net_balance
             ')
             ->groupBy('accounts.id', 'accounts.name', 'accounts.type', 'accounts.deleted_at', 'accounts.is_active')
             ->orderBy('accounts.type')
@@ -116,7 +116,7 @@ class ReportService
         $date = $date ?? now()->toDateString();
         
         // 1. Get all balances up to the specified date
-        $balances = DB::table('transaction_entries')
+        $balances = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
             ->whereNull('transactions.deleted_at')
             ->where('transactions.date', '<=', $date)
@@ -277,7 +277,7 @@ class ReportService
     public function profitAndLoss(string $startDate, string $endDate): ProfitAndLossResult
     {
         // 1. Get all balances within the period
-        $balances = DB::table('transaction_entries')
+        $balances = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
             ->whereNull('transactions.deleted_at')
             ->whereBetween('transactions.date', [$startDate, $endDate])
@@ -360,7 +360,7 @@ class ReportService
     public function cashFlow(string $startDate, string $endDate): CashFlowResult
     {
         // 1. Calculate Opening Balance of Cash & Bank accounts
-        $historicalCashFlow = DB::table('transaction_entries')
+        $historicalCashFlow = DB::connection('tenant')->table('transaction_entries')
             ->join('transactions', 'transaction_entries.transaction_id', '=', 'transactions.id')
             ->join('accounts', 'transaction_entries.account_id', '=', 'accounts.id')
             ->whereNull('transactions.deleted_at')
@@ -369,14 +369,14 @@ class ReportService
             ->selectRaw('COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as balance')
             ->value('balance') ?? '0.0000';
 
-        $accountOpeningBalances = DB::table('accounts')
+        $accountOpeningBalances = DB::connection('tenant')->table('accounts')
             ->whereIn('type', ['cash', 'bank'])
             ->sum('opening_balance') ?? '0.0000';
 
         $openingBalance = bcadd((string)$historicalCashFlow, (string)$accountOpeningBalances, 4);
 
         // 2. Calculate Offset Cash Flow inside the period
-        $offsets = DB::table('transaction_entries as te1')
+        $offsets = DB::connection('tenant')->table('transaction_entries as te1')
             ->join('transactions', 'te1.transaction_id', '=', 'transactions.id')
             ->join('accounts as a1', 'te1.account_id', '=', 'a1.id')
             ->whereNull('transactions.deleted_at')
@@ -467,7 +467,7 @@ class ReportService
     {
         $date = $date ?? now()->toDateString();
         
-        $accounts = DB::table('accounts')
+        $accounts = DB::connection('tenant')->table('accounts')
             ->leftJoin('transaction_entries', 'accounts.id', '=', 'transaction_entries.account_id')
             ->leftJoin('transactions', function($join) use ($date) {
                 $join->on('transaction_entries.transaction_id', '=', 'transactions.id')
@@ -482,7 +482,7 @@ class ReportService
                 accounts.deleted_at,
                 accounts.is_active,
                 accounts.opening_balance,
-                COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as net_balance
+                COALESCE(SUM(CASE WHEN transactions.id IS NOT NULL THEN transaction_entries.debit ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN transactions.id IS NOT NULL THEN transaction_entries.credit ELSE 0 END), 0) as net_balance
             ')
             ->groupBy('accounts.id', 'accounts.name', 'accounts.contact_id', 'accounts.deleted_at', 'accounts.is_active', 'accounts.opening_balance')
             ->get();
@@ -530,7 +530,7 @@ class ReportService
     {
         $date = $date ?? now()->toDateString();
         
-        $accounts = DB::table('accounts')
+        $accounts = DB::connection('tenant')->table('accounts')
             ->leftJoin('transaction_entries', 'accounts.id', '=', 'transaction_entries.account_id')
             ->leftJoin('transactions', function($join) use ($date) {
                 $join->on('transaction_entries.transaction_id', '=', 'transactions.id')
@@ -545,7 +545,7 @@ class ReportService
                 accounts.deleted_at,
                 accounts.is_active,
                 accounts.opening_balance,
-                COALESCE(SUM(transaction_entries.debit), 0) - COALESCE(SUM(transaction_entries.credit), 0) as net_balance
+                COALESCE(SUM(CASE WHEN transactions.id IS NOT NULL THEN transaction_entries.debit ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN transactions.id IS NOT NULL THEN transaction_entries.credit ELSE 0 END), 0) as net_balance
             ')
             ->groupBy('accounts.id', 'accounts.name', 'accounts.contact_id', 'accounts.deleted_at', 'accounts.is_active', 'accounts.opening_balance')
             ->get();
