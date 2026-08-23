@@ -707,6 +707,6 @@ class ReportService
     private function getTenantCurrency(): string
     {
         $profile = \App\Models\Tenant\CompanyProfile::first();
-        return $profile ? $profile->currency_code : 'AED';
+        return $profile?->currency_code ?? '';
     }
 }
