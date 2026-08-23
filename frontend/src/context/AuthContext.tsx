@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import api from '@/lib/api';
+import { setGlobalTenantCurrency } from '@/lib/utils';
 
 interface User {
   id: number;
   name: string;
   email: string;
   phone?: string;
+  currency_code?: string;
   company?: {
     company_name: string;
     onboarding_completed_at: string | null;
@@ -33,6 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.getItem('auth_token') ?? sessionStorage.getItem('auth_token')
   );
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setGlobalTenantCurrency(user?.currency_code || null);
+  }, [user]);
 
   useEffect(() => {
     if (token) {

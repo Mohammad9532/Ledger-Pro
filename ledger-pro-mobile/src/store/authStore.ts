@@ -7,6 +7,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
+  currency_code?: string;
 }
 
 export interface AuthState {

@@ -102,7 +102,7 @@ class ReportService
             isBalanced: bccomp($totalDebit, $totalCredit, 4) === 0,
             asOfDate: $date,
             generatedAt: now()->toIso8601String(),
-            currency: 'AED', // Hardcoded for now, can be dynamic
+            currency: $this->getTenantCurrency(), // Hardcoded for now, can be dynamic
             tenant: config('database.connections.tenant.database', 'N/A')
         );
     }
@@ -266,7 +266,7 @@ class ReportService
             difference: $difference,
             asOfDate: $date,
             generatedAt: now()->toIso8601String(),
-            currency: 'AED', // Dynamic later
+            currency: $this->getTenantCurrency(), // Dynamic later
             tenant: config('database.connections.tenant.database', 'N/A')
         );
     }
@@ -349,7 +349,7 @@ class ReportService
             startDate: $startDate,
             endDate: $endDate,
             generatedAt: now()->toIso8601String(),
-            currency: 'AED',
+            currency: $this->getTenantCurrency(),
             tenant: config('database.connections.tenant.database', 'N/A')
         );
     }
@@ -459,7 +459,7 @@ class ReportService
             startDate: $startDate,
             endDate: $endDate,
             generatedAt: now()->toIso8601String(),
-            currency: 'AED',
+            currency: $this->getTenantCurrency(),
             tenant: config('database.connections.tenant.database', 'N/A')
         );
     }
@@ -517,7 +517,7 @@ class ReportService
             total: $total,
             asOfDate: $date,
             generatedAt: now()->toIso8601String(),
-            currency: 'AED',
+            currency: $this->getTenantCurrency(),
             tenant: config('database.connections.tenant.database', 'N/A'),
             reportType: 'receivable'
         );
@@ -581,7 +581,7 @@ class ReportService
             total: $total,
             asOfDate: $date,
             generatedAt: now()->toIso8601String(),
-            currency: 'AED',
+            currency: $this->getTenantCurrency(),
             tenant: config('database.connections.tenant.database', 'N/A'),
             reportType: 'payable'
         );
@@ -704,5 +704,9 @@ class ReportService
         return $cards;
     }
 
-
+    private function getTenantCurrency(): string
+    {
+        $profile = \App\Models\Tenant\CompanyProfile::first();
+        return $profile ? $profile->currency_code : 'AED';
+    }
 }

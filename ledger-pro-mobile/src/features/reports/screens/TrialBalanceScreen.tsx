@@ -36,12 +36,12 @@ export default function TrialBalanceScreen() {
         <View className="flex-row items-center justify-end flex-1">
           <View className="flex-1 items-end pr-2 border-r border-border">
             <Text className={`font-medium ${debit > 0 ? 'text-white' : 'text-slate-600'}`}>
-              {debit > 0 ? formatCurrency(debit) : '-'}
+              {debit > 0 ? formatCurrency(debit, data?.currency) : '-'}
             </Text>
           </View>
           <View className="flex-1 items-end pl-2">
             <Text className={`font-medium ${credit > 0 ? 'text-white' : 'text-slate-600'}`}>
-              {credit > 0 ? formatCurrency(credit) : '-'}
+              {credit > 0 ? formatCurrency(credit, data?.currency) : '-'}
             </Text>
           </View>
         </View>
@@ -126,11 +126,11 @@ export default function TrialBalanceScreen() {
         <View className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-2xl">
           <View className="flex-row justify-between mb-2">
             <Text className="text-muted font-medium">Debits</Text>
-            <Text className="text-white font-bold">{data.currency} {formatCurrency(parseFloat(data.total_debit))}</Text>
+            <Text className="text-white font-bold">{formatCurrency(parseFloat(data.total_debit), data.currency)}</Text>
           </View>
           <View className="flex-row justify-between mb-4">
             <Text className="text-muted font-medium">Credits</Text>
-            <Text className="text-white font-bold">{data.currency} {formatCurrency(parseFloat(data.total_credit))}</Text>
+            <Text className="text-white font-bold">{formatCurrency(parseFloat(data.total_credit), data.currency)}</Text>
           </View>
           
           <View className="flex-row items-center justify-between pt-4 border-t border-slate-700/50">

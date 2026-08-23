@@ -26,7 +26,7 @@ export default function ReceivablesScreen() {
           )}
         </View>
         <Text className="font-bold text-success">
-          {formatCurrency(amount)}
+          {formatCurrency(amount, data?.currency)}
         </Text>
       </View>
     );
@@ -81,7 +81,7 @@ export default function ReceivablesScreen() {
           <View className="flex-row items-center justify-between">
             <Text className="text-slate-300 font-bold text-lg">Total Receivables</Text>
             <Text className="text-2xl font-black text-success">
-              {data.currency} {formatCurrency(parseFloat(data.total))}
+              {formatCurrency(parseFloat(data.total), data.currency)}
             </Text>
           </View>
         </View>

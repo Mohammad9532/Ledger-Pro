@@ -29,7 +29,7 @@ export default function CashFlowScreen() {
       <View className="flex-row items-center justify-between py-3 px-4 border-b border-border/50">
         <Text className="text-white text-base">{item.account_name}</Text>
         <Text className={`font-medium ${isPositive ? 'text-success' : 'text-danger'}`}>
-          {isPositive ? '+' : ''}{formatCurrency(amount)}
+          {isPositive ? '+' : ''}{formatCurrency(amount, data?.currency)}
         </Text>
       </View>
     );
@@ -38,7 +38,7 @@ export default function CashFlowScreen() {
   const renderSectionHeader = ({ section }: { section: any }) => (
     <View className="bg-slate-800/80 px-4 py-2 mt-4 flex-row justify-between items-center border-y border-border">
       <Text className="text-muted text-xs font-bold uppercase tracking-wider">{section.title}</Text>
-      <Text className="text-muted text-xs font-bold">{formatCurrency(section.total)}</Text>
+      <Text className="text-muted text-xs font-bold">{formatCurrency(section.total, data?.currency)}</Text>
     </View>
   );
 
@@ -91,19 +91,19 @@ export default function CashFlowScreen() {
         <View className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-5 shadow-2xl">
           <View className="flex-row justify-between mb-2">
             <Text className="text-muted font-medium">Opening Balance</Text>
-            <Text className="text-white font-medium">{formatCurrency(parseFloat(data.opening_balance))}</Text>
+            <Text className="text-white font-medium">{formatCurrency(parseFloat(data.opening_balance), data.currency)}</Text>
           </View>
           <View className="flex-row justify-between mb-4">
             <Text className="text-muted font-medium">Net Cash Flow</Text>
             <Text className={`font-bold ${parseFloat(data.net_cash_flow) >= 0 ? 'text-success' : 'text-danger'}`}>
-              {parseFloat(data.net_cash_flow) >= 0 ? '+' : ''}{formatCurrency(parseFloat(data.net_cash_flow))}
+              {parseFloat(data.net_cash_flow) >= 0 ? '+' : ''}{formatCurrency(parseFloat(data.net_cash_flow), data.currency)}
             </Text>
           </View>
           
           <View className="flex-row items-center justify-between pt-4 border-t border-slate-700/50">
             <Text className="text-slate-300 font-bold text-lg">Closing Balance</Text>
             <Text className="text-2xl font-black text-white">
-              {data.currency} {formatCurrency(parseFloat(data.closing_balance))}
+              {formatCurrency(parseFloat(data.closing_balance), data.currency)}
             </Text>
           </View>
         </View>

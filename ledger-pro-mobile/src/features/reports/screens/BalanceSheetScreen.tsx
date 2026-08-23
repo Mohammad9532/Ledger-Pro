@@ -29,7 +29,7 @@ export default function BalanceSheetScreen() {
       <View className="flex-row items-center justify-between py-3 px-4 border-b border-border/50">
         <Text className="text-white text-base">{item.name}</Text>
         <Text className="text-white font-medium">
-          {formatCurrency(amount)}
+          {formatCurrency(amount, data?.currency)}
         </Text>
       </View>
     );
@@ -38,7 +38,7 @@ export default function BalanceSheetScreen() {
   const renderSectionHeader = ({ section }: { section: any }) => (
     <View className="bg-slate-800/80 px-4 py-2 mt-4 flex-row justify-between items-center border-y border-border">
       <Text className="text-muted text-xs font-bold uppercase tracking-wider">{section.title}</Text>
-      <Text className="text-muted text-xs font-bold">{formatCurrency(section.total)}</Text>
+      <Text className="text-muted text-xs font-bold">{formatCurrency(section.total, data?.currency)}</Text>
     </View>
   );
 
@@ -91,11 +91,11 @@ export default function BalanceSheetScreen() {
         <View className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-5 shadow-2xl">
           <View className="flex-row justify-between mb-2">
             <Text className="text-muted font-medium">Total Assets</Text>
-            <Text className="text-white font-bold">{data.currency} {formatCurrency(parseFloat(data.total_assets))}</Text>
+            <Text className="text-white font-bold">{formatCurrency(parseFloat(data.total_assets), data.currency)}</Text>
           </View>
           <View className="flex-row justify-between mb-4">
             <Text className="text-muted font-medium">Total Liabilities & Equity</Text>
-            <Text className="text-white font-bold">{data.currency} {formatCurrency(parseFloat(data.total_liabilities_and_equity))}</Text>
+            <Text className="text-white font-bold">{formatCurrency(parseFloat(data.total_liabilities_and_equity), data.currency)}</Text>
           </View>
           
           <View className="flex-row items-center justify-between pt-4 border-t border-slate-700/50">
@@ -109,7 +109,7 @@ export default function BalanceSheetScreen() {
                 <>
                   <AlertCircle size={16} color="#ef4444" />
                   <Text className="text-danger font-bold ml-2">
-                    Difference: {formatCurrency(parseFloat(data.difference))}
+                    Difference: {formatCurrency(parseFloat(data.difference), data.currency)}
                   </Text>
                 </>
               )}

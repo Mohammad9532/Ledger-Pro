@@ -51,8 +51,17 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
+        $userArray = $user->toArray();
+        if ($user->company) {
+            app(\App\Services\Tenant\TenantSwitcher::class)->switch($user->company->database_name);
+            $profile = \App\Models\Tenant\CompanyProfile::first();
+            if ($profile) {
+                $userArray['currency_code'] = $profile->currency_code;
+            }
+        }
+
         return response()->json([
-            'user' => $user,
+            'user' => $userArray,
             'token' => $token,
         ]);
     }
@@ -66,6 +75,17 @@ class AuthController extends Controller
 
     public function user(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        $userArray = $user->toArray();
+        
+        if ($user->company) {
+            app(\App\Services\Tenant\TenantSwitcher::class)->switch($user->company->database_name);
+            $profile = \App\Models\Tenant\CompanyProfile::first();
+            if ($profile) {
+                $userArray['currency_code'] = $profile->currency_code;
+            }
+        }
+
+        return response()->json($userArray);
     }
 }

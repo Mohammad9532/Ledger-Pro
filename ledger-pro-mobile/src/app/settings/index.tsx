@@ -61,7 +61,7 @@ export default function SettingsScreen() {
 
   // Company
   const [companyName, setCompanyName] = useState(company?.company_name ?? '');
-  const [currencyCode, setCurrencyCode] = useState('INR');
+  const [currencyCode, setCurrencyCode] = useState('');
   const [savingCompany, setSavingCompany] = useState(false);
   const [showCompany, setShowCompany] = useState(false);
 

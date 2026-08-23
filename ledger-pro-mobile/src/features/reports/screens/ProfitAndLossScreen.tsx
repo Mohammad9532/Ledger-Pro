@@ -27,7 +27,7 @@ export default function ProfitAndLossScreen() {
       <View className="flex-row items-center justify-between py-3 px-4 border-b border-border/50">
         <Text className="text-white text-base">{item.account_name}</Text>
         <Text className={`font-medium ${section.isIncome ? 'text-success' : 'text-white'}`}>
-          {formatCurrency(amount)}
+          {formatCurrency(amount, data?.currency)}
         </Text>
       </View>
     );
@@ -36,7 +36,7 @@ export default function ProfitAndLossScreen() {
   const renderSectionHeader = ({ section }: { section: any }) => (
     <View className="bg-slate-800/80 px-4 py-2 mt-4 flex-row justify-between items-center border-y border-border">
       <Text className="text-muted text-xs font-bold uppercase tracking-wider">{section.title}</Text>
-      <Text className="text-muted text-xs font-bold">{formatCurrency(section.total)}</Text>
+      <Text className="text-muted text-xs font-bold">{formatCurrency(section.total, data?.currency)}</Text>
     </View>
   );
 
@@ -91,7 +91,7 @@ export default function ProfitAndLossScreen() {
             <Text className="text-slate-300 font-bold text-lg">Net Profit</Text>
             <View className="items-end">
               <Text className={`text-2xl font-black ${parseFloat(data.net_profit) >= 0 ? 'text-success' : 'text-danger'}`}>
-                {data.currency} {formatCurrency(Math.abs(parseFloat(data.net_profit)))}
+                {formatCurrency(Math.abs(parseFloat(data.net_profit)), data.currency)}
               </Text>
               {parseFloat(data.net_profit) < 0 && (
                 <Text className="text-danger text-xs mt-1">Net Loss</Text>

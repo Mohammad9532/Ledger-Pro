@@ -27,7 +27,7 @@ export default function PayablesScreen() {
           )}
         </View>
         <Text className="font-bold text-danger">
-          {formatCurrency(amount)}
+          {formatCurrency(amount, data?.currency)}
         </Text>
       </View>
     );
@@ -82,7 +82,7 @@ export default function PayablesScreen() {
           <View className="flex-row items-center justify-between">
             <Text className="text-slate-300 font-bold text-lg">Total Payables</Text>
             <Text className="text-2xl font-black text-danger">
-              {data.currency} {formatCurrency(Math.abs(parseFloat(data.total)))}
+              {formatCurrency(Math.abs(parseFloat(data.total)), data.currency)}
             </Text>
           </View>
         </View>

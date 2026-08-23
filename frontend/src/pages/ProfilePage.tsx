@@ -57,7 +57,7 @@ export default function ProfilePage() {
 
   // Company Profile State
   const [companyName, setCompanyName] = useState('');
-  const [currencyCode, setCurrencyCode] = useState('INR');
+  const [currencyCode, setCurrencyCode] = useState('');
   const [countryCode, setCountryCode] = useState('IN');
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [fyStart, setFyStart] = useState('04-01');

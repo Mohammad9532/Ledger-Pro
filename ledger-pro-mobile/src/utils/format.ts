@@ -1,10 +1,21 @@
 import { formatDistanceToNow } from 'date-fns';
+import { useAuthStore } from '../store/authStore';
 
-export function formatCurrency(amount: string | number): string {
+export function formatCurrency(amount: string | number, explicitCurrency?: string): string {
   const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  const currencyCode = explicitCurrency || useAuthStore.getState().user?.currency_code;
+  
+  if (currencyCode) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numericAmount);
+  }
+
+  // Neutral fallback when no currency is available
+  return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(numericAmount);
