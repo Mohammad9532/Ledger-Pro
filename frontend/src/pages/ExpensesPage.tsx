@@ -101,7 +101,7 @@ export default function ExpensesPage() {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}>
+                    <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => (percent || 0) > 0.04 ? `${name} (${((percent || 0) * 100).toFixed(0)}%)` : ''}>
                       {chartData.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip formatter={(v: any) => formatCurrency(Number(v))} />

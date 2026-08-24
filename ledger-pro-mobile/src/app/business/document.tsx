@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Download, Plus, Trash2, Copy } from 'lucide-react-native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import Toast from 'react-native-toast-message';
 import { format } from 'date-fns';
@@ -155,33 +155,48 @@ export default function GenerateDocumentScreen() {
   const generateMutation = useGenerateDocument();
 
   const handleGenerate = () => {
-    generateMutation.mutate({ id: Number(id), data: docForm }, {
-      onSuccess: async (blobData: any) => {
+    const payload = {
+      document_type: docForm.document_type,
+      data: docForm
+    };
+    generateMutation.mutate({ id: Number(id), data: payload }, {
+      onSuccess: async (arrayBufferData: any) => {
         try {
-          const reader = new FileReader();
-          reader.readAsDataURL(blobData);
-          reader.onloadend = async () => {
-            const base64data = reader.result as string;
-            const base64 = base64data.split(',')[1];
-            
-            const pnr = docForm.segments[0]?.pnr || 'ticket';
-            const fileUri = FileSystem.documentDirectory + `Ticket_${docForm.passengers[0].first_name}_${pnr}.pdf`;
-            await FileSystem.writeAsStringAsync(fileUri, base64, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-            
-            if (await Sharing.isAvailableAsync()) {
-              await Sharing.shareAsync(fileUri, { UTI: '.pdf', mimeType: 'application/pdf' });
-            } else {
-              Alert.alert('Success', 'PDF generated, but sharing is not available on this device.');
-            }
-          };
-        } catch (e) {
-          Alert.alert('Error', 'Failed to process PDF download.');
+          // Robust conversion of ArrayBuffer to Base64 avoiding RN FileReader bugs
+          const uint8Array = new Uint8Array(arrayBufferData);
+          let binary = '';
+          for (let i = 0; i < uint8Array.byteLength; i++) {
+            binary += String.fromCharCode(uint8Array[i]);
+          }
+          const base64 = typeof btoa === 'function' ? btoa(binary) : null;
+          if (!base64) throw new Error('Base64 encoding not available');
+
+          const pnr = docForm.segments[0]?.pnr || 'ticket';
+          const fileUri = FileSystem.documentDirectory + `Ticket_${docForm.passengers[0].first_name}_${pnr}.pdf`;
+          
+          await FileSystem.writeAsStringAsync(fileUri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(fileUri, { UTI: '.pdf', mimeType: 'application/pdf' });
+          } else {
+            Alert.alert('Success', 'PDF generated, but sharing is not available on this device.');
+          }
+        } catch (e: any) {
+          Alert.alert('Error', 'Failed to process PDF download: ' + (e.message || String(e)));
         }
       },
       onError: (err: any) => {
-        Alert.alert('Error', err.response?.data?.message || err.message || 'Failed to generate document');
+        let msg = err.message;
+        if (err.response && err.response.data) {
+          try {
+            // decode arraybuffer to string
+            const str = String.fromCharCode.apply(null, new Uint8Array(err.response.data) as any);
+            msg = str;
+          } catch(e) {}
+        }
+        Alert.alert('Error', msg || 'Failed to generate document');
       }
     });
   };

@@ -12,6 +12,7 @@ import api from '../../api/api';
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
+  company_name: z.string().min(2, 'Company Name is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   password_confirmation: z.string()
 }).refine((data) => data.password === data.password_confirmation, {
@@ -95,6 +96,21 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 value={value}
                 error={errors.email?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="company_name"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AppInput
+                label="Company Name"
+                placeholder="My Business LLC"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                error={errors.company_name?.message}
               />
             )}
           />

@@ -406,6 +406,8 @@ class BusinessItemController extends Controller
 
     public function generateDocument(Request $request, int $id)
     {
+        \Illuminate\Support\Facades\Log::info('generateDocument Payload:', $request->all());
+        
         $validated = $request->validate([
             'document_type' => 'required|string|in:flight',
             'data' => 'required|array',

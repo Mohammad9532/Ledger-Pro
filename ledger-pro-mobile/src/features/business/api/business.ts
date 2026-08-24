@@ -95,9 +95,8 @@ export const useCancelBusinessItem = () => {
 export const useGenerateDocument = () => {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      // Return blob so we can read binary data natively
       const response = await api.post(`/business-items/${id}/documents`, data, {
-        responseType: 'blob'
+        responseType: 'arraybuffer'
       });
       return response.data;
     }

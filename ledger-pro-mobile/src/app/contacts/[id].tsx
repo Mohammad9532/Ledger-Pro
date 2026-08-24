@@ -6,7 +6,9 @@ import { useContactSummary, useContactLedger } from '../../features/accounts/api
 import { StatementEntry } from '../../features/accounts/api/accounts';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { Alert } from 'react-native';
-import api from '../../../api/api';
+import api from '../../api/api';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 export default function ContactProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,6 +18,44 @@ export default function ContactProfileScreen() {
   const [activeTab, setActiveTab] = useState<'summary' | 'ledger'>('summary');
   const [showDetails, setShowDetails] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!summaryData?.contact?.account_id) return;
+    setIsExporting(true);
+    try {
+      const response = await api.get('/reports/account-ledger/export', {
+        params: {
+          format: 'pdf',
+          account_id: summaryData.contact.account_id
+        },
+        responseType: 'arraybuffer'
+      });
+      
+      const uint8Array = new Uint8Array(response.data);
+      let binary = '';
+      for (let i = 0; i < uint8Array.byteLength; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64 = typeof btoa === 'function' ? btoa(binary) : null;
+      if (!base64) throw new Error('Base64 encoding not available');
+
+      const fileUri = FileSystem.documentDirectory + `Ledger_${summaryData.contact.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, { UTI: '.pdf', mimeType: 'application/pdf' });
+      } else {
+        Alert.alert('Success', 'PDF generated but sharing is not available.');
+      }
+    } catch (e: any) {
+      Alert.alert('Error', 'Failed to export PDF: ' + (e.message || String(e)));
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const { data: summaryData, isLoading: isLoadingSummary } = useContactSummary(contactId);
   const { 
@@ -98,14 +138,25 @@ export default function ContactProfileScreen() {
         <Text className="text-white text-2xl font-bold mb-1">{contact.name}</Text>
         <Text className={`${balanceColor} font-bold text-lg`}>{balanceText}</Text>
         
-        {balance !== 0 && !contact.is_archived && (
+        <View className="flex-row items-center justify-center gap-3 mt-4">
           <TouchableOpacity 
-            className="mt-3 bg-slate-800 px-4 py-2 rounded-full border border-slate-700"
-            onPress={() => Alert.alert('Adjust Balance', 'Please use the web application to adjust balances with specific accounting categories.')}
+            className="flex-row items-center bg-primary-500/20 px-4 py-2 rounded-full border border-primary-500/30"
+            onPress={handleExportPDF}
+            disabled={isExporting}
           >
-            <Text className="text-primary-500 font-bold text-sm">Adjust Balance</Text>
+            {isExporting ? <ActivityIndicator size="small" color="#f97316" /> : <FileText size={16} color="#f97316" />}
+            <Text className="text-primary-500 font-bold text-sm ml-2">Export PDF</Text>
           </TouchableOpacity>
-        )}
+
+          {balance !== 0 && !contact.is_archived && (
+            <TouchableOpacity 
+              className="bg-slate-800 px-4 py-2 rounded-full border border-slate-700"
+              onPress={() => Alert.alert('Adjust Balance', 'Please use the web application to adjust balances with specific accounting categories.')}
+            >
+              <Text className="text-slate-300 font-bold text-sm">Adjust Balance</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <TouchableOpacity 

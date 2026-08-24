@@ -5,10 +5,12 @@ import { useAuthStore } from '../../../store/authStore';
 import { Bell, Settings } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function DashboardHeader() {
   const { user, company } = useAuthStore();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -22,7 +24,7 @@ export function DashboardHeader() {
     : 'LP';
 
   return (
-    <View className="mb-6 pt-2">
+    <View className="mb-6" style={{ paddingTop: Math.max(insets.top, 16) }}>
       <View className="flex-row justify-between items-center">
         {/* Left: Greeting + Name */}
         <View className="flex-1">

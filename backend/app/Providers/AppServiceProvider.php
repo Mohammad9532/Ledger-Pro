@@ -24,11 +24,6 @@ class AppServiceProvider extends ServiceProvider
     {
         \Laravel\Sanctum\Sanctum::usePersonalAccessTokenModel(\App\Models\Master\PersonalAccessToken::class);
 
-        Event::listen(
-            RegisteredCompanyCreated::class,
-            SendVerificationEmail::class
-        );
-
         // Fail fast if SMTP mailer is configured but required env vars are missing.
         // This prevents silent fallback to log driver in production.
         if (config('mail.default') === 'smtp') {
