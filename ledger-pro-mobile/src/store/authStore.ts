@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { queryClient } from '../app/_layout';
 
 export interface User {
   id: number;
@@ -55,6 +56,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       await SecureStore.deleteItemAsync('auth_company');
       await SecureStore.deleteItemAsync('auth_tenant');
     }
+    
+    // Clear the React Query cache so data from the previous user doesn't bleed over
+    queryClient.clear();
+    
     set({ token: null, user: null, company: null, tenant: null });
   },
 

@@ -105,10 +105,7 @@ function AccountCard({ item, getIcon }: { item: Account, getIcon: (t: string) =>
           </TouchableOpacity>
           <TouchableOpacity 
             className="flex-1 items-center justify-center py-3"
-            onPress={() => {
-              // TODO: Implement Edit Account modal/screen
-              console.log('Edit Account:', item.id);
-            }}
+            onPress={() => router.push(`/accounts/edit/${item.id}`)}
           >
             <Pencil size={18} color="#94a3b8" />
             <Text className="text-white text-xs font-medium mt-1">Edit</Text>

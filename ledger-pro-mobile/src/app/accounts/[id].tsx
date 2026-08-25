@@ -36,7 +36,10 @@ export default function AccountStatementScreen() {
         </Text>
 
         <View className="flex-row gap-3">
-          <TouchableOpacity className="flex-1 bg-slate-800 rounded-xl py-3 items-center border border-slate-700">
+          <TouchableOpacity 
+            className="flex-1 bg-slate-800 rounded-xl py-3 items-center border border-slate-700"
+            onPress={() => router.push(`/accounts/edit/${id}`)}
+          >
             <Text className="text-white font-medium">Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity className="flex-1 bg-primary-500 rounded-xl py-3 items-center">

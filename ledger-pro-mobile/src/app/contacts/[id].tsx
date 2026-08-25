@@ -138,14 +138,21 @@ export default function ContactProfileScreen() {
         <Text className="text-white text-2xl font-bold mb-1">{contact.name}</Text>
         <Text className={`${balanceColor} font-bold text-lg`}>{balanceText}</Text>
         
-        <View className="flex-row items-center justify-center gap-3 mt-4">
+        <View className="flex-row items-center justify-center gap-2 mt-4 flex-wrap">
           <TouchableOpacity 
             className="flex-row items-center bg-primary-500/20 px-4 py-2 rounded-full border border-primary-500/30"
             onPress={handleExportPDF}
             disabled={isExporting}
           >
             {isExporting ? <ActivityIndicator size="small" color="#f97316" /> : <FileText size={16} color="#f97316" />}
-            <Text className="text-primary-500 font-bold text-sm ml-2">Export PDF</Text>
+            <Text className="text-primary-500 font-bold text-sm ml-2">Export</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            className="bg-slate-800 px-4 py-2 rounded-full border border-slate-700"
+            onPress={() => router.push(`/contacts/edit/${id}`)}
+          >
+            <Text className="text-white font-bold text-sm">Edit</Text>
           </TouchableOpacity>
 
           {balance !== 0 && !contact.is_archived && (

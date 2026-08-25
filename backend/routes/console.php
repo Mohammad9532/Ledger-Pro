@@ -14,3 +14,4 @@ Schedule::call(function () {
 })->daily();
 
 Schedule::command('app:backup-db')->daily();
+Schedule::command('app:cheques-send-reminders')->dailyAt('08:00');

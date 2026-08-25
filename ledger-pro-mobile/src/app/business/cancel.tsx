@@ -7,6 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import Toast from 'react-native-toast-message';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountSelectorSheet } from '../../features/transactions/components/AccountSelectorSheet';
 import { Account } from '../../features/accounts/api/accounts';
@@ -73,10 +74,11 @@ export default function CancelBusinessItemScreen() {
   const netProfit = customerCharge - supplierFee;
 
   return (
-    <KeyboardAvoidingView 
-      className="flex-1 bg-background" 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <SafeAreaView className="flex-1 bg-background">
+      <KeyboardAvoidingView 
+        className="flex-1" 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border flex-row items-center justify-between">
         <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center rounded-full bg-slate-800/50">
           <ArrowLeft size={20} color="#f8fafc" />
@@ -189,6 +191,7 @@ export default function CancelBusinessItemScreen() {
         }}
         excludeTypes={[]}
       />
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
-import { Search } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
+import { Search, Plus } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { AccountList } from '../../features/accounts/components/AccountList';
 import { ContactList } from '../../features/accounts/components/ContactList';
 import { useUiStore } from '../../store/uiStore';
 
 export default function AccountsDirectoryScreen() {
+  const router = useRouter();
   const { activeDirectoryTab, setActiveDirectoryTab } = useUiStore();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -54,6 +56,21 @@ export default function AccountsDirectoryScreen() {
           <ContactList searchQuery={searchQuery} />
         )}
       </View>
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        className="absolute bottom-6 right-6 w-14 h-14 bg-primary-500 rounded-full items-center justify-center shadow-lg shadow-black/50"
+        onPress={() => {
+          if (activeDirectoryTab === 'accounts') {
+            router.push('/accounts/new');
+          } else {
+            router.push('/contacts/new');
+          }
+        }}
+        activeOpacity={0.8}
+      >
+        <Plus size={24} color="#ffffff" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }

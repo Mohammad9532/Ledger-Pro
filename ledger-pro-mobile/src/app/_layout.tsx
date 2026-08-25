@@ -8,7 +8,7 @@ import { useAuthStore } from '../store/authStore';
 import { LoadingScreen } from '../components/LoadingScreen';
 import Toast from 'react-native-toast-message';
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const { isLoading, token, restoreSession } = useAuthStore();
@@ -23,11 +23,12 @@ export default function RootLayout() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isOnboarding = segments[1] === 'onboarding';
 
     if (!token && !inAuthGroup) {
       // Redirect to the sign-in page.
       router.replace('/(auth)/login');
-    } else if (token && inAuthGroup) {
+    } else if (token && inAuthGroup && !isOnboarding) {
       // Redirect to the tabs page.
       router.replace('/(tabs)');
     }

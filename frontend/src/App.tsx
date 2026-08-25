@@ -33,6 +33,7 @@ import ReportsPage from '@/pages/ReportsPage';
 import ReconciliationPage from '@/pages/ReconciliationPage';
 import MonthClosingPage from '@/pages/MonthClosingPage';
 import SystemPage from '@/pages/SystemPage';
+import ChequesPage from '@/pages/ChequesPage';
 
 export default function App() {
   return (
@@ -83,6 +84,7 @@ export default function App() {
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/reconciliation" element={<ReconciliationPage />} />
               <Route path="/month-closing" element={<MonthClosingPage />} />
+              <Route path="/cheques" element={<ChequesPage />} />
               <Route path="/system" element={<SystemPage />} />
             </Route>
           </Route>

@@ -13,6 +13,7 @@ import { AIRLINES, AIRPORTS } from '../../utils/travelData';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { ChevronRight, Calendar as CalendarIcon } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const defaultSegment = () => ({ 
   airline: '', flight_number: '', pnr: '', ticket_number: '', 
@@ -247,7 +248,8 @@ export default function GenerateDocumentScreen() {
   );
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <SafeAreaView className="flex-1 bg-background">
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border flex-row items-center justify-between z-10">
         <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center rounded-full bg-slate-800/50">
@@ -468,6 +470,7 @@ export default function GenerateDocumentScreen() {
           onChange={handleDateChange}
         />
       )}
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

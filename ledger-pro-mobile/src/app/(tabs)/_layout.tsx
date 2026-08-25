@@ -43,7 +43,7 @@ function CustomTabBar({ state, navigation, onFabPress }: { state: any; navigatio
         borderTopColor: '#1e293b',
         paddingHorizontal: 8,
         paddingTop: 8,
-        paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 12),
+        paddingBottom: insets.bottom + (Platform.OS === 'ios' ? 20 : 12),
       }}
     >
       <TabBtn name="index" icon={Home} label="Home" />

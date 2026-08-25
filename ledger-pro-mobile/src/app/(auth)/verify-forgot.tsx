@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,38 +9,47 @@ import { AppButton } from '../../components/AppButton';
 import { AppCard } from '../../components/AppCard';
 import api from '../../api/api';
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
+const verifyForgotSchema = z.object({
+  code: z.string().length(6, 'Verification code must be exactly 6 digits'),
 });
 
-type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
+type VerifyForgotForm = z.infer<typeof verifyForgotSchema>;
 
-export default function ForgotPasswordScreen() {
+export default function VerifyForgotScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const email = params.email as string;
+  
   const [isLoading, setIsLoading] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<ForgotPasswordForm>({
-    resolver: zodResolver(forgotPasswordSchema),
+  } = useForm<VerifyForgotForm>({
+    resolver: zodResolver(verifyForgotSchema),
   });
 
-  const onSubmit = async (data: ForgotPasswordForm) => {
+  if (!email) {
+    Alert.alert('Error', 'Missing email address.', [
+      { text: 'OK', onPress: () => router.replace('/login') }
+    ]);
+    return null;
+  }
+
+  const onSubmit = async (data: VerifyForgotForm) => {
     try {
       setIsLoading(true);
-      await api.post('/password/forgot', data);
+      await api.post('/password/verify-otp', {
+        email: email,
+        code: data.code
+      });
       
-      Alert.alert(
-        'Email Sent',
-        'If an account with that email exists, we have sent a password reset link.',
-        [{ text: 'OK', onPress: () => router.replace(`/(auth)/verify-forgot?email=${encodeURIComponent(data.email)}`) }]
-      );
+      router.replace(`/(auth)/reset-password?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       Alert.alert(
-        'Request Failed',
-        error.response?.data?.message || 'An error occurred while requesting a password reset.'
+        'Verification Failed',
+        error.response?.data?.message || 'Invalid or expired verification code.'
       );
     } finally {
       setIsLoading(false);
@@ -53,45 +62,49 @@ export default function ForgotPasswordScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
-        <View className="mb-10">
-          <Text className="text-3xl font-bold text-white mb-2">Reset Password</Text>
-          <Text className="text-base text-muted">
-            Enter your email address to receive a password reset link.
+        <View className="mb-10 items-center">
+          <Text className="text-3xl font-bold text-white mb-2">Verify Reset Code</Text>
+          <Text className="text-base text-muted text-center">
+            We sent a 6-digit password reset code to
+          </Text>
+          <Text className="text-base text-primary-400 font-bold mt-1">
+            {email}
           </Text>
         </View>
 
         <AppCard>
           <Controller
             control={control}
-            name="email"
+            name="code"
             render={({ field: { onChange, onBlur, value } }) => (
               <AppInput
-                label="Email Address"
-                placeholder="john@example.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
+                label="Reset Code"
+                placeholder="123456"
+                keyboardType="number-pad"
+                maxLength={6}
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
-                error={errors.email?.message}
+                error={errors.code?.message}
+                style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }}
               />
             )}
           />
 
-          <View className="mt-4">
+          <View className="mt-6">
             <AppButton
-              title="Send Reset Link"
+              title="Verify Code"
               onPress={handleSubmit(onSubmit)}
               isLoading={isLoading}
             />
           </View>
-
+          
           <View className="items-center mt-6">
             <AppButton
               title="Back to Sign In"
               variant="ghost"
               size="sm"
-              onPress={() => router.canGoBack() ? router.back() : router.replace('/login')}
+              onPress={() => router.replace('/login')}
             />
           </View>
         </AppCard>

@@ -41,14 +41,25 @@ export default function RegisterScreen() {
       
       Alert.alert(
         'Registration Successful',
-        'Your account has been created. Please log in.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+        'Your account has been created. We have sent a verification code to your email.',
+        [{ text: 'OK', onPress: () => router.replace(`/(auth)/verify-email?email=${encodeURIComponent(data.email)}`) }]
       );
     } catch (error: any) {
-      Alert.alert(
-        'Registration Failed',
-        error.response?.data?.message || 'An error occurred during registration.'
-      );
+      let errorMessage = 'An error occurred during registration.';
+      
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        errorMessage = error.response.data?.message || error.response.data?.error || `Server Error: ${error.response.status}`;
+      } else if (error.request) {
+        // The request was made but no response was received
+        const urlTried = error.config ? (error.config.baseURL || '') + (error.config.url || '') : 'Unknown URL';
+        errorMessage = `Network Error: Could not connect to API (${error.message}).\n\nTrying to reach: ${urlTried}`;
+      } else {
+        // Something happened in setting up the request
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Registration Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }

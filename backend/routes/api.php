@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\MonthClosingController;
 use App\Http\Controllers\Api\CompanyProfileController;
+use App\Http\Controllers\Api\ChequeReminderController;
 
 // Public routes
 Route::post('/register', [RegisterController::class, 'store']);
@@ -98,6 +99,10 @@ Route::middleware([
     Route::post('/business-items/{id}/cancel', [BusinessItemController::class, 'recordCancellation']);
     Route::post('/business-items/{id}/documents', [BusinessItemController::class, 'generateDocument']);
     Route::get('/business-profit', [BusinessItemController::class, 'profitReport']);
+
+    // Cheque Reminders
+    Route::apiResource('cheques', ChequeReminderController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::patch('/cheques/{id}/status', [ChequeReminderController::class, 'updateStatus']);
     Route::post('/service-charges', [BusinessItemController::class, 'storeServiceCharge']);
 
     // Reconciliation

@@ -7,6 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import Toast from 'react-native-toast-message';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountSelectorSheet } from '../../features/transactions/components/AccountSelectorSheet';
 import { ContactSelectorSheet } from '../../features/transactions/components/ContactSelectorSheet';
@@ -105,7 +106,8 @@ export default function NewBusinessPurchaseScreen() {
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <SafeAreaView className="flex-1 bg-background">
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border flex-row items-center justify-between z-10">
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/business')} className="w-10 h-10 items-center justify-center rounded-full bg-slate-800">
@@ -223,7 +225,7 @@ export default function NewBusinessPurchaseScreen() {
       </ScrollView>
 
       {/* Save Button */}
-      <View className="p-4 border-t border-border bg-card absolute bottom-0 left-0 right-0 pb-8">
+      <View className="p-4 border-t border-border bg-card absolute bottom-0 left-0 right-0">
         <TouchableOpacity className={`h-14 rounded-xl items-center justify-center ${isPending ? 'bg-primary-500/50' : 'bg-primary-500'}`} onPress={handleSave} disabled={isPending} activeOpacity={0.8}>
           <Text className="text-white text-base font-bold">{isPending ? 'Saving...' : 'Record Purchase'}</Text>
         </TouchableOpacity>
@@ -236,6 +238,7 @@ export default function NewBusinessPurchaseScreen() {
       <ContactSelectorSheet ref={supplierSheetRef} title="Select Supplier" selectedId={supplierContact?.id} onSelect={setSupplierContact} />
       <AccountSelectorSheet ref={paymentSheetRef} title="Select Payment Account" allowedTypes={['cash', 'bank', 'credit_card']} selectedId={paymentAccount?.id} onSelect={setPaymentAccount} />
       <AccountSelectorSheet ref={cashbackSheetRef} title="Select Cashback Account" allowedTypes={['asset', 'bank', 'cash']} selectedId={cashbackAccount?.id} onSelect={setCashbackAccount} />
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

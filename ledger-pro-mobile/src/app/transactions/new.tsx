@@ -9,6 +9,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import api from '../../api/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmountInput } from '../../features/transactions/components/AmountInput';
 import { AccountSelectorSheet } from '../../features/transactions/components/AccountSelectorSheet';
@@ -324,7 +325,8 @@ function StandardTransactionScreen({
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <SafeAreaView className="flex-1 bg-background">
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-14 pb-4 border-b border-border bg-card">
         <TouchableOpacity onPress={handleBack} className="p-2 -ml-2"><ArrowLeft size={24} color="#f8fafc" /></TouchableOpacity>
@@ -591,6 +593,7 @@ function StandardTransactionScreen({
         }} 
       />
       <AccountSelectorSheet ref={toSheetRef} title={`Select ${config.toLabel}`} allowedTypes={config.toFilter} selectedId={toAccount?.id} onSelect={setToAccount} />
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
