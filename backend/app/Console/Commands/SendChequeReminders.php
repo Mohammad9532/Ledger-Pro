@@ -82,7 +82,8 @@ class SendChequeReminders extends Command
         $eligibleChequeIds = [];
 
         foreach ($cheques as $cheque) {
-            $diffInDays = array_search($cheque->due_date, $targetDates);
+            // $cheque->due_date is a Carbon instance because it's cast to 'date' in the model
+            $diffInDays = array_search($cheque->due_date->format('Y-m-d'), $targetDates);
 
             if ($diffInDays === false || $diffInDays < 0 || $diffInDays > 5) continue;
 
