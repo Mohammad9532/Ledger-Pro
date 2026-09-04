@@ -66,6 +66,7 @@ export default function ProfilePage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [savingCompany, setSavingCompany] = useState(false);
   const [companySuccess, setCompanySuccess] = useState(false);
+  const [chequeReminderTime, setChequeReminderTime] = useState('08:00');
 
   useEffect(() => {
     api.get('/company/profile').then(res => {
@@ -78,6 +79,7 @@ export default function ProfilePage() {
         setFyStart(p.financial_year_start);
         setFyEnd(p.financial_year_end);
         setTaxEnabled(p.tax_enabled);
+        if (p.cheque_reminder_time) setChequeReminderTime(p.cheque_reminder_time);
       }
     });
   }, []);
@@ -112,6 +114,7 @@ export default function ProfilePage() {
       formData.append('financial_year_start', fyStart);
       formData.append('financial_year_end', fyEnd);
       formData.append('tax_enabled', taxEnabled ? '1' : '0');
+      formData.append('cheque_reminder_time', chequeReminderTime);
       formData.append('_method', 'PUT');
       if (logoFile) formData.append('logo', logoFile);
 
@@ -241,6 +244,11 @@ export default function ProfilePage() {
                   <Label>Country Code</Label>
                   <Input value={countryCode} onChange={e => setCountryCode(e.target.value)} required maxLength={2} disabled={savingCompany} />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Cheque Reminder Time</Label>
+                <Input type="time" value={chequeReminderTime} onChange={e => setChequeReminderTime(e.target.value)} required disabled={savingCompany} />
+                <p className="text-xs text-muted-foreground">Daily email time (24-hour, in your company timezone)</p>
               </div>
               <div className="space-y-2">
                 <Label>Company Logo (Optional)</Label>
