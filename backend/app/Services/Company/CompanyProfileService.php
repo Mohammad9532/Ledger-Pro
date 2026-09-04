@@ -37,9 +37,9 @@ class CompanyProfileService
                 $profile = CompanyProfile::create($data);
             }
 
-            // Sync allowed master fields
+            // Sync allowed master fields (only when company_name is part of this update)
             $masterUpdates = [];
-            if ($masterCompany->company_name !== $data['company_name']) {
+            if (isset($data['company_name']) && $masterCompany->company_name !== $data['company_name']) {
                 $masterUpdates['company_name'] = $data['company_name'];
             }
 
