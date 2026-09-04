@@ -82,9 +82,9 @@ class SendChequeReminders extends Command
         $eligibleChequeIds = [];
 
         foreach ($cheques as $cheque) {
-            $diffInDays = $today->diffInDays(Carbon::parse($cheque->due_date, $timezone)->startOfDay(), false);
+            $diffInDays = array_search($cheque->due_date, $targetDates);
 
-            if ($diffInDays < 0 || $diffInDays > 5) continue;
+            if ($diffInDays === false || $diffInDays < 0 || $diffInDays > 5) continue;
 
             // Check if reminder already exists for this day
             $existingSend = ChequeReminderSend::where('cheque_reminder_id', $cheque->id)
