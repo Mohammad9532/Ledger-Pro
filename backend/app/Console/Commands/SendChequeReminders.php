@@ -40,19 +40,31 @@ class SendChequeReminders extends Command
         if (!$user) {
             $user = User::where('company_id', $company->id)->first();
         }
-        
+
         if (!$user || empty($user->email)) {
             return;
         }
 
         $recipientEmail = $user->email;
 
-        // Fetch Timezone
+        // Fetch company profile for timezone & configured reminder time
         $profile = CompanyProfile::first();
         $timezone = $profile->timezone ?? config('app.timezone', 'UTC');
-        
-        $today = Carbon::now($timezone)->startOfDay();
-        
+
+        // Read configured time, default to 08:00
+        $reminderTime = $profile->cheque_reminder_time ?? '08:00';
+
+        // Get the current time in the company's timezone (HH:MM)
+        $now = Carbon::now($timezone);
+        $currentHHMM = $now->format('H:i');
+
+        // Only proceed if the current minute matches the configured reminder time
+        if ($currentHHMM !== $reminderTime) {
+            return;
+        }
+
+        $today = $now->copy()->startOfDay();
+
         // We look for cheques due in 5, 4, 3, 2, 1, or 0 days.
         $targetDates = [];
         for ($i = 0; $i <= 5; $i++) {
@@ -71,28 +83,27 @@ class SendChequeReminders extends Command
 
         foreach ($cheques as $cheque) {
             $diffInDays = $today->diffInDays(Carbon::parse($cheque->due_date, $timezone)->startOfDay(), false);
-            
+
             if ($diffInDays < 0 || $diffInDays > 5) continue;
 
-            // Check if reminder already exists
+            // Check if reminder already exists for this day
             $existingSend = ChequeReminderSend::where('cheque_reminder_id', $cheque->id)
                 ->where('reminder_day', $diffInDays)
                 ->first();
 
             if ($existingSend) {
-                // If it is queued but stuck for more than 2 hours, we can retry it by letting it pass
+                // If it is queued but stuck for more than 2 hours, retry it
                 if ($existingSend->status === 'queued' && $existingSend->created_at->diffInHours(now()) >= 2) {
                     $eligibleChequeIds[] = $cheque->id;
                 }
-                // If it is failed, we might want to retry, but Laravel queue handles standard retries.
                 continue;
             } else {
                 // Create queued record
                 ChequeReminderSend::create([
                     'cheque_reminder_id' => $cheque->id,
-                    'reminder_day' => $diffInDays,
-                    'recipient' => $recipientEmail,
-                    'status' => 'queued',
+                    'reminder_day'       => $diffInDays,
+                    'recipient'          => $recipientEmail,
+                    'status'             => 'queued',
                 ]);
                 $eligibleChequeIds[] = $cheque->id;
             }
@@ -100,9 +111,9 @@ class SendChequeReminders extends Command
 
         if (!empty($eligibleChequeIds)) {
             dispatch(new ProcessTenantChequeRemindersJob(
-                $company->database_name, 
-                $recipientEmail, 
-                $eligibleChequeIds, 
+                $company->database_name,
+                $recipientEmail,
+                $eligibleChequeIds,
                 $today->format('d M Y')
             ));
         }

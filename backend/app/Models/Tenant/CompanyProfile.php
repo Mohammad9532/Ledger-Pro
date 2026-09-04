@@ -18,6 +18,7 @@ class CompanyProfile extends TenantModel
         'tax_rate',
         'date_format',
         'decimal_places',
+        'cheque_reminder_time',
     ];
 
     protected $casts = [

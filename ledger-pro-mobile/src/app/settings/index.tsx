@@ -1,16 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, Alert,
-  ActivityIndicator, SafeAreaView, Switch,
+  ActivityIndicator, SafeAreaView, Switch, FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   ArrowLeft, User, Lock, Building, LogOut, ChevronRight,
-  Eye, EyeOff, CheckCircle, Terminal,
+  Eye, EyeOff, CheckCircle, Terminal, Bell,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../api/api';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// Generates 0-padded strings for hour (0-23) and minute (0-59)
+const HOURS   = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+function TimePickerInline({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [hh, mm] = value.split(':');
+
+  const renderItem = (item: string, selected: boolean, onSelect: () => void) => (
+    <TouchableOpacity
+      key={item}
+      onPress={onSelect}
+      style={{
+        paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8,
+        backgroundColor: selected ? '#f97316' : 'transparent',
+        alignItems: 'center', marginVertical: 2,
+      }}
+    >
+      <Text style={{ color: selected ? '#fff' : '#94a3b8', fontWeight: selected ? '700' : '400', fontSize: 17, fontVariant: ['tabular-nums'] }}>
+        {item}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={{ flexDirection: 'row', backgroundColor: '#0f172a', borderRadius: 14, borderWidth: 1, borderColor: '#334155', overflow: 'hidden', marginTop: 8, marginBottom: 16 }}>
+      {/* Hour column */}
+      <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: '#1e293b' }}>
+        <Text style={{ color: '#475569', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center', paddingTop: 8, paddingBottom: 4 }}>Hour</Text>
+        <ScrollView style={{ maxHeight: 170 }} showsVerticalScrollIndicator={false}>
+          <View style={{ paddingHorizontal: 8, paddingBottom: 8 }}>
+            {HOURS.map(h => renderItem(h, h === hh, () => onChange(`${h}:${mm}`)))}
+          </View>
+        </ScrollView>
+      </View>
+      {/* Minute column */}
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: '#475569', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center', paddingTop: 8, paddingBottom: 4 }}>Minute</Text>
+        <ScrollView style={{ maxHeight: 170 }} showsVerticalScrollIndicator={false}>
+          <View style={{ paddingHorizontal: 8, paddingBottom: 8 }}>
+            {MINUTES.map(m => renderItem(m, m === mm, () => onChange(`${hh}:${m}`)))}
+          </View>
+        </ScrollView>
+      </View>
+    </View>
+  );
+}
 
 function SectionHeader({ title }: { title: string }) {
   return (
@@ -65,6 +112,11 @@ export default function SettingsScreen() {
   const [savingCompany, setSavingCompany] = useState(false);
   const [showCompany, setShowCompany] = useState(false);
 
+  // Cheque Reminder Time
+  const [reminderTime, setReminderTime] = useState('08:00');
+  const [showReminderTime, setShowReminderTime] = useState(false);
+  const [savingReminder, setSavingReminder] = useState(false);
+
   // Password
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
@@ -78,6 +130,7 @@ export default function SettingsScreen() {
       const p = res.data.profile;
       if (p?.currency_code) setCurrencyCode(p.currency_code);
       if (res.data.company_name) setCompanyName(res.data.company_name);
+      if (p?.cheque_reminder_time) setReminderTime(p.cheque_reminder_time);
     }).catch(() => {});
   }, []);
 
@@ -107,6 +160,19 @@ export default function SettingsScreen() {
       Alert.alert('Error', err.response?.data?.message || 'Failed to update company');
     } finally {
       setSavingCompany(false);
+    }
+  };
+
+  const handleSaveReminderTime = async () => {
+    setSavingReminder(true);
+    try {
+      await api.post('/company/profile', { cheque_reminder_time: reminderTime, _method: 'PUT' });
+      Alert.alert('Saved', `Cheque reminders will be sent daily at ${reminderTime}`);
+      setShowReminderTime(false);
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to save reminder time');
+    } finally {
+      setSavingReminder(false);
     }
   };
 
@@ -196,6 +262,32 @@ export default function SettingsScreen() {
               <TouchableOpacity onPress={handleSaveCompany} disabled={savingCompany}
                 style={{ backgroundColor: '#f97316', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
                 {savingCompany ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save Company</Text>}
+              </TouchableOpacity>
+            </View>
+          )}
+          <Divider />
+          {/* Cheque Reminder Time */}
+          <SettingRow
+            icon={Bell}
+            label="Cheque Reminder Time"
+            value={reminderTime}
+            onPress={() => setShowReminderTime(v => !v)}
+          />
+          {showReminderTime && (
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0f172a' }}>
+              <Text style={{ color: '#64748b', fontSize: 12, marginTop: 12, marginBottom: 2 }}>
+                Daily email time (24-hour, in your company timezone)
+              </Text>
+              <TimePickerInline value={reminderTime} onChange={setReminderTime} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(249,115,22,0.08)', borderRadius: 10, padding: 10, marginBottom: 14 }}>
+                <Bell size={14} color="#f97316" style={{ marginRight: 6 }} />
+                <Text style={{ color: '#f97316', fontSize: 12, flex: 1 }}>
+                  Emails will be sent at <Text style={{ fontWeight: '700' }}>{reminderTime}</Text> for cheques due in the next 5 days.
+                </Text>
+              </View>
+              <TouchableOpacity onPress={handleSaveReminderTime} disabled={savingReminder}
+                style={{ backgroundColor: '#f97316', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
+                {savingReminder ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save Reminder Time</Text>}
               </TouchableOpacity>
             </View>
           )}
