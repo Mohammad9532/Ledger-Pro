@@ -39,16 +39,19 @@ Route::middleware([
     // Audits & Backup
     // Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
-    // System & Backups
-    Route::prefix('system')->group(function () {
-        Route::get('/status', [\App\Http\Controllers\Api\SystemController::class, 'status']);
-        Route::get('/health', [\App\Http\Controllers\Api\SystemController::class, 'health']);
-        Route::get('/readiness', [\App\Http\Controllers\Api\SystemController::class, 'readiness']);
-        Route::get('/backups', [\App\Http\Controllers\Api\SystemController::class, 'getBackups']);
-        Route::post('/backups', [\App\Http\Controllers\Api\SystemController::class, 'createBackup']);
-        Route::get('/backups/{filename}/download', [\App\Http\Controllers\Api\SystemController::class, 'downloadBackup']);
-        Route::post('/backups/{filename}/restore', [\App\Http\Controllers\Api\SystemController::class, 'restoreBackup']);
-    });
+    // System & Backups — platform operators only. Tenant users cannot reach these.
+    Route::prefix('system')
+        ->middleware(\App\Http\Middleware\EnsurePlatformAdmin::class)
+        ->group(function () {
+            Route::get('/status', [\App\Http\Controllers\Api\SystemController::class, 'status']);
+            Route::get('/health', [\App\Http\Controllers\Api\SystemController::class, 'health']);
+            Route::get('/readiness', [\App\Http\Controllers\Api\SystemController::class, 'readiness']);
+            Route::get('/backups', [\App\Http\Controllers\Api\SystemController::class, 'getBackups']);
+            Route::post('/backups', [\App\Http\Controllers\Api\SystemController::class, 'createBackup']);
+            Route::get('/backups/{filename}/download', [\App\Http\Controllers\Api\SystemController::class, 'downloadBackup'])
+                ->where('filename', 'ledger_backup_\d{4}_\d{2}_\d{2}_\d{6}\.sql');
+            // Restore route intentionally removed — restores are an SSH/ops action, never an HTTP endpoint.
+        });
 
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);

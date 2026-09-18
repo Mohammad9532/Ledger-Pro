@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import api from '@/lib/api';
 import { format } from 'date-fns';
-import { Download, RefreshCcw, Database, ShieldAlert, CheckCircle, Server, HardDrive, FileTerminal, Cloud, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, Database, ShieldAlert, CheckCircle, Server, HardDrive, FileTerminal, Cloud, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function SystemPage() {
   const [health, setHealth] = useState<any>(null);
@@ -13,9 +12,8 @@ export default function SystemPage() {
   const [status, setStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState(false);
-  const [showRestore, setShowRestore] = useState(false);
-  const [restoreFile, setRestoreFile] = useState<string | null>(null);
   const [showReadiness, setShowReadiness] = useState(false);
+  const [forbidden, setForbidden] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -31,7 +29,11 @@ export default function SystemPage() {
       setReadiness(rRes.data);
       setStatus(sRes.data);
     } catch (err: any) {
-      console.error(err);
+      if (err.response?.status === 403) {
+        setForbidden(true);
+      } else {
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -57,26 +59,6 @@ export default function SystemPage() {
     window.open(`${import.meta.env.VITE_API_URL}/system/backups/${filename}/download`, '_blank');
   };
 
-  const confirmRestore = (filename: string) => {
-    setRestoreFile(filename);
-    setShowRestore(true);
-  };
-
-  const handleRestore = async () => {
-    if (!restoreFile) return;
-    setActioning(true);
-    try {
-      await api.post(`/system/backups/${restoreFile}/restore`);
-      alert('Database restored successfully! The page will now reload.');
-      window.location.reload();
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to restore backup');
-    } finally {
-      setActioning(false);
-      setShowRestore(false);
-    }
-  };
-
   const formatBytes = (bytes: number, decimals = 2) => {
     if (!+bytes) return '0 Bytes';
     const k = 1024, dm = decimals < 0 ? 0 : decimals, sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -97,6 +79,16 @@ export default function SystemPage() {
         <div className="flex justify-center py-12">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : forbidden ? (
+        <Card>
+          <CardContent className="p-8 flex flex-col items-center text-center gap-3">
+            <ShieldAlert className="w-8 h-8 text-amber-500" />
+            <p className="font-semibold">Platform administrators only</p>
+            <p className="text-sm text-muted-foreground max-w-md">
+              System status and backups are managed by the platform operator and are not available to company accounts.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-6 animate-fade-in">
 
@@ -346,9 +338,6 @@ export default function SystemPage() {
                         <Button size="sm" variant="outline" onClick={() => handleDownload(b.filename)}>
                           <Download className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => confirmRestore(b.filename)}>
-                          <RefreshCcw className="w-4 h-4 mr-2" /> Restore
-                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -359,28 +348,6 @@ export default function SystemPage() {
           </Card>
         </div>
       )}
-
-      {/* Restore Warning Dialog */}
-      <Dialog open={showRestore} onOpenChange={setShowRestore}>
-        <DialogContent className="sm:max-w-md border-rose-500/50">
-          <DialogHeader>
-            <DialogTitle className="text-rose-500 flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5" /> Critical Warning
-            </DialogTitle>
-            <DialogDescription className="pt-2 text-foreground">
-              You are about to restore the database from <strong>{restoreFile}</strong>.
-              <br/><br/>
-              This will <strong>OVERWRITE</strong> the current database entirely. Any data created after this backup will be permanently lost. This action is irreversible.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowRestore(false)} disabled={actioning}>Cancel</Button>
-            <Button variant="destructive" onClick={handleRestore} disabled={actioning}>
-              {actioning ? 'Restoring...' : 'Yes, Overwrite Database'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

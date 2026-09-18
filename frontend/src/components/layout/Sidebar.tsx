@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Wallet, Users, ArrowLeftRight, ShoppingBag,
   CreditCard, Receipt, TrendingUp, BarChart3, Scale, CalendarCheck, Search, Shield, Moon, Sun,
-  ChevronLeft, ChevronRight, LogOut, Menu, Settings, Clock
+  ChevronLeft, ChevronRight, LogOut, Menu, Clock
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -21,7 +21,7 @@ const navItems = [
   { path: '/reconciliation', icon: Scale, label: 'Reconciliation' },
   { path: '/cheques', icon: Clock, label: 'Cheque Reminders' },
   { path: '/month-closing', icon: CalendarCheck, label: 'Month Closing' },
-  { path: '/system', icon: Settings, label: 'System & Backups' },
+  // '/system' is platform-admin only; not linked from tenant navigation. Route still exists in App.tsx.
 ];
 
 interface SidebarProps {

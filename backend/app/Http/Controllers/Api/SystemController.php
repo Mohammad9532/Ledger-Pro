@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Spatie\DbDumper\Databases\MySql;
-use App\Models\AuditLog;
-use Illuminate\Support\Facades\Auth;
 
 class SystemController extends Controller
 {
@@ -254,32 +252,6 @@ class SystemController extends Controller
         }
 
         return Storage::disk('local')->download('backups/' . $filename);
-    }
-
-    public function restoreBackup(Request $request, $filename): JsonResponse
-    {
-        if (!Storage::disk('local')->exists('backups/' . $filename)) {
-            return response()->json(['error' => 'Backup not found'], 404);
-        }
-
-        try {
-            $path = Storage::disk('local')->path('backups/' . $filename);
-            $sql = file_get_contents($path);
-
-            // Execute the raw SQL
-            DB::unprepared($sql);
-
-            AuditLog::create([
-                'user_id' => Auth::id() ?? 1,
-                'action' => 'database_restore',
-                'description' => "Restored database from backup file: {$filename}",
-                'ip_address' => $request->ip(),
-            ]);
-
-            return response()->json(['message' => 'Database restored successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Restore failed: ' . $e->getMessage()], 500);
-        }
     }
 
     public function readiness(): JsonResponse
