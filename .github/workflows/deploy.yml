@@ -18,32 +18,27 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
 
           script: |
-            # Main App
+            # Abort on the first failing step. Without this a failed `git pull`
+            # still "succeeds" and rebuilds the old code (happened 41cc352..c0dab06).
+            set -euo pipefail
+
             cd /var/www/Ledger-Pro
 
-            git pull origin main
+            git pull --ff-only origin main
 
             cd frontend
             npm install
             npm run build
 
             cd ../backend
-            composer install --no-dev --optimize-autoloader
+            composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force --database=master --path=database/migrations/master
             php artisan migrate --force
             php artisan tenants:migrate
             php artisan optimize:clear
 
-            # Friend App
-            cd /var/www/Ledger-Pro-Friend
+            # Queue workers keep running the old code until told to restart.
+            php artisan queue:restart
 
-            git pull origin main
-
-            cd frontend
-            npm install
-            npm run build
-
-            cd ../backend
-            composer install --no-dev --optimize-autoloader
-            php artisan migrate --force
-            php artisan optimize:clear
+            # (The former "Friend App" second deployment was discontinued after
+            #  multi-tenancy launched; its tenant was removed on 2026-09-18.)
