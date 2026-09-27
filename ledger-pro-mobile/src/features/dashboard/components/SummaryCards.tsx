@@ -28,7 +28,7 @@ function Tile({ label, value, icon: Icon, tint, color }: { label: string; value:
         <Icon size={16} color={color} strokeWidth={2} />
       </View>
       <Text style={text.eyebrow} numberOfLines={1}>{label}</Text>
-      <Text style={[text.figure, { fontSize: 22, lineHeight: 26, marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit>
+      <Text style={[text.figure, { fontSize: 20, lineHeight: 24, marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit>
         {formatCurrency(value || '0')}
       </Text>
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, backgroundColor: color, opacity: 0.85 }} />
@@ -70,7 +70,7 @@ export const SummaryCards = memo(function SummaryCards({ summary }: Props) {
         </View>
 
         <Text
-          style={[text.figure, { fontSize: 42, lineHeight: 48, marginTop: 10, color: surplus >= 0 ? colors.ink : colors.negative }]}
+          style={[text.figure, { fontSize: 34, lineHeight: 40, marginTop: 10, color: surplus >= 0 ? colors.ink : colors.negative }]}
           numberOfLines={1}
           adjustsFontSizeToFit
         >
@@ -80,11 +80,11 @@ export const SummaryCards = memo(function SummaryCards({ summary }: Props) {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 14, marginTop: 16 }}>
           <View>
             <Text style={text.eyebrow}>Total assets</Text>
-            <Text style={[text.figure, { fontSize: 20, lineHeight: 24, marginTop: 4 }]}>{formatCurrency(assets)}</Text>
+            <Text style={[text.figure, { fontSize: 18, lineHeight: 22, marginTop: 4 }]}>{formatCurrency(assets)}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={text.eyebrow}>Business</Text>
-            <Text style={[text.figure, { fontSize: 20, lineHeight: 24, marginTop: 4 }]}>{formatCurrency(summary.business || '0')}</Text>
+            <Text style={[text.figure, { fontSize: 18, lineHeight: 22, marginTop: 4 }]}>{formatCurrency(summary.business || '0')}</Text>
           </View>
         </View>
       </TouchableOpacity>

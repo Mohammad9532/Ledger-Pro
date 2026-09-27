@@ -82,10 +82,11 @@ export const text = StyleSheet.create({
     color: colors.ink,
     letterSpacing: -0.2,
   },
+  // Money is set in the sans at semibold: the serif's condensed numerals look stretched at size.
   figure: {
-    fontFamily: fonts.display,
+    fontFamily: fonts.sansSemiBold,
     color: colors.ink,
-    letterSpacing: -0.6,
+    letterSpacing: -0.5,
     fontVariant: ['tabular-nums'],
   },
   body: {

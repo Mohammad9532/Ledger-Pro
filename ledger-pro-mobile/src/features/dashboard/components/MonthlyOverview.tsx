@@ -61,7 +61,7 @@ export const MonthlyOverview = memo(function MonthlyOverview({ monthly }: Props)
                 {isProfit ? '+' : ''}{margin}%
               </Text>
             </View>
-            <Text style={[text.figure, { fontSize: 22, lineHeight: 26, color: tone }]}>{formatCurrency(profit)}</Text>
+            <Text style={[text.figure, { fontSize: 20, lineHeight: 24, color: tone }]}>{formatCurrency(profit)}</Text>
           </View>
         </View>
       </View>
