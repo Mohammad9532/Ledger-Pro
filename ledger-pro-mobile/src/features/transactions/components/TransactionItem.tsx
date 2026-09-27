@@ -29,17 +29,17 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
     switch (transaction.type) {
       case 'income':
       case 'sale':
-        return <Wallet size={20} color="#10b981" />;
+        return <Wallet size={20} color="#3DD68C" />;
       case 'expense':
       case 'purchase':
-        return <CreditCard size={20} color="#ef4444" />;
+        return <CreditCard size={20} color="#FF6B81" />;
       case 'transfer':
       case 'journal':
-        return <ArrowRightLeft size={20} color="#f59e0b" />;
+        return <ArrowRightLeft size={20} color="#F2C14E" />;
       case 'cancellation':
-        return <XCircle size={20} color="#64748b" />;
+        return <XCircle size={20} color="#7C948C" />;
       default:
-        return <FileText size={20} color="#3b82f6" />;
+        return <FileText size={20} color="#5AA9F5" />;
     }
   };
 

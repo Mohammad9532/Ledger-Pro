@@ -26,9 +26,9 @@ export function BusinessItemCard({ item }: { item: BusinessItem }) {
         <View className="flex-row items-center flex-1">
           <View className="w-10 h-10 rounded-full bg-slate-800/80 items-center justify-center mr-3">
             {item.status === 'cancelled' ? (
-              <XCircle size={20} color="#ef4444" />
+              <XCircle size={20} color="#FF6B81" />
             ) : (
-              <Plane size={20} color="#3b82f6" />
+              <Plane size={20} color="#5AA9F5" />
             )}
           </View>
           <View className="flex-1 mr-2">
@@ -37,12 +37,12 @@ export function BusinessItemCard({ item }: { item: BusinessItem }) {
             </Text>
             {item.buyer?.name ? (
               <View className="flex-row items-center mt-0.5">
-                <User size={12} color="#94a3b8" />
+                <User size={12} color="#9FB4AC" />
                 <Text className="text-muted text-xs ml-1" numberOfLines={1}>{item.buyer.name}</Text>
               </View>
             ) : item.metadata?.passengers?.[0]?.first_name ? (
               <View className="flex-row items-center mt-0.5">
-                <User size={12} color="#94a3b8" />
+                <User size={12} color="#9FB4AC" />
                 <Text className="text-muted text-xs ml-1" numberOfLines={1}>{item.metadata.passengers[0].first_name}</Text>
               </View>
             ) : null}
@@ -58,13 +58,13 @@ export function BusinessItemCard({ item }: { item: BusinessItem }) {
       <View className="px-4 py-3 bg-slate-800/20">
         <View className="flex-row justify-between mb-2">
           <View className="flex-row items-center">
-            <Tag size={14} color="#94a3b8" />
+            <Tag size={14} color="#9FB4AC" />
             <Text className="text-slate-400 text-xs ml-1.5 font-mono">
               PNR: {item.metadata?.flight?.pnr || 'N/A'}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <Ticket size={14} color="#94a3b8" />
+            <Ticket size={14} color="#9FB4AC" />
             <Text className="text-slate-400 text-xs ml-1.5 font-mono">
               TKT: {item.metadata?.flight?.ticket_number || 'N/A'}
             </Text>
@@ -103,7 +103,7 @@ export function BusinessItemCard({ item }: { item: BusinessItem }) {
               activeOpacity={0.7}
               onPress={() => router.push(`/business/cancel?id=${item.id}`)}
             >
-              <Ban size={14} color="#ef4444" className="mr-1.5" />
+              <Ban size={14} color="#FF6B81" className="mr-1.5" />
               <Text className="text-red-400 font-bold text-sm">Cancel</Text>
             </TouchableOpacity>
             
@@ -126,7 +126,7 @@ export function BusinessItemCard({ item }: { item: BusinessItem }) {
               activeOpacity={0.7}
               onPress={() => router.push(`/business/document?id=${item.id}`)}
             >
-              <FileDown size={14} color="#cbd5e1" className="mr-2" />
+              <FileDown size={14} color="#C7D6D0" className="mr-2" />
               <Text className="text-slate-300 font-bold text-sm">Download Ticket (PDF)</Text>
             </TouchableOpacity>
           </View>

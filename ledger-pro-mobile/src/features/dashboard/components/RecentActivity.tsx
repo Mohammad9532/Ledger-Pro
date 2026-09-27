@@ -1,28 +1,30 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, RefreshCw, ShoppingCart, Tag, Edit2, Share, Trash2, CreditCard, XCircle } from 'lucide-react-native';
+import { ArrowDownLeft, ArrowUpRight, RefreshCw, ShoppingCart, Tag, Edit2, Trash2, CreditCard, XCircle } from 'lucide-react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { formatCurrency, formatRelativeTime } from '../../../utils/format';
 import { RecentTransaction } from '../types/dashboard';
+import { colors, fonts, radius, text } from '../../../theme';
 
 interface Props {
   transactions: RecentTransaction[];
 }
 
-const TX_CONFIG: Record<string, { icon: any; color: string; bg: string; accent: string; label: string }> = {
-  income:       { icon: ArrowDownLeft,  color: '#10b981', bg: 'rgba(16,185,129,0.12)',  accent: '#10b981', label: 'Income' },
-  receive_money:{ icon: ArrowDownLeft,  color: '#10b981', bg: 'rgba(16,185,129,0.12)',  accent: '#10b981', label: 'Received' },
-  sale:         { icon: Tag,            color: '#10b981', bg: 'rgba(16,185,129,0.12)',  accent: '#10b981', label: 'Sale' },
-  expense:      { icon: ArrowUpRight,   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   accent: '#ef4444', label: 'Expense' },
-  give_money:   { icon: ArrowUpRight,   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   accent: '#ef4444', label: 'Given' },
-  purchase:     { icon: ShoppingCart,   color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  accent: '#f59e0b', label: 'Purchase' },
-  cancellation: { icon: XCircle,        color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   accent: '#ef4444', label: 'Cancellation' },
-  transfer:     { icon: RefreshCw,      color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  accent: '#3b82f6', label: 'Transfer' },
-  cc_payment:   { icon: CreditCard,     color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  accent: '#8b5cf6', label: 'CC Payment' },
+const TX_CONFIG: Record<string, { icon: any; color: string; bg: string; label: string }> = {
+  income:        { icon: ArrowDownLeft, color: colors.positive, bg: colors.positiveSoft, label: 'Income' },
+  receive_money: { icon: ArrowDownLeft, color: colors.positive, bg: colors.positiveSoft, label: 'Received' },
+  sale:          { icon: Tag,           color: colors.positive, bg: colors.positiveSoft, label: 'Sale' },
+  expense:       { icon: ArrowUpRight,  color: colors.negative, bg: colors.negativeSoft, label: 'Expense' },
+  give_money:    { icon: ArrowUpRight,  color: colors.negative, bg: colors.negativeSoft, label: 'Given' },
+  purchase:      { icon: ShoppingCart,  color: colors.warning,  bg: colors.warningSoft,  label: 'Purchase' },
+  cancellation:  { icon: XCircle,       color: colors.negative, bg: colors.negativeSoft, label: 'Cancellation' },
+  transfer:      { icon: RefreshCw,     color: colors.info,     bg: colors.infoSoft,     label: 'Transfer' },
+  cc_payment:    { icon: CreditCard,    color: colors.violet,   bg: colors.violetSoft,   label: 'CC Payment' },
 };
 
-const getConfig = (type: string) => TX_CONFIG[type] ?? { icon: Tag, color: '#94a3b8', bg: 'rgba(148,163,184,0.1)', accent: '#94a3b8', label: type.replace(/_/g, ' ') };
+const getConfig = (type: string) =>
+  TX_CONFIG[type] ?? { icon: Tag, color: colors.inkMuted, bg: 'rgba(159, 180, 172, 0.12)', label: type.replace(/_/g, ' ') };
 
 const renderRightActions = (tx: RecentTransaction) => {
   const handleDelete = () => {
@@ -38,11 +40,11 @@ const renderRightActions = (tx: RecentTransaction) => {
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <TouchableOpacity style={{ width: 60, flex: 1, backgroundColor: 'rgba(59,130,246,0.2)', alignItems: 'center', justifyContent: 'center' }} onPress={() => {}}>
-        <Edit2 size={20} color="#3b82f6" />
+      <TouchableOpacity style={{ width: 60, flex: 1, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center' }} onPress={() => {}}>
+        <Edit2 size={20} color={colors.info} />
       </TouchableOpacity>
-      <TouchableOpacity style={{ width: 60, flex: 1, backgroundColor: 'rgba(239,68,68,0.2)', alignItems: 'center', justifyContent: 'center' }} onPress={handleDelete}>
-        <Trash2 size={20} color="#ef4444" />
+      <TouchableOpacity style={{ width: 60, flex: 1, backgroundColor: colors.negativeSoft, alignItems: 'center', justifyContent: 'center' }} onPress={handleDelete}>
+        <Trash2 size={20} color={colors.negative} />
       </TouchableOpacity>
     </View>
   );
@@ -54,24 +56,25 @@ export const RecentActivity = memo(function RecentActivity({ transactions }: Pro
 
   return (
     <View style={{ marginBottom: 32 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Text style={{ fontSize: 17, fontWeight: '700', color: '#f8fafc' }}>Recent Activity</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+        <Text style={text.sectionTitle}>Recent entries</Text>
         <TouchableOpacity onPress={() => router.push('/transactions' as any)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Text style={{ fontSize: 12, color: '#f97316', fontWeight: '600' }}>See all →</Text>
+          <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 12.5, color: colors.primary }}>See all →</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={{ backgroundColor: '#1e293b', borderRadius: 20, borderWidth: 1, borderColor: '#334155', overflow: 'hidden' }}>
+      <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
         {transactions.map((tx, index) => {
           const isLast = index === transactions.length - 1;
           const cfg = getConfig(tx.type);
           const isIncome = ['income', 'receive_money', 'sale'].includes(tx.type);
           const isExpense = ['expense', 'give_money', 'purchase', 'cancellation'].includes(tx.type);
           const Icon = cfg.icon;
+          const amountColor = isIncome ? colors.positive : isExpense ? colors.negative : colors.ink;
 
           return (
-            <Swipeable 
-              key={tx.id} 
+            <Swipeable
+              key={tx.id}
               renderRightActions={() => renderRightActions(tx)}
               friction={2}
               rightThreshold={40}
@@ -83,35 +86,35 @@ export const RecentActivity = memo(function RecentActivity({ transactions }: Pro
                   alignItems: 'center',
                   padding: 14,
                   paddingLeft: 0,
-                  backgroundColor: '#1e293b',
+                  backgroundColor: colors.surface,
                   borderBottomWidth: isLast ? 0 : 1,
-                  borderBottomColor: '#0f172a',
+                  borderBottomColor: colors.bg,
                 }}
               >
                 {/* Left accent bar */}
-                <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: cfg.accent, borderRadius: 2, marginRight: 12 }} />
+                <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: cfg.color, borderRadius: 2, marginRight: 12 }} />
 
                 {/* Icon */}
-                <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: cfg.bg, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                  <Icon size={20} color={cfg.color} />
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: cfg.bg, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                  <Icon size={18} color={cfg.color} strokeWidth={2} />
                 </View>
 
                 {/* Text */}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#f8fafc', fontWeight: '700', fontSize: 14 }}>
+                  <Text style={{ fontFamily: fonts.sansSemiBold, color: colors.ink, fontSize: 14 }}>
                     {cfg.label.charAt(0).toUpperCase() + cfg.label.slice(1)}
                   </Text>
-                  <Text style={{ color: '#64748b', fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+                  <Text style={{ fontFamily: fonts.sans, color: colors.inkFaint, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                     {tx.entries[0]?.account?.name || tx.description || '—'}
                   </Text>
                 </View>
 
                 {/* Amount + Time */}
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontWeight: '800', fontSize: 15, color: isIncome ? '#10b981' : isExpense ? '#ef4444' : '#f8fafc' }}>
-                    {isIncome ? '+' : isExpense ? '-' : ''}{formatCurrency(tx.amount)}
+                  <Text style={{ fontFamily: fonts.monoMedium, fontSize: 14, color: amountColor, fontVariant: ['tabular-nums'] }}>
+                    {isIncome ? '+' : isExpense ? '−' : ''}{formatCurrency(tx.amount)}
                   </Text>
-                  <Text style={{ color: '#475569', fontSize: 11, marginTop: 3 }}>{formatRelativeTime(tx.date)}</Text>
+                  <Text style={{ fontFamily: fonts.mono, color: colors.inkGhost, fontSize: 10.5, marginTop: 3 }}>{formatRelativeTime(tx.date)}</Text>
                 </View>
               </TouchableOpacity>
             </Swipeable>
@@ -121,4 +124,3 @@ export const RecentActivity = memo(function RecentActivity({ transactions }: Pro
     </View>
   );
 });
-

@@ -111,7 +111,7 @@ export default function NewBusinessPurchaseScreen() {
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border flex-row items-center justify-between z-10">
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/business')} className="w-10 h-10 items-center justify-center rounded-full bg-slate-800">
-          <ArrowLeft size={20} color="#f8fafc" />
+          <ArrowLeft size={20} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">New Business Purchase</Text>
         <View className="w-10" />
@@ -128,7 +128,7 @@ export default function NewBusinessPurchaseScreen() {
               onChangeText={setPurchaseCost}
               keyboardType="decimal-pad"
               placeholder="0.00"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#5F776F"
               className="text-white text-6xl font-bold h-20 min-w-[150px] text-center"
               autoFocus
             />
@@ -140,12 +140,12 @@ export default function NewBusinessPurchaseScreen() {
           <View className="py-2 border-b border-border">
             <Text className="text-muted text-sm font-medium mb-2">Item Description</Text>
             <View className="flex-row items-center">
-              <FileText size={16} color="#94a3b8" className="mr-2" />
+              <FileText size={16} color="#9FB4AC" className="mr-2" />
               <TextInput 
                 value={description} 
                 onChangeText={setDescription} 
                 placeholder="e.g., Flight Ticket, Package..." 
-                placeholderTextColor="#64748b" 
+                placeholderTextColor="#7C948C" 
                 className="flex-1 text-white text-base" 
               />
             </View>
@@ -155,11 +155,11 @@ export default function NewBusinessPurchaseScreen() {
             <View>
               <Text className="text-muted text-sm font-medium mb-1">Date</Text>
               <View className="flex-row items-center">
-                <CalendarIcon size={16} color="#94a3b8" className="mr-2" />
+                <CalendarIcon size={16} color="#9FB4AC" className="mr-2" />
                 <Text className="text-white text-base">{format(date, 'MMM dd, yyyy')}</Text>
               </View>
             </View>
-            <ChevronRight size={20} color="#64748b" />
+            <ChevronRight size={20} color="#7C948C" />
           </TouchableOpacity>
 
           <View className="py-4 border-b border-border flex-row items-center justify-between">
@@ -170,7 +170,7 @@ export default function NewBusinessPurchaseScreen() {
             <Switch
               value={isCredit}
               onValueChange={setIsCredit}
-              trackColor={{ false: '#334155', true: '#f97316' }}
+              trackColor={{ false: '#1F3129', true: '#C6F13B' }}
               thumbColor="#ffffff"
             />
           </View>
@@ -181,7 +181,7 @@ export default function NewBusinessPurchaseScreen() {
                 <Text className="text-muted text-sm font-medium mb-1">Supplier</Text>
                 <Text className={`text-base ${supplierContact ? 'text-white' : 'text-slate-500'}`}>{supplierContact ? supplierContact.name : `Select Supplier`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => paymentSheetRef.current?.present()}>
@@ -189,7 +189,7 @@ export default function NewBusinessPurchaseScreen() {
                 <Text className="text-muted text-sm font-medium mb-1">Payment Account</Text>
                 <Text className={`text-base ${paymentAccount ? 'text-white' : 'text-slate-500'}`}>{paymentAccount ? paymentAccount.name : `Select Payment Source`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           )}
 
@@ -204,7 +204,7 @@ export default function NewBusinessPurchaseScreen() {
                 onChangeText={setCashbackAmount}
                 keyboardType="decimal-pad"
                 placeholder="Cashback Amount"
-                placeholderTextColor="#64748b"
+                placeholderTextColor="#7C948C"
                 className="flex-1 text-white text-base"
               />
             </View>
@@ -217,7 +217,7 @@ export default function NewBusinessPurchaseScreen() {
                     {cashbackAccount ? cashbackAccount.name : 'Select Asset / Bank Account'}
                   </Text>
                 </View>
-                <ChevronRight size={20} color="#64748b" />
+                <ChevronRight size={20} color="#7C948C" />
               </TouchableOpacity>
             )}
           </View>
@@ -227,7 +227,7 @@ export default function NewBusinessPurchaseScreen() {
       {/* Save Button */}
       <View className="p-4 border-t border-border bg-card absolute bottom-0 left-0 right-0">
         <TouchableOpacity className={`h-14 rounded-xl items-center justify-center ${isPending ? 'bg-primary-500/50' : 'bg-primary-500'}`} onPress={handleSave} disabled={isPending} activeOpacity={0.8}>
-          <Text className="text-white text-base font-bold">{isPending ? 'Saving...' : 'Record Purchase'}</Text>
+          <Text className="text-onprimary text-base font-bold">{isPending ? 'Saving...' : 'Record Purchase'}</Text>
         </TouchableOpacity>
       </View>
 

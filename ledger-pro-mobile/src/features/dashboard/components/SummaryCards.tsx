@@ -1,121 +1,107 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Wallet, Landmark, ArrowDownLeft, ArrowUpRight, ChevronRight, Briefcase, CreditCard, Building } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Wallet, Landmark, ArrowDownLeft, ArrowUpRight, ChevronRight, CreditCard, Scale } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { formatCurrency } from '../../../utils/format';
 import { DashboardSummary } from '../types/dashboard';
+import { colors, fonts, radius, text } from '../../../theme';
+import { LedgerRules } from '../../../components/LedgerRules';
 
 interface Props {
   summary: DashboardSummary;
 }
 
+function Tile({ label, value, icon: Icon, tint, color }: { label: string; value: string; icon: any; tint: string; color: string }) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+      }}
+    >
+      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: tint, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+        <Icon size={16} color={color} strokeWidth={2} />
+      </View>
+      <Text style={text.eyebrow} numberOfLines={1}>{label}</Text>
+      <Text style={[text.figure, { fontSize: 22, lineHeight: 26, marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit>
+        {formatCurrency(value || '0')}
+      </Text>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, backgroundColor: color, opacity: 0.85 }} />
+    </View>
+  );
+}
+
 export const SummaryCards = memo(function SummaryCards({ summary }: Props) {
+  const router = useRouter();
+  const surplus = parseFloat(summary.surplus || '0');
+  const assets = parseFloat(summary.asset || '0');
+
   return (
     <View className="mb-6">
-      {/* Hero Card: Total Surplus */}
-      <TouchableOpacity activeOpacity={0.9} accessibilityLabel="Total Surplus">
-        <LinearGradient
-          colors={['#f97316', '#ea580c']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ borderRadius: 24, padding: 24, marginBottom: 16 }}
-        >
-          <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-primary-50 font-medium">Total Assets</Text>
-            <ChevronRight size={20} color="#fffedd" />
-          </View>
-          <Text className="text-white text-4xl font-bold tracking-tight mb-4">
-            {formatCurrency((parseFloat(summary.surplus || '0') + parseFloat(summary.asset || '0')).toString())}
-          </Text>
+      {/* Hero: the ledger sheet */}
+      <TouchableOpacity
+        activeOpacity={0.92}
+        accessibilityLabel="Net surplus"
+        onPress={() => router.push('/accounts' as any)}
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: radius.xl,
+          borderWidth: 1,
+          borderColor: colors.borderStrong,
+          padding: 22,
+          marginBottom: 14,
+          overflow: 'hidden',
+        }}
+      >
+        <LedgerRules count={9} offset={-2} />
+        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: colors.primary }} />
 
-          {/* Breakdown: Surplus & Assets */}
-          <View className="flex-row justify-between border-t border-white/20 pt-4 mt-2">
-            <View>
-              <Text className="text-primary-100 text-xs font-medium uppercase tracking-wider mb-1">Surplus</Text>
-              <Text className="text-white font-bold">{formatCurrency(summary.surplus || '0')}</Text>
-            </View>
-            <View className="items-end">
-              <Text className="text-primary-100 text-xs font-medium uppercase tracking-wider mb-1">Assets</Text>
-              <Text className="text-white font-bold">{formatCurrency(summary.asset || '0')}</Text>
-            </View>
+        <View className="flex-row justify-between items-center">
+          <Text style={text.eyebrow}>Net surplus</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <Text style={{ fontFamily: fonts.mono, fontSize: 11, color: colors.primary }}>Accounts</Text>
+            <ChevronRight size={14} color={colors.primary} />
           </View>
-        </LinearGradient>
+        </View>
+
+        <Text
+          style={[text.figure, { fontSize: 42, lineHeight: 48, marginTop: 10, color: surplus >= 0 ? colors.ink : colors.negative }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {formatCurrency(surplus)}
+        </Text>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 14, marginTop: 16 }}>
+          <View>
+            <Text style={text.eyebrow}>Total assets</Text>
+            <Text style={[text.figure, { fontSize: 20, lineHeight: 24, marginTop: 4 }]}>{formatCurrency(assets)}</Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={text.eyebrow}>Business</Text>
+            <Text style={[text.figure, { fontSize: 20, lineHeight: 24, marginTop: 4 }]}>{formatCurrency(summary.business || '0')}</Text>
+          </View>
+        </View>
       </TouchableOpacity>
 
-      {/* Sub Cards: Cash & Bank */}
-      <View className="flex-row gap-4 mb-4">
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-primary-500/10 items-center justify-center mb-3">
-            <Wallet size={16} color="#f97316" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">Cash</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.cash)}</Text>
-        </View>
-
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-blue-500/10 items-center justify-center mb-3">
-            <Landmark size={16} color="#3b82f6" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">Bank</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.bank)}</Text>
-        </View>
+      <View className="flex-row gap-3 mb-3">
+        <Tile label="Cash" value={summary.cash} icon={Wallet} tint={colors.positiveSoft} color={colors.positive} />
+        <Tile label="Bank" value={summary.bank} icon={Landmark} tint={colors.infoSoft} color={colors.info} />
       </View>
 
-      {/* Sub Cards: Receivable & Payable */}
-      <View className="flex-row gap-4 mb-4">
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-success/10 items-center justify-center mb-3">
-            <ArrowDownLeft size={16} color="#10b981" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">To Receive</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.receivable)}</Text>
-        </View>
-
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-danger/10 items-center justify-center mb-3">
-            <ArrowUpRight size={16} color="#ef4444" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">To Pay</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.payable)}</Text>
-        </View>
+      <View className="flex-row gap-3 mb-3">
+        <Tile label="To receive" value={summary.receivable} icon={ArrowDownLeft} tint={colors.violetSoft} color={colors.violet} />
+        <Tile label="To pay" value={summary.payable} icon={ArrowUpRight} tint={colors.negativeSoft} color={colors.negative} />
       </View>
 
-      {/* Sub Cards: Assets & Business */}
-      <View className="flex-row gap-4 mb-4">
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-teal-500/10 items-center justify-center mb-3">
-            <Building size={16} color="#14b8a6" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">Assets</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.asset || '0')}</Text>
-        </View>
-
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-indigo-500/10 items-center justify-center mb-3">
-            <Briefcase size={16} color="#6366f1" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">Business</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.business || '0')}</Text>
-        </View>
-      </View>
-
-      {/* Sub Cards: Credit Card & Liabilities */}
-      <View className="flex-row gap-4">
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-pink-500/10 items-center justify-center mb-3">
-            <CreditCard size={16} color="#ec4899" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">Credit Cards</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.credit_card || '0')}</Text>
-        </View>
-
-        <View className="flex-1 bg-card rounded-2xl p-4 border border-border">
-          <View className="w-8 h-8 rounded-full bg-rose-500/10 items-center justify-center mb-3">
-            <ArrowUpRight size={16} color="#f43f5e" />
-          </View>
-          <Text className="text-muted text-xs font-medium mb-1">Liabilities</Text>
-          <Text className="text-white text-lg font-bold">{formatCurrency(summary.liability || '0')}</Text>
-        </View>
+      <View className="flex-row gap-3">
+        <Tile label="Credit cards" value={summary.credit_card} icon={CreditCard} tint={'rgba(255, 154, 92, 0.14)'} color={colors.orange} />
+        <Tile label="Liabilities" value={summary.liability} icon={Scale} tint={colors.warningSoft} color={colors.warning} />
       </View>
     </View>
   );

@@ -25,21 +25,21 @@ function TimePickerInline({ value, onChange }: { value: string; onChange: (v: st
       onPress={onSelect}
       style={{
         paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8,
-        backgroundColor: selected ? '#f97316' : 'transparent',
+        backgroundColor: selected ? '#C6F13B' : 'transparent',
         alignItems: 'center', marginVertical: 2,
       }}
     >
-      <Text style={{ color: selected ? '#fff' : '#94a3b8', fontWeight: selected ? '700' : '400', fontSize: 17, fontVariant: ['tabular-nums'] }}>
+      <Text style={{ color: selected ? '#0A1311' : '#9FB4AC', fontWeight: selected ? '700' : '400', fontSize: 17, fontVariant: ['tabular-nums'] }}>
         {item}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: '#0f172a', borderRadius: 14, borderWidth: 1, borderColor: '#334155', overflow: 'hidden', marginTop: 8, marginBottom: 16 }}>
+    <View style={{ flexDirection: 'row', backgroundColor: '#0A1311', borderRadius: 14, borderWidth: 1, borderColor: '#1F3129', overflow: 'hidden', marginTop: 8, marginBottom: 16 }}>
       {/* Hour column */}
-      <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: '#1e293b' }}>
-        <Text style={{ color: '#475569', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center', paddingTop: 8, paddingBottom: 4 }}>Hour</Text>
+      <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: '#0F1B18' }}>
+        <Text style={{ color: '#5F776F', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center', paddingTop: 8, paddingBottom: 4 }}>Hour</Text>
         <ScrollView style={{ maxHeight: 170 }} showsVerticalScrollIndicator={false}>
           <View style={{ paddingHorizontal: 8, paddingBottom: 8 }}>
             {HOURS.map(h => renderItem(h, h === hh, () => onChange(`${h}:${mm}`)))}
@@ -48,7 +48,7 @@ function TimePickerInline({ value, onChange }: { value: string; onChange: (v: st
       </View>
       {/* Minute column */}
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#475569', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center', paddingTop: 8, paddingBottom: 4 }}>Minute</Text>
+        <Text style={{ color: '#5F776F', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center', paddingTop: 8, paddingBottom: 4 }}>Minute</Text>
         <ScrollView style={{ maxHeight: 170 }} showsVerticalScrollIndicator={false}>
           <View style={{ paddingHorizontal: 8, paddingBottom: 8 }}>
             {MINUTES.map(m => renderItem(m, m === mm, () => onChange(`${hh}:${m}`)))}
@@ -61,7 +61,7 @@ function TimePickerInline({ value, onChange }: { value: string; onChange: (v: st
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <Text style={{ color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 24, marginLeft: 4 }}>
+    <Text style={{ color: '#7C948C', fontSize: 10.5, fontFamily: 'DMMono_500Medium', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8, marginTop: 24, marginLeft: 4 }}>
       {title}
     </Text>
   );
@@ -74,26 +74,26 @@ function SettingRow({ icon: Icon, label, value, onPress, destructive = false, tr
       activeOpacity={0.7}
       style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 }}
     >
-      <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: destructive ? 'rgba(239,68,68,0.12)' : 'rgba(249,115,22,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-        <Icon size={17} color={destructive ? '#ef4444' : '#f97316'} />
+      <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: destructive ? 'rgba(255,107,129,0.12)' : 'rgba(198,241,59,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+        <Icon size={17} color={destructive ? '#FF6B81' : '#C6F13B'} />
       </View>
-      <Text style={{ flex: 1, color: destructive ? '#ef4444' : '#f8fafc', fontWeight: '600', fontSize: 15 }}>{label}</Text>
-      {value && <Text style={{ color: '#64748b', fontSize: 13, marginRight: 6 }}>{value}</Text>}
-      {trailing || <ChevronRight size={16} color="#334155" />}
+      <Text style={{ flex: 1, color: destructive ? '#FF6B81' : '#E7F0EB', fontWeight: '600', fontSize: 15 }}>{label}</Text>
+      {value && <Text style={{ color: '#7C948C', fontSize: 13, marginRight: 6 }}>{value}</Text>}
+      {trailing || <ChevronRight size={16} color="#1F3129" />}
     </TouchableOpacity>
   );
 }
 
 function SettingsCard({ children }: { children: React.ReactNode }) {
   return (
-    <View style={{ backgroundColor: '#1e293b', borderRadius: 20, borderWidth: 1, borderColor: '#334155', overflow: 'hidden', marginBottom: 4 }}>
+    <View style={{ backgroundColor: '#0F1B18', borderRadius: 20, borderWidth: 1, borderColor: '#1F3129', overflow: 'hidden', marginBottom: 4 }}>
       {children}
     </View>
   );
 }
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: '#0f172a', marginLeft: 62 }} />;
+  return <View style={{ height: 1, backgroundColor: '#0A1311', marginLeft: 62 }} />;
 }
 
 export default function SettingsScreen() {
@@ -204,18 +204,18 @@ export default function SettingsScreen() {
     : 'LP';
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0a0f1a' }}>
+    <View style={{ flex: 1, backgroundColor: '#070E0C' }}>
       <SafeAreaView>
-        <View style={{ backgroundColor: '#0f172a', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#1e293b' }}>
+        <View style={{ backgroundColor: '#0A1311', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#0F1B18' }}>
           {/* Avatar + name */}
           <View style={{ alignItems: 'center', paddingTop: 8 }}>
-            <LinearGradient colors={['#f97316', '#ea580c']} style={{ width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 26 }}>{initials}</Text>
+            <LinearGradient colors={['#C6F13B', '#A8D622']} style={{ width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <Text style={{ color: '#0A1311', fontWeight: '800', fontSize: 26 }}>{initials}</Text>
             </LinearGradient>
-            <Text style={{ color: '#f8fafc', fontSize: 20, fontWeight: '800' }}>{user?.name}</Text>
-            <Text style={{ color: '#64748b', fontSize: 13, marginTop: 3 }}>{user?.email}</Text>
-            <View style={{ backgroundColor: 'rgba(249,115,22,0.15)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 8 }}>
-              <Text style={{ color: '#f97316', fontSize: 11, fontWeight: '700' }}>{company?.company_name}</Text>
+            <Text style={{ color: '#E7F0EB', fontSize: 24, fontFamily: 'InstrumentSerif_400Regular', letterSpacing: -0.3 }}>{user?.name}</Text>
+            <Text style={{ color: '#7C948C', fontSize: 13, marginTop: 3 }}>{user?.email}</Text>
+            <View style={{ backgroundColor: 'rgba(198,241,59,0.15)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 8 }}>
+              <Text style={{ color: '#C6F13B', fontSize: 11, fontWeight: '700' }}>{company?.company_name}</Text>
             </View>
           </View>
         </View>
@@ -228,18 +228,18 @@ export default function SettingsScreen() {
         <SettingsCard>
           <SettingRow icon={User} label="Edit Profile" value={user?.name} onPress={() => setShowPersonal(v => !v)} />
           {showPersonal && (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0f172a' }}>
-              <Text style={{ color: '#64748b', fontSize: 12, marginTop: 12, marginBottom: 6 }}>Full Name</Text>
-              <View style={{ backgroundColor: '#0f172a', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 12 }}>
-                <TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor="#475569" style={{ color: '#f8fafc', fontSize: 15 }} />
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0A1311' }}>
+              <Text style={{ color: '#7C948C', fontSize: 12, marginTop: 12, marginBottom: 6 }}>Full Name</Text>
+              <View style={{ backgroundColor: '#0A1311', borderRadius: 12, borderWidth: 1, borderColor: '#1F3129', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 12 }}>
+                <TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor="#5F776F" style={{ color: '#E7F0EB', fontSize: 15 }} />
               </View>
-              <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 6 }}>Phone (Optional)</Text>
-              <View style={{ backgroundColor: '#0f172a', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 16 }}>
-                <TextInput value={phone} onChangeText={setPhone} placeholder="Phone number" placeholderTextColor="#475569" keyboardType="phone-pad" style={{ color: '#f8fafc', fontSize: 15 }} />
+              <Text style={{ color: '#7C948C', fontSize: 12, marginBottom: 6 }}>Phone (Optional)</Text>
+              <View style={{ backgroundColor: '#0A1311', borderRadius: 12, borderWidth: 1, borderColor: '#1F3129', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 16 }}>
+                <TextInput value={phone} onChangeText={setPhone} placeholder="Phone number" placeholderTextColor="#5F776F" keyboardType="phone-pad" style={{ color: '#E7F0EB', fontSize: 15 }} />
               </View>
               <TouchableOpacity onPress={handleSaveInfo} disabled={savingInfo}
-                style={{ backgroundColor: '#f97316', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
-                {savingInfo ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save Changes</Text>}
+                style={{ backgroundColor: '#C6F13B', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
+                {savingInfo ? <ActivityIndicator color="#0A1311" /> : <Text style={{ color: '#0A1311', fontWeight: '700', fontSize: 15 }}>Save Changes</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -250,18 +250,18 @@ export default function SettingsScreen() {
         <SettingsCard>
           <SettingRow icon={Building} label="Company Settings" value={company?.company_name} onPress={() => setShowCompany(v => !v)} />
           {showCompany && (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0f172a' }}>
-              <Text style={{ color: '#64748b', fontSize: 12, marginTop: 12, marginBottom: 6 }}>Company Name</Text>
-              <View style={{ backgroundColor: '#0f172a', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 12 }}>
-                <TextInput value={companyName} onChangeText={setCompanyName} placeholder="Company name" placeholderTextColor="#475569" style={{ color: '#f8fafc', fontSize: 15 }} />
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0A1311' }}>
+              <Text style={{ color: '#7C948C', fontSize: 12, marginTop: 12, marginBottom: 6 }}>Company Name</Text>
+              <View style={{ backgroundColor: '#0A1311', borderRadius: 12, borderWidth: 1, borderColor: '#1F3129', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 12 }}>
+                <TextInput value={companyName} onChangeText={setCompanyName} placeholder="Company name" placeholderTextColor="#5F776F" style={{ color: '#E7F0EB', fontSize: 15 }} />
               </View>
-              <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 6 }}>Currency Code</Text>
-              <View style={{ backgroundColor: '#0f172a', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 16 }}>
-                <TextInput value={currencyCode} onChangeText={setCurrencyCode} placeholder="INR" placeholderTextColor="#475569" maxLength={3} autoCapitalize="characters" style={{ color: '#f8fafc', fontSize: 15 }} />
+              <Text style={{ color: '#7C948C', fontSize: 12, marginBottom: 6 }}>Currency Code</Text>
+              <View style={{ backgroundColor: '#0A1311', borderRadius: 12, borderWidth: 1, borderColor: '#1F3129', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 16 }}>
+                <TextInput value={currencyCode} onChangeText={setCurrencyCode} placeholder="INR" placeholderTextColor="#5F776F" maxLength={3} autoCapitalize="characters" style={{ color: '#E7F0EB', fontSize: 15 }} />
               </View>
               <TouchableOpacity onPress={handleSaveCompany} disabled={savingCompany}
-                style={{ backgroundColor: '#f97316', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
-                {savingCompany ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save Company</Text>}
+                style={{ backgroundColor: '#C6F13B', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
+                {savingCompany ? <ActivityIndicator color="#0A1311" /> : <Text style={{ color: '#0A1311', fontWeight: '700', fontSize: 15 }}>Save Company</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -274,20 +274,20 @@ export default function SettingsScreen() {
             onPress={() => setShowReminderTime(v => !v)}
           />
           {showReminderTime && (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0f172a' }}>
-              <Text style={{ color: '#64748b', fontSize: 12, marginTop: 12, marginBottom: 2 }}>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0A1311' }}>
+              <Text style={{ color: '#7C948C', fontSize: 12, marginTop: 12, marginBottom: 2 }}>
                 Daily email time (24-hour, in your company timezone)
               </Text>
               <TimePickerInline value={reminderTime} onChange={setReminderTime} />
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(249,115,22,0.08)', borderRadius: 10, padding: 10, marginBottom: 14 }}>
-                <Bell size={14} color="#f97316" style={{ marginRight: 6 }} />
-                <Text style={{ color: '#f97316', fontSize: 12, flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(198,241,59,0.08)', borderRadius: 10, padding: 10, marginBottom: 14 }}>
+                <Bell size={14} color="#C6F13B" style={{ marginRight: 6 }} />
+                <Text style={{ color: '#C6F13B', fontSize: 12, flex: 1 }}>
                   Emails will be sent at <Text style={{ fontWeight: '700' }}>{reminderTime}</Text> for cheques due in the next 5 days.
                 </Text>
               </View>
               <TouchableOpacity onPress={handleSaveReminderTime} disabled={savingReminder}
-                style={{ backgroundColor: '#f97316', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
-                {savingReminder ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save Reminder Time</Text>}
+                style={{ backgroundColor: '#C6F13B', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}>
+                {savingReminder ? <ActivityIndicator color="#0A1311" /> : <Text style={{ color: '#0A1311', fontWeight: '700', fontSize: 15 }}>Save Reminder Time</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -298,34 +298,34 @@ export default function SettingsScreen() {
         <SettingsCard>
           <SettingRow icon={Lock} label="Change Password" onPress={() => setShowPassword(v => !v)} />
           {showPassword && (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0f172a' }}>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0A1311' }}>
               {[
                 { label: 'Current Password', value: currentPwd, onChange: setCurrentPwd },
                 { label: 'New Password', value: newPwd, onChange: setNewPwd },
                 { label: 'Confirm New Password', value: confirmPwd, onChange: setConfirmPwd },
               ].map((field, i) => (
                 <View key={i}>
-                  <Text style={{ color: '#64748b', fontSize: 12, marginTop: 12, marginBottom: 6 }}>{field.label}</Text>
-                  <View style={{ backgroundColor: '#0f172a', borderRadius: 12, borderWidth: 1, borderColor: '#334155', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 4 }}>
+                  <Text style={{ color: '#7C948C', fontSize: 12, marginTop: 12, marginBottom: 6 }}>{field.label}</Text>
+                  <View style={{ backgroundColor: '#0A1311', borderRadius: 12, borderWidth: 1, borderColor: '#1F3129', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, marginBottom: 4 }}>
                     <TextInput
                       value={field.value}
                       onChangeText={field.onChange}
                       secureTextEntry={!showPwd}
                       placeholder="••••••••"
-                      placeholderTextColor="#475569"
-                      style={{ flex: 1, color: '#f8fafc', fontSize: 15 }}
+                      placeholderTextColor="#5F776F"
+                      style={{ flex: 1, color: '#E7F0EB', fontSize: 15 }}
                     />
                     {i === 0 && (
                       <TouchableOpacity onPress={() => setShowPwd(v => !v)}>
-                        {showPwd ? <EyeOff size={18} color="#64748b" /> : <Eye size={18} color="#64748b" />}
+                        {showPwd ? <EyeOff size={18} color="#7C948C" /> : <Eye size={18} color="#7C948C" />}
                       </TouchableOpacity>
                     )}
                   </View>
                 </View>
               ))}
               <TouchableOpacity onPress={handleChangePassword} disabled={savingPwd}
-                style={{ backgroundColor: '#f97316', borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginTop: 16 }}>
-                {savingPwd ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Change Password</Text>}
+                style={{ backgroundColor: '#C6F13B', borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginTop: 16 }}>
+                {savingPwd ? <ActivityIndicator color="#0A1311" /> : <Text style={{ color: '#0A1311', fontWeight: '700', fontSize: 15 }}>Change Password</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -343,7 +343,7 @@ export default function SettingsScreen() {
           <SettingRow icon={LogOut} label="Sign Out" destructive onPress={handleLogout} trailing={<View />} />
         </SettingsCard>
 
-        <Text style={{ color: '#1e293b', textAlign: 'center', fontSize: 12, marginTop: 24 }}>Ledger Pro Mobile v0.4.0</Text>
+        <Text style={{ color: '#0F1B18', textAlign: 'center', fontSize: 12, marginTop: 24 }}>Ledger Pro Mobile v0.4.0</Text>
       </ScrollView>
     </View>
   );

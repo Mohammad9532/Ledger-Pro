@@ -81,7 +81,7 @@ export default function CancelBusinessItemScreen() {
       >
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border flex-row items-center justify-between">
         <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center rounded-full bg-slate-800/50">
-          <ArrowLeft size={20} color="#f8fafc" />
+          <ArrowLeft size={20} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">Cancel Ticket</Text>
         <View className="w-10" />
@@ -100,7 +100,7 @@ export default function CancelBusinessItemScreen() {
           onPress={() => setShowDatePicker(true)}
         >
           <View className="flex-row items-center">
-            <CalendarIcon size={20} color="#94a3b8" />
+            <CalendarIcon size={20} color="#9FB4AC" />
             <Text className="text-white ml-3 text-base">{format(date, 'MMM dd, yyyy')}</Text>
           </View>
         </TouchableOpacity>
@@ -146,7 +146,7 @@ export default function CancelBusinessItemScreen() {
           <Text className={refundAccount ? 'text-white' : 'text-slate-500'}>
             {refundAccount ? refundAccount.name : 'Select Account'}
           </Text>
-          <ChevronRight size={20} color="#64748b" />
+          <ChevronRight size={20} color="#7C948C" />
         </TouchableOpacity>
 
         {/* Net Profit Summary */}
@@ -162,7 +162,7 @@ export default function CancelBusinessItemScreen() {
         <TextInput
           className="bg-card border border-border rounded-xl p-4 text-white text-base mb-10 min-h-[100]"
           placeholder="Reason for cancellation..."
-          placeholderTextColor="#64748b"
+          placeholderTextColor="#7C948C"
           value={notes}
           onChangeText={setNotes}
           multiline

@@ -65,7 +65,7 @@ export default function TrialBalanceScreen() {
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border z-10">
         <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <ArrowLeft size={24} color="#f8fafc" />
+            <ArrowLeft size={24} color="#E7F0EB" />
           </TouchableOpacity>
           <Text className="text-white text-lg font-bold">Trial Balance</Text>
           <View style={{ width: 40 }} />
@@ -82,10 +82,10 @@ export default function TrialBalanceScreen() {
 
           {/* Search Bar */}
           <View className="flex-1 flex-row items-center bg-background rounded-xl px-3 py-2.5 border border-border">
-            <Search size={18} color="#94a3b8" />
+            <Search size={18} color="#9FB4AC" />
             <TextInput
               placeholder="Search..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#7C948C"
               className="flex-1 ml-2 text-white text-sm"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -97,11 +97,11 @@ export default function TrialBalanceScreen() {
       {/* List */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#f97316" />
+          <ActivityIndicator size="large" color="#C6F13B" />
         </View>
       ) : error ? (
         <View className="flex-1 justify-center items-center px-6">
-          <AlertCircle size={48} color="#ef4444" className="mb-4" />
+          <AlertCircle size={48} color="#FF6B81" className="mb-4" />
           <Text className="text-white text-center text-lg font-bold mb-2">Failed to load report</Text>
           <Text className="text-muted text-center text-sm">Please check your connection and try again.</Text>
         </View>
@@ -137,12 +137,12 @@ export default function TrialBalanceScreen() {
             <View className="flex-row items-center">
               {data.is_balanced ? (
                 <>
-                  <CheckCircle2 size={16} color="#10b981" />
+                  <CheckCircle2 size={16} color="#3DD68C" />
                   <Text className="text-success font-bold ml-2">Balanced</Text>
                 </>
               ) : (
                 <>
-                  <AlertCircle size={16} color="#ef4444" />
+                  <AlertCircle size={16} color="#FF6B81" />
                   <Text className="text-danger font-bold ml-2">Not Balanced</Text>
                 </>
               )}

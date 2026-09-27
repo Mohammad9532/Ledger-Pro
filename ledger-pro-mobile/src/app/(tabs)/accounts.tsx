@@ -1,51 +1,78 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { AccountList } from '../../features/accounts/components/AccountList';
 import { ContactList } from '../../features/accounts/components/ContactList';
 import { useUiStore } from '../../store/uiStore';
+import { colors, fonts, text, shadow } from '../../theme';
+
+type DirectoryTab = 'accounts' | 'contacts';
 
 export default function AccountsDirectoryScreen() {
   const router = useRouter();
   const { activeDirectoryTab, setActiveDirectoryTab } = useUiStore();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const Segment = ({ id, label }: { id: DirectoryTab; label: string }) => {
+    const active = activeDirectoryTab === id;
+    return (
+      <TouchableOpacity
+        onPress={() => setActiveDirectoryTab(id)}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: active }}
+        style={{
+          flex: 1,
+          paddingVertical: 9,
+          borderRadius: 10,
+          alignItems: 'center',
+          backgroundColor: active ? colors.primary : 'transparent',
+        }}
+      >
+        <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 13.5, color: active ? colors.onPrimary : colors.inkMuted }}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
       {/* Header & Search */}
-      <View className="px-4 pt-4 pb-2 bg-card">
-        <Text className="text-white text-2xl font-bold mb-4">Directory</Text>
-        
-        <View className="flex-row items-center bg-slate-800 rounded-xl px-3 h-12 mb-4 border border-slate-700">
-          <Search size={20} color="#94a3b8" />
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <Text style={text.eyebrow}>Chart of accounts · People</Text>
+        <Text style={[text.title, { marginTop: 4, marginBottom: 16 }]}>Directory</Text>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.bg,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            height: 46,
+            marginBottom: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          <Search size={18} color={colors.inkFaint} />
           <TextInput
-            className="flex-1 text-white ml-2 text-base"
-            placeholder="Search directory..."
-            placeholderTextColor="#64748b"
+            style={{ flex: 1, marginLeft: 8, fontFamily: fonts.sans, fontSize: 15, color: colors.ink }}
+            placeholder="Search directory…"
+            placeholderTextColor={colors.inkGhost}
+            selectionColor={colors.primary}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            returnKeyType="search"
           />
         </View>
 
-        {/* Segmented Control */}
-        <View className="flex-row bg-slate-800 p-1 rounded-xl">
-          <TouchableOpacity
-            className={`flex-1 py-2 rounded-lg items-center ${activeDirectoryTab === 'accounts' ? 'bg-primary-500' : ''}`}
-            onPress={() => setActiveDirectoryTab('accounts')}
-          >
-            <Text className={`font-bold ${activeDirectoryTab === 'accounts' ? 'text-white' : 'text-slate-400'}`}>
-              Accounts
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-2 rounded-lg items-center ${activeDirectoryTab === 'contacts' ? 'bg-primary-500' : ''}`}
-            onPress={() => setActiveDirectoryTab('contacts')}
-          >
-            <Text className={`font-bold ${activeDirectoryTab === 'contacts' ? 'text-white' : 'text-slate-400'}`}>
-              Contacts
-            </Text>
-          </TouchableOpacity>
+        {/* Segmented control */}
+        <View style={{ flexDirection: 'row', backgroundColor: colors.bg, padding: 4, borderRadius: 14, borderWidth: 1, borderColor: colors.border }}>
+          <Segment id="accounts" label="Accounts" />
+          <Segment id="contacts" label="Contacts" />
         </View>
       </View>
 
@@ -59,7 +86,18 @@ export default function AccountsDirectoryScreen() {
 
       {/* Floating Action Button */}
       <TouchableOpacity
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary-500 rounded-full items-center justify-center shadow-lg shadow-black/50"
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...shadow.glow,
+        }}
         onPress={() => {
           if (activeDirectoryTab === 'accounts') {
             router.push('/accounts/new');
@@ -67,9 +105,11 @@ export default function AccountsDirectoryScreen() {
             router.push('/contacts/new');
           }
         }}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={activeDirectoryTab === 'accounts' ? 'New account' : 'New contact'}
       >
-        <Plus size={24} color="#ffffff" />
+        <Plus size={24} color={colors.onPrimary} strokeWidth={2.4} />
       </TouchableOpacity>
     </SafeAreaView>
   );

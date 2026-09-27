@@ -4,9 +4,24 @@ import '../global.css';
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
+import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
+import {
+  InstrumentSans_400Regular,
+  InstrumentSans_500Medium,
+  InstrumentSans_600SemiBold,
+  InstrumentSans_700Bold,
+} from '@expo-google-fonts/instrument-sans';
+import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
+import Toast from 'react-native-toast-message';
 import { useAuthStore } from '../store/authStore';
 import { LoadingScreen } from '../components/LoadingScreen';
-import Toast from 'react-native-toast-message';
+import { colors } from '../theme';
+
+// Keep the native splash up until fonts and the session are ready.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export const queryClient = new QueryClient();
 
@@ -15,9 +30,27 @@ export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
 
+  const [fontsLoaded, fontError] = useFonts({
+    InstrumentSerif_400Regular,
+    InstrumentSerif_400Regular_Italic,
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+    InstrumentSans_700Bold,
+    DMMono_400Regular,
+    DMMono_500Medium,
+  });
+  const fontsReady = fontsLoaded || !!fontError;
+
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
+
+  useEffect(() => {
+    if (fontsReady && !isLoading) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsReady, isLoading]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -34,15 +67,16 @@ export default function RootLayout() {
     }
   }, [token, isLoading, segments, router]);
 
-  if (isLoading) {
+  if (isLoading || !fontsReady) {
     return <LoadingScreen />;
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <StatusBar style="light" />
       <QueryClientProvider client={queryClient}>
         <BottomSheetModalProvider>
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>

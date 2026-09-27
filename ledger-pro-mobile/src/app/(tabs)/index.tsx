@@ -39,7 +39,7 @@ export default function DashboardScreen() {
   if (isError && !data) {
     return (
       <View className="flex-1 justify-center items-center bg-background px-4">
-        <WifiOff size={48} color="#ef4444" />
+        <WifiOff size={48} color="#FF6B81" />
         <Text className="text-white text-lg font-bold mt-4">Connection Error</Text>
         <Text className="text-muted text-center mt-2">Could not connect to the server.</Text>
       </View>
@@ -60,7 +60,7 @@ export default function DashboardScreen() {
       <DashboardHeader />
       {isOffline && (
         <View className="bg-danger/20 p-2 rounded-lg mb-4 flex-row justify-center items-center gap-2">
-          <WifiOff size={14} color="#ef4444" />
+          <WifiOff size={14} color="#FF6B81" />
           <Text className="text-danger text-xs font-bold">You are offline. Showing cached data.</Text>
         </View>
       )}
@@ -88,8 +88,8 @@ export default function DashboardScreen() {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh} 
-            tintColor="#f97316"
-            colors={['#f97316']}
+            tintColor="#C6F13B"
+            colors={['#C6F13B']}
           />
         }
         ListFooterComponent={data ? <RecentActivity transactions={data.recent_transactions} /> : null}

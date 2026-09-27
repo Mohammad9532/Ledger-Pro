@@ -130,7 +130,7 @@ export default function OnboardingScreen() {
                     }}
                   >
                     <Text className="text-white text-base">{selected ? selected.name : 'Select Country'}</Text>
-                    <ChevronDown size={20} color="#94a3b8" />
+                    <ChevronDown size={20} color="#9FB4AC" />
                   </TouchableOpacity>
                   {errors.country_code && <Text className="text-red-500 text-sm mt-1">{errors.country_code.message}</Text>}
                 </View>
@@ -154,7 +154,7 @@ export default function OnboardingScreen() {
                     }}
                   >
                     <Text className="text-white text-base">{selected ? selected.name : 'Select Currency'}</Text>
-                    <ChevronDown size={20} color="#94a3b8" />
+                    <ChevronDown size={20} color="#9FB4AC" />
                   </TouchableOpacity>
                   {errors.currency_code && <Text className="text-red-500 text-sm mt-1">{errors.currency_code.message}</Text>}
                 </View>
@@ -181,8 +181,8 @@ export default function OnboardingScreen() {
       <BottomSheetModal
         ref={bottomSheetRef}
         snapPoints={snapPoints}
-        backgroundStyle={{ backgroundColor: '#1e293b' }}
-        handleIndicatorStyle={{ backgroundColor: '#475569' }}
+        backgroundStyle={{ backgroundColor: '#0F1B18' }}
+        handleIndicatorStyle={{ backgroundColor: '#5F776F' }}
         backdropComponent={(props) => (
           <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
         )}
@@ -215,7 +215,7 @@ export default function OnboardingScreen() {
                 <Text className={`text-base ${isSelected ? 'text-primary-500 font-bold' : 'text-slate-200'}`}>
                   {item.name}
                 </Text>
-                {isSelected && <Check size={20} color="#f97316" />}
+                {isSelected && <Check size={20} color="#C6F13B" />}
               </TouchableOpacity>
             );
           }}

@@ -18,10 +18,10 @@ export default function TransactionsScreen() {
         
         {/* Search Bar */}
         <View className="flex-row items-center bg-background rounded-xl px-4 py-3 border border-border">
-          <Search size={20} color="#94a3b8" />
+          <Search size={20} color="#9FB4AC" />
           <TextInput
             placeholder="Search transactions..."
-            placeholderTextColor="#64748b"
+            placeholderTextColor="#7C948C"
             className="flex-1 ml-3 text-white text-base"
             value={searchQuery}
             onChangeText={(text) => {
@@ -35,11 +35,11 @@ export default function TransactionsScreen() {
       {/* List */}
       {isLoading && page === 1 ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#f97316" />
+          <ActivityIndicator size="large" color="#C6F13B" />
         </View>
       ) : error ? (
         <View className="flex-1 justify-center items-center px-6">
-          <AlertCircle size={48} color="#ef4444" className="mb-4" />
+          <AlertCircle size={48} color="#FF6B81" className="mb-4" />
           <Text className="text-white text-center text-lg font-bold mb-2">Failed to load transactions</Text>
           <Text className="text-muted text-center text-sm">Please check your connection and try again.</Text>
         </View>
@@ -53,13 +53,13 @@ export default function TransactionsScreen() {
             <RefreshControl 
               refreshing={isRefetching && page === 1} 
               onRefresh={() => { setPage(1); refetch(); }}
-              tintColor="#f97316"
+              tintColor="#C6F13B"
             />
           }
           ListEmptyComponent={
             <View className="py-20 items-center justify-center">
               <View className="bg-slate-800/50 p-4 rounded-full mb-4">
-                <FileText size={40} color="#64748b" />
+                <FileText size={40} color="#7C948C" />
               </View>
               <Text className="text-white text-lg font-bold mb-2">No transactions found</Text>
               <Text className="text-muted text-center">

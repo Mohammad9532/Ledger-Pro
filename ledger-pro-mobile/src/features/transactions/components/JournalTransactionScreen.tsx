@@ -156,7 +156,7 @@ export function JournalTransactionScreen() {
     <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View className="flex-row items-center justify-between px-4 pt-14 pb-4 border-b border-border bg-card">
         <TouchableOpacity onPress={handleBack} className="p-2 -ml-2">
-          <ArrowLeft size={24} color="#f8fafc" />
+          <ArrowLeft size={24} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">New Journal Entry</Text>
         <View style={{ width: 40 }} />
@@ -176,7 +176,7 @@ export function JournalTransactionScreen() {
           <View className="flex-row items-center justify-center pt-2 border-t border-border/50">
             {isBalanced ? (
               <>
-                <CheckCircle2 size={16} color="#10b981" className="mr-2" />
+                <CheckCircle2 size={16} color="#3DD68C" className="mr-2" />
                 <Text className="text-success font-bold">Balanced</Text>
               </>
             ) : (
@@ -193,7 +193,7 @@ export function JournalTransactionScreen() {
                 <Text className="text-white font-bold text-xs">Entry {index + 1}</Text>
                 {rows.length > 2 && (
                   <TouchableOpacity onPress={() => handleRemoveRow(row.id)}>
-                    <Trash2 size={16} color="#ef4444" />
+                    <Trash2 size={16} color="#FF6B81" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -218,7 +218,7 @@ export function JournalTransactionScreen() {
                     onChangeText={(val) => handleUpdateRow(row.id, 'debit', val.replace(/[^0-9.]/g, ''))}
                     keyboardType="decimal-pad"
                     placeholder="0.00"
-                    placeholderTextColor="#64748b"
+                    placeholderTextColor="#7C948C"
                     className="flex-1 text-white"
                   />
                 </View>
@@ -229,7 +229,7 @@ export function JournalTransactionScreen() {
                     onChangeText={(val) => handleUpdateRow(row.id, 'credit', val.replace(/[^0-9.]/g, ''))}
                     keyboardType="decimal-pad"
                     placeholder="0.00"
-                    placeholderTextColor="#64748b"
+                    placeholderTextColor="#7C948C"
                     className="flex-1 text-white"
                   />
                 </View>
@@ -241,7 +241,7 @@ export function JournalTransactionScreen() {
             className="flex-row items-center justify-center p-3 border border-dashed border-primary-500/50 rounded-xl bg-primary-500/10 mb-6"
             onPress={handleAddRow}
           >
-            <Plus size={20} color="#f97316" className="mr-2" />
+            <Plus size={20} color="#C6F13B" className="mr-2" />
             <Text className="text-primary-500 font-bold">Add Entry Line</Text>
           </TouchableOpacity>
 
@@ -253,7 +253,7 @@ export function JournalTransactionScreen() {
             <View>
               <Text className="text-muted text-sm font-medium mb-1">Date</Text>
               <View className="flex-row items-center">
-                <CalendarIcon size={16} color="#94a3b8" className="mr-2" />
+                <CalendarIcon size={16} color="#9FB4AC" className="mr-2" />
                 <Text className="text-white text-base">{format(date, 'MMM dd, yyyy')}</Text>
               </View>
             </View>
@@ -262,12 +262,12 @@ export function JournalTransactionScreen() {
           <View className="py-4 border-b border-border">
             <Text className="text-muted text-sm font-medium mb-2">Description</Text>
             <View className="flex-row items-center">
-              <FileText size={16} color="#94a3b8" className="mr-2" />
+              <FileText size={16} color="#9FB4AC" className="mr-2" />
               <TextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Journal Reference"
-                placeholderTextColor="#64748b"
+                placeholderTextColor="#7C948C"
                 className="flex-1 text-white text-base"
               />
             </View>
@@ -293,7 +293,7 @@ export function JournalTransactionScreen() {
           disabled={isPending || !isBalanced}
           activeOpacity={0.8}
         >
-          <Text className="text-white text-base font-bold">
+          <Text className="text-onprimary text-base font-bold">
             {isPending ? 'Saving...' : 'Save Journal'}
           </Text>
         </TouchableOpacity>

@@ -61,7 +61,7 @@ export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allow
           <Text className={`text-base font-medium ${isSelected ? 'text-primary-500' : 'text-white'}`}>{item.name}</Text>
           <Text className="text-muted text-xs capitalize mt-1">{item.type.replace(/_/g, ' ')}</Text>
         </View>
-        {isSelected && <Check size={20} color="#f97316" />}
+        {isSelected && <Check size={20} color="#C6F13B" />}
       </TouchableOpacity>
     );
   }, [selectedId, handleSelect]);
@@ -71,11 +71,11 @@ export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allow
       <Text className="text-white text-lg font-bold mb-4">{title}</Text>
       
       <View className="flex-row items-center bg-slate-800 rounded-xl px-3 h-12 mb-4 border border-slate-700">
-        <Search size={20} color="#94a3b8" />
+        <Search size={20} color="#9FB4AC" />
         <TextInput
           className="flex-1 text-white ml-2 text-base"
           placeholder="Search..."
-          placeholderTextColor="#64748b"
+          placeholderTextColor="#7C948C"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -135,8 +135,8 @@ export const AccountSelectorSheet = forwardRef<BottomSheetModal, Props>(({ allow
       index={0}
       snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: '#1e293b' }}
-      handleIndicatorStyle={{ backgroundColor: '#64748b' }}
+      backgroundStyle={{ backgroundColor: '#0F1B18' }}
+      handleIndicatorStyle={{ backgroundColor: '#7C948C' }}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
     >

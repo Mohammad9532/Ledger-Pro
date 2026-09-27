@@ -124,7 +124,7 @@ export default function NewAccountScreen() {
                       onPress={() => bottomSheetRef.current?.present()}
                     >
                       <Text className="text-white text-base">{selected ? selected.label : 'Select Type'}</Text>
-                      <ChevronDown size={20} color="#94a3b8" />
+                      <ChevronDown size={20} color="#9FB4AC" />
                     </TouchableOpacity>
                     {errors.type && <Text className="text-red-500 text-sm mt-1">{errors.type.message}</Text>}
                   </View>
@@ -164,8 +164,8 @@ export default function NewAccountScreen() {
         <BottomSheetModal
           ref={bottomSheetRef}
           snapPoints={snapPoints}
-          backgroundStyle={{ backgroundColor: '#1e293b' }}
-          handleIndicatorStyle={{ backgroundColor: '#475569' }}
+          backgroundStyle={{ backgroundColor: '#0F1B18' }}
+          handleIndicatorStyle={{ backgroundColor: '#5F776F' }}
           backdropComponent={(props) => (
             <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior="close" opacity={0.5} />
           )}
@@ -189,7 +189,7 @@ export default function NewAccountScreen() {
                   <Text className={`text-base ${isSelected ? 'text-primary-500 font-bold' : 'text-slate-200'}`}>
                     {item.label}
                   </Text>
-                  {isSelected && <Check size={20} color="#f97316" />}
+                  {isSelected && <Check size={20} color="#C6F13B" />}
                 </TouchableOpacity>
               );
             }}

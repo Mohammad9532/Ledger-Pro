@@ -43,7 +43,7 @@ export const AmountInput = ({ value, onChange, currency }: Props) => {
       >
         {activeCode === 'AED' ? (
           <View className="mr-2">
-            <AedSymbol size={40} color="#0ea5e9" />
+            <AedSymbol size={40} color="#4FC3E8" />
           </View>
         ) : (
           <Text className="text-primary-500 text-5xl font-bold mr-2">{displaySymbol}</Text>
@@ -55,7 +55,7 @@ export const AmountInput = ({ value, onChange, currency }: Props) => {
           keyboardType="decimal-pad"
           className="text-white text-6xl font-bold p-0 m-0 w-auto min-w-[100px]"
           placeholder="0.00"
-          placeholderTextColor="#334155"
+          placeholderTextColor="#1F3129"
           autoFocus
         />
       </TouchableOpacity>

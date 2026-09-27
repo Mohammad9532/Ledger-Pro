@@ -74,7 +74,7 @@ export default function ContactProfileScreen() {
   if (isLoadingSummary) {
     return (
       <View className="flex-1 bg-background items-center justify-center">
-        <ActivityIndicator size="large" color="#f97316" />
+        <ActivityIndicator size="large" color="#C6F13B" />
       </View>
     );
   }
@@ -121,7 +121,7 @@ export default function ContactProfileScreen() {
     <View className="bg-card px-4 pt-14 pb-4 border-b border-border">
       <View className="flex-row items-center justify-between mb-4">
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/people')} className="p-2 -ml-2">
-          <ArrowLeft size={24} color="#f8fafc" />
+          <ArrowLeft size={24} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">Contact Profile</Text>
         <TouchableOpacity className="p-2" onPress={handleArchiveToggle}>
@@ -144,7 +144,7 @@ export default function ContactProfileScreen() {
             onPress={handleExportPDF}
             disabled={isExporting}
           >
-            {isExporting ? <ActivityIndicator size="small" color="#f97316" /> : <FileText size={16} color="#f97316" />}
+            {isExporting ? <ActivityIndicator size="small" color="#C6F13B" /> : <FileText size={16} color="#C6F13B" />}
             <Text className="text-primary-500 font-bold text-sm ml-2">Export</Text>
           </TouchableOpacity>
 
@@ -171,24 +171,24 @@ export default function ContactProfileScreen() {
         onPress={() => setShowDetails(!showDetails)}
       >
         <Text className="text-muted mr-1">{showDetails ? 'Hide Details' : 'Show Details'}</Text>
-        {showDetails ? <ChevronUp size={16} color="#94a3b8" /> : <ChevronDown size={16} color="#94a3b8" />}
+        {showDetails ? <ChevronUp size={16} color="#9FB4AC" /> : <ChevronDown size={16} color="#9FB4AC" />}
       </TouchableOpacity>
 
       {showDetails && (
         <View className="mt-4 p-4 bg-slate-800 rounded-xl border border-slate-700">
           {contact.phone && (
             <View className="flex-row items-center mb-3">
-              <Phone size={16} color="#94a3b8" className="mr-3" />
+              <Phone size={16} color="#9FB4AC" className="mr-3" />
               <Text className="text-white">{contact.phone}</Text>
             </View>
           )}
           <View className="flex-row items-center mb-3">
-            <Mail size={16} color="#94a3b8" className="mr-3" />
+            <Mail size={16} color="#9FB4AC" className="mr-3" />
             <Text className="text-white">Email not provided</Text>
           </View>
           {contact.notes && (
             <View className="flex-row items-center">
-              <FileText size={16} color="#94a3b8" className="mr-3" />
+              <FileText size={16} color="#9FB4AC" className="mr-3" />
               <Text className="text-white">{contact.notes}</Text>
             </View>
           )}
@@ -201,7 +201,7 @@ export default function ContactProfileScreen() {
           className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'summary' ? 'bg-primary-500' : ''}`}
           onPress={() => setActiveTab('summary')}
         >
-          <Text className={`font-bold ${activeTab === 'summary' ? 'text-white' : 'text-slate-400'}`}>
+          <Text className={`font-bold ${activeTab === 'summary' ? 'text-onprimary' : 'text-slate-400'}`}>
             Summary
           </Text>
         </TouchableOpacity>
@@ -209,7 +209,7 @@ export default function ContactProfileScreen() {
           className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'ledger' ? 'bg-primary-500' : ''}`}
           onPress={() => setActiveTab('ledger')}
         >
-          <Text className={`font-bold ${activeTab === 'ledger' ? 'text-white' : 'text-slate-400'}`}>
+          <Text className={`font-bold ${activeTab === 'ledger' ? 'text-onprimary' : 'text-slate-400'}`}>
             Ledger
           </Text>
         </TouchableOpacity>
@@ -299,7 +299,7 @@ export default function ContactProfileScreen() {
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
             isLoadingLedger ? (
-              <ActivityIndicator color="#f97316" style={{ marginTop: 20 }} />
+              <ActivityIndicator color="#C6F13B" style={{ marginTop: 20 }} />
             ) : (
               <View className="p-8 items-center">
                 <Text className="text-muted">No ledger entries found.</Text>
@@ -309,7 +309,7 @@ export default function ContactProfileScreen() {
           ListFooterComponent={
             isFetchingNextPage ? (
               <View className="py-4 items-center">
-                <ActivityIndicator color="#f97316" />
+                <ActivityIndicator color="#C6F13B" />
               </View>
             ) : null
           }

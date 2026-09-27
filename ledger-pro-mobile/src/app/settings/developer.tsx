@@ -18,7 +18,7 @@ export default function DeveloperDiagnosticsScreen() {
     <View className="flex-row items-center justify-between p-4 border-b border-border">
       <View className="flex-row items-center">
         <View className="w-8 h-8 rounded-full bg-slate-800 items-center justify-center mr-3">
-          <Icon size={16} color="#94a3b8" />
+          <Icon size={16} color="#9FB4AC" />
         </View>
         <Text className="text-white font-medium">{label}</Text>
       </View>
@@ -32,7 +32,7 @@ export default function DeveloperDiagnosticsScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-row items-center justify-between px-4 pt-4 pb-4 bg-card border-b border-border">
         <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-          <ArrowLeft size={24} color="#f8fafc" />
+          <ArrowLeft size={24} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">Developer Mode</Text>
         <View style={{ width: 40 }} />
@@ -40,7 +40,7 @@ export default function DeveloperDiagnosticsScreen() {
 
       <ScrollView className="flex-1 px-4 pt-4">
         <View className="bg-primary-500/10 p-4 rounded-xl border border-primary-500/20 mb-6 flex-row items-center">
-          <Terminal size={24} color="#f97316" className="mr-3" />
+          <Terminal size={24} color="#C6F13B" className="mr-3" />
           <View className="flex-1">
             <Text className="text-primary-500 font-bold mb-1">Alpha Diagnostics</Text>
             <Text className="text-primary-400 text-xs">

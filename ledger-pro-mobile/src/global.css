@@ -2,16 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ledger Pro mobile · "Ink & Lime" tokens (mirrors src/theme/index.ts) */
 @layer base {
   :root {
-    --color-primary-50: 255 247 237;
-    --color-primary-500: 249 115 22;
-    --color-background: 15 23 42;
-    --color-card: 30 41 59;
-    --color-text: 248 250 252;
-    --color-muted: 148 163 184;
-    --color-border: 51 65 85;
-    --color-success: 16 185 129;
-    --color-danger: 239 68 68;
+    --color-primary-50: 247 253 227;
+    --color-primary-500: 198 241 59;
+    --color-on-primary: 10 19 17;
+    --color-background: 10 19 17;
+    --color-card: 15 27 24;
+    --color-surface: 22 36 31;
+    --color-text: 231 240 235;
+    --color-muted: 159 180 172;
+    --color-border: 31 49 41;
+    --color-success: 61 214 140;
+    --color-danger: 255 107 129;
+    --color-warning: 242 193 78;
+    --color-info: 90 169 245;
   }
 }

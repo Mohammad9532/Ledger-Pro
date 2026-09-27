@@ -95,7 +95,7 @@ export default function BusinessSaleScreen() {
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border flex-row items-center justify-between z-10">
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/business')} className="w-10 h-10 items-center justify-center rounded-full bg-slate-800">
-          <ArrowLeft size={20} color="#f8fafc" />
+          <ArrowLeft size={20} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">Record Sale</Text>
         <View className="w-10" />
@@ -112,7 +112,7 @@ export default function BusinessSaleScreen() {
               onChangeText={setSaleAmount}
               keyboardType="decimal-pad"
               placeholder="0.00"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#5F776F"
               className="text-white text-6xl font-bold h-20 min-w-[150px] text-center"
               autoFocus
             />
@@ -125,11 +125,11 @@ export default function BusinessSaleScreen() {
             <View>
               <Text className="text-muted text-sm font-medium mb-1">Date</Text>
               <View className="flex-row items-center">
-                <CalendarIcon size={16} color="#94a3b8" className="mr-2" />
+                <CalendarIcon size={16} color="#9FB4AC" className="mr-2" />
                 <Text className="text-white text-base">{format(date, 'MMM dd, yyyy')}</Text>
               </View>
             </View>
-            <ChevronRight size={20} color="#64748b" />
+            <ChevronRight size={20} color="#7C948C" />
           </TouchableOpacity>
 
           <View className="py-4 border-b border-border flex-row items-center justify-between">
@@ -140,7 +140,7 @@ export default function BusinessSaleScreen() {
             <Switch
               value={isCredit}
               onValueChange={setIsCredit}
-              trackColor={{ false: '#334155', true: '#f97316' }}
+              trackColor={{ false: '#1F3129', true: '#C6F13B' }}
               thumbColor="#ffffff"
             />
           </View>
@@ -151,7 +151,7 @@ export default function BusinessSaleScreen() {
                 <Text className="text-muted text-sm font-medium mb-1">Customer / Buyer</Text>
                 <Text className={`text-base ${buyerContact ? 'text-white' : 'text-slate-500'}`}>{buyerContact ? buyerContact.name : `Select Buyer`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-border active:bg-border/30" onPress={() => paymentSheetRef.current?.present()}>
@@ -159,7 +159,7 @@ export default function BusinessSaleScreen() {
                 <Text className="text-muted text-sm font-medium mb-1">Receive Payment Into</Text>
                 <Text className={`text-base ${paymentAccount ? 'text-white' : 'text-slate-500'}`}>{paymentAccount ? paymentAccount.name : `Select Bank or Cash`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           )}
 
@@ -169,7 +169,7 @@ export default function BusinessSaleScreen() {
       {/* Save Button */}
       <View className="p-4 border-t border-border bg-card absolute bottom-0 left-0 right-0">
         <TouchableOpacity className={`h-14 rounded-xl items-center justify-center ${isPending ? 'bg-primary-500/50' : 'bg-primary-500'}`} onPress={handleSave} disabled={isPending} activeOpacity={0.8}>
-          <Text className="text-white text-base font-bold">{isPending ? 'Saving...' : 'Record Sale'}</Text>
+          <Text className="text-onprimary text-base font-bold">{isPending ? 'Saving...' : 'Record Sale'}</Text>
         </TouchableOpacity>
       </View>
 

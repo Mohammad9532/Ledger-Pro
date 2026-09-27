@@ -22,10 +22,10 @@ export function AccountList({ searchQuery }: Props) {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'bank': return <Landmark size={24} color="#60a5fa" />;
-      case 'credit_card': return <CreditCard size={24} color="#f472b6" />;
-      case 'cash': return <Banknote size={24} color="#4ade80" />;
-      default: return <Briefcase size={24} color="#94a3b8" />;
+      case 'bank': return <Landmark size={24} color="#7DBCF8" />;
+      case 'credit_card': return <CreditCard size={24} color="#F58CC4" />;
+      case 'cash': return <Banknote size={24} color="#3DD68C" />;
+      default: return <Briefcase size={24} color="#9FB4AC" />;
     }
   };
 
@@ -34,7 +34,7 @@ export function AccountList({ searchQuery }: Props) {
   const EmptyState = () => (
     <View className="flex-1 items-center justify-center pt-20 px-6">
       <View className="w-20 h-20 rounded-full bg-slate-800 items-center justify-center mb-6">
-        <Wallet size={32} color="#64748b" />
+        <Wallet size={32} color="#7C948C" />
       </View>
       <Text className="text-white text-lg font-bold mb-2">No accounts found</Text>
       <Text className="text-muted text-center">
@@ -51,7 +51,7 @@ export function AccountList({ searchQuery }: Props) {
       contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
       ListEmptyComponent={!isLoading ? EmptyState : null}
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#f97316" />
+        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#C6F13B" />
       }
     />
   );
@@ -80,9 +80,9 @@ function AccountCard({ item, getIcon }: { item: Account, getIcon: (t: string) =>
             {formatCurrency(parseFloat(item.computed_balance))}
           </Text>
           {expanded ? (
-            <ChevronDown size={16} color="#64748b" className="mt-1" />
+            <ChevronDown size={16} color="#7C948C" className="mt-1" />
           ) : (
-            <ChevronRight size={16} color="#64748b" className="mt-1" />
+            <ChevronRight size={16} color="#7C948C" className="mt-1" />
           )}
         </View>
       </TouchableOpacity>
@@ -93,21 +93,21 @@ function AccountCard({ item, getIcon }: { item: Account, getIcon: (t: string) =>
             className="flex-1 items-center justify-center py-3 border-r border-border"
             onPress={() => router.push({ pathname: '/accounts/[id]', params: { id: item.id } })}
           >
-            <FileText size={18} color="#94a3b8" />
+            <FileText size={18} color="#9FB4AC" />
             <Text className="text-white text-xs font-medium mt-1">Statement</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className="flex-1 items-center justify-center py-3 border-r border-border"
             onPress={() => router.push(`/transactions/new?type=expense&account_id=${item.id}&account_name=${encodeURIComponent(item.name)}&account_type=${item.type}`)}
           >
-            <Plus size={18} color="#f97316" />
+            <Plus size={18} color="#C6F13B" />
             <Text className="text-primary-500 text-xs font-medium mt-1">New Txn</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className="flex-1 items-center justify-center py-3"
             onPress={() => router.push(`/accounts/edit/${item.id}`)}
           >
-            <Pencil size={18} color="#94a3b8" />
+            <Pencil size={18} color="#9FB4AC" />
             <Text className="text-white text-xs font-medium mt-1">Edit</Text>
           </TouchableOpacity>
         </View>

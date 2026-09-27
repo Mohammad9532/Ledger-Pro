@@ -241,7 +241,7 @@ export default function GenerateDocumentScreen() {
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#64748b"
+        placeholderTextColor="#7C948C"
         editable={editable}
       />
     </View>
@@ -253,7 +253,7 @@ export default function GenerateDocumentScreen() {
       {/* Header */}
       <View className="bg-card pt-14 pb-4 px-4 border-b border-border flex-row items-center justify-between z-10">
         <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center rounded-full bg-slate-800/50">
-          <ArrowLeft size={20} color="#f8fafc" />
+          <ArrowLeft size={20} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">Generate PDF</Text>
         <View className="w-10" />
@@ -265,7 +265,7 @@ export default function GenerateDocumentScreen() {
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-white text-lg font-bold">Passengers</Text>
             <TouchableOpacity onPress={addPassenger} className="flex-row items-center bg-primary-500/20 px-3 py-1.5 rounded-full border border-primary-500/30">
-              <Plus size={14} color="#f97316" />
+              <Plus size={14} color="#C6F13B" />
               <Text className="text-primary-500 text-xs font-bold ml-1">Add</Text>
             </TouchableOpacity>
           </View>
@@ -274,7 +274,7 @@ export default function GenerateDocumentScreen() {
             <View key={idx} className="bg-card border border-border p-4 rounded-2xl mb-4 relative">
               {idx > 0 && (
                 <TouchableOpacity onPress={() => removePassenger(idx)} className="absolute top-4 right-4 z-10 w-8 h-8 items-center justify-center bg-red-500/20 rounded-full">
-                  <Trash2 size={14} color="#ef4444" />
+                  <Trash2 size={14} color="#FF6B81" />
                 </TouchableOpacity>
               )}
               <InputField label="Title" value={p.title} onChangeText={(v: string) => updatePassenger(idx, 'title', v)} placeholder="Mr/Ms" />
@@ -297,7 +297,7 @@ export default function GenerateDocumentScreen() {
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-white text-lg font-bold">Flight Segments</Text>
             <TouchableOpacity onPress={addSegment} className="flex-row items-center bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/30">
-              <Plus size={14} color="#3b82f6" />
+              <Plus size={14} color="#5AA9F5" />
               <Text className="text-blue-400 text-xs font-bold ml-1">Add Via</Text>
             </TouchableOpacity>
           </View>
@@ -321,13 +321,13 @@ export default function GenerateDocumentScreen() {
                         onPress={() => toggleSameAsFirst(sIdx, !seg.same_as_first)} 
                         className={`flex-row items-center px-2.5 py-1 rounded-full border ${seg.same_as_first ? 'bg-blue-500/30 border-blue-500/50' : 'bg-slate-800/50 border-slate-700'}`}
                       >
-                        <Copy size={12} color={seg.same_as_first ? '#60a5fa' : '#94a3b8'} />
+                        <Copy size={12} color={seg.same_as_first ? '#7DBCF8' : '#9FB4AC'} />
                         <Text className={`text-xs font-medium ml-1 ${seg.same_as_first ? 'text-blue-400' : 'text-slate-400'}`}>Same</Text>
                       </TouchableOpacity>
                     )}
                     {docForm.segments.length > 1 && (
                       <TouchableOpacity onPress={() => removeSegment(sIdx)} className="w-7 h-7 items-center justify-center bg-red-500/20 rounded-full">
-                        <Trash2 size={12} color="#ef4444" />
+                        <Trash2 size={12} color="#FF6B81" />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -344,7 +344,7 @@ export default function GenerateDocumentScreen() {
                     <Text className={(isSame ? firstSeg.airline : seg.airline) ? 'text-white text-base' : 'text-slate-500 text-base'} numberOfLines={1}>
                       {(isSame ? firstSeg.airline : seg.airline) || 'Select Airline'}
                     </Text>
-                    <ChevronRight size={20} color="#64748b" />
+                    <ChevronRight size={20} color="#7C948C" />
                   </TouchableOpacity>
                 </View>
                 <InputField label="Flight Number" value={seg.flight_number} onChangeText={(v: string) => updateSegment(sIdx, 'flight_number', v)} placeholder="EK 123" />
@@ -366,7 +366,7 @@ export default function GenerateDocumentScreen() {
                       <Text className={seg.from ? 'text-white text-base flex-1' : 'text-slate-500 text-base flex-1'} numberOfLines={1}>
                         {seg.from || 'Select Origin Airport'}
                       </Text>
-                      <ChevronRight size={20} color="#64748b" />
+                      <ChevronRight size={20} color="#7C948C" />
                     </TouchableOpacity>
                   </View>
                   <View className="mb-4">
@@ -378,7 +378,7 @@ export default function GenerateDocumentScreen() {
                       <Text className={seg.to ? 'text-white text-base flex-1' : 'text-slate-500 text-base flex-1'} numberOfLines={1}>
                         {seg.to || 'Select Destination Airport'}
                       </Text>
-                      <ChevronRight size={20} color="#64748b" />
+                      <ChevronRight size={20} color="#7C948C" />
                     </TouchableOpacity>
                   </View>
                   <View className="mb-4">
@@ -387,7 +387,7 @@ export default function GenerateDocumentScreen() {
                       className="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 flex-row items-center"
                       onPress={() => handleOpenPicker('departure', sIdx)}
                     >
-                      <CalendarIcon size={20} color="#94a3b8" />
+                      <CalendarIcon size={20} color="#9FB4AC" />
                       <Text className={seg.departure ? 'text-white text-base ml-3' : 'text-slate-500 text-base ml-3'}>
                         {seg.departure || 'Select Date & Time'}
                       </Text>
@@ -399,7 +399,7 @@ export default function GenerateDocumentScreen() {
                       className="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 flex-row items-center"
                       onPress={() => handleOpenPicker('arrival', sIdx)}
                     >
-                      <CalendarIcon size={20} color="#94a3b8" />
+                      <CalendarIcon size={20} color="#9FB4AC" />
                       <Text className={seg.arrival ? 'text-white text-base ml-3' : 'text-slate-500 text-base ml-3'}>
                         {seg.arrival || 'Select Date & Time'}
                       </Text>
@@ -421,11 +421,11 @@ export default function GenerateDocumentScreen() {
           disabled={generateMutation.isPending}
         >
           {generateMutation.isPending ? (
-            <ActivityIndicator color="#fff" className="mr-2" />
+            <ActivityIndicator color="#0A1311" className="mr-2" />
           ) : (
-            <Download size={20} color="#fff" className="mr-2" />
+            <Download size={20} color="#0A1311" className="mr-2" />
           )}
-          <Text className="text-white font-bold text-base">
+          <Text className="text-onprimary font-bold text-base">
             {generateMutation.isPending ? 'Generating PDF...' : 'Download PDF Ticket'}
           </Text>
         </TouchableOpacity>

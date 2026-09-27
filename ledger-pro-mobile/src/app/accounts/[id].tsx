@@ -43,7 +43,7 @@ export default function AccountStatementScreen() {
             <Text className="text-white font-medium">Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity className="flex-1 bg-primary-500 rounded-xl py-3 items-center">
-            <Text className="text-white font-bold">New Txn</Text>
+            <Text className="text-onprimary font-bold">New Txn</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -75,7 +75,7 @@ export default function AccountStatementScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 bg-background items-center justify-center">
-        <ActivityIndicator size="large" color="#f97316" />
+        <ActivityIndicator size="large" color="#C6F13B" />
       </View>
     );
   }
@@ -84,7 +84,7 @@ export default function AccountStatementScreen() {
     <View className="flex-1 bg-background">
       <View className="flex-row items-center justify-between px-4 pt-14 pb-4 bg-card border-b border-border">
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/accounts')} className="p-2 -ml-2">
-          <ArrowLeft size={24} color="#f8fafc" />
+          <ArrowLeft size={24} color="#E7F0EB" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-bold">{account?.name || 'Account Statement'}</Text>
         <View style={{ width: 40 }} />
@@ -104,7 +104,7 @@ export default function AccountStatementScreen() {
         ListFooterComponent={
           isFetchingNextPage ? (
             <View className="py-4 items-center">
-              <ActivityIndicator color="#f97316" />
+              <ActivityIndicator color="#C6F13B" />
             </View>
           ) : null
         }

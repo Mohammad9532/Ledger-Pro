@@ -33,18 +33,18 @@ export const CreateTransactionSheet = forwardRef<BottomSheetModal>((props, ref) 
   );
 
   const actions = [
-    { id: 'give_money', label: 'Give Money', icon: <ArrowUpRight size={24} color="#ef4444" />, route: '/transactions/new?type=give_money' },
-    { id: 'receive_money', label: 'Receive Money', icon: <ArrowDownLeft size={24} color="#10b981" />, route: '/transactions/new?type=receive_money' },
-    { id: 'expense', label: 'Expense', icon: <ArrowUpRight size={24} color="#ef4444" />, route: '/transactions/new?type=expense' },
-    { id: 'income', label: 'Income', icon: <ArrowDownLeft size={24} color="#10b981" />, route: '/transactions/new?type=income' },
-    { id: 'transfer', label: 'Account Transfer', icon: <RefreshCw size={24} color="#3b82f6" />, route: '/transactions/new?type=transfer' },
-    { id: 'cc_payment', label: 'CC Payment', icon: <CreditCard size={24} color="#8b5cf6" />, route: '/transactions/new?type=cc_payment' },
-    { id: 'third_party_transfer', label: 'Third Party Transfer', icon: <ExternalLink size={24} color="#f59e0b" />, route: '/transactions/new?type=third_party_transfer' },
+    { id: 'give_money', label: 'Give Money', icon: <ArrowUpRight size={24} color="#FF6B81" />, route: '/transactions/new?type=give_money' },
+    { id: 'receive_money', label: 'Receive Money', icon: <ArrowDownLeft size={24} color="#3DD68C" />, route: '/transactions/new?type=receive_money' },
+    { id: 'expense', label: 'Expense', icon: <ArrowUpRight size={24} color="#FF6B81" />, route: '/transactions/new?type=expense' },
+    { id: 'income', label: 'Income', icon: <ArrowDownLeft size={24} color="#3DD68C" />, route: '/transactions/new?type=income' },
+    { id: 'transfer', label: 'Account Transfer', icon: <RefreshCw size={24} color="#5AA9F5" />, route: '/transactions/new?type=transfer' },
+    { id: 'cc_payment', label: 'CC Payment', icon: <CreditCard size={24} color="#A79BFF" />, route: '/transactions/new?type=cc_payment' },
+    { id: 'third_party_transfer', label: 'Third Party Transfer', icon: <ExternalLink size={24} color="#F2C14E" />, route: '/transactions/new?type=third_party_transfer' },
   ];
 
   const content = (
     <View className="p-6 pb-8">
-      <Text className="text-white text-xl font-bold mb-6">Create New</Text>
+      <Text style={{ fontFamily: 'InstrumentSerif_400Regular', fontSize: 26, color: '#E7F0EB', letterSpacing: -0.3, marginBottom: 22 }}>New entry</Text>
       
       <View className="flex-row flex-wrap justify-between">
         {actions.map((action) => (

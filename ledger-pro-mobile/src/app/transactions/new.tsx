@@ -329,7 +329,7 @@ function StandardTransactionScreen({
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-14 pb-4 border-b border-border bg-card">
-        <TouchableOpacity onPress={handleBack} className="p-2 -ml-2"><ArrowLeft size={24} color="#f8fafc" /></TouchableOpacity>
+        <TouchableOpacity onPress={handleBack} className="p-2 -ml-2"><ArrowLeft size={24} color="#E7F0EB" /></TouchableOpacity>
         <Text className="text-white text-lg font-bold">{config.title}</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -344,7 +344,7 @@ function StandardTransactionScreen({
                 <Text className="text-muted text-sm font-medium mb-1">{config.personLabel}</Text>
                 <Text className={`text-base ${person ? 'text-white' : 'text-slate-500'}`}>{person ? person.name : `Select ${config.personLabel}`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           )}
 
@@ -354,7 +354,7 @@ function StandardTransactionScreen({
                 <Text className="text-muted text-sm font-medium mb-1">{config.categoryLabel}</Text>
                 <Text className={`text-base ${category ? 'text-white' : 'text-slate-500'}`}>{category ? category.name : `Select ${config.categoryLabel}`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           )}
 
@@ -364,7 +364,7 @@ function StandardTransactionScreen({
                 <Text className="text-muted text-sm font-medium mb-1">{config.toLabel}</Text>
                 <Text className={`text-base ${toAccount ? 'text-white' : 'text-slate-500'}`}>{toAccount ? toAccount.name : `Select ${config.toLabel}`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           )}
 
@@ -374,7 +374,7 @@ function StandardTransactionScreen({
                 <Text className="text-muted text-sm font-medium mb-1">{config.fromLabel}</Text>
                 <Text className={`text-base ${fromAccount ? 'text-white' : 'text-slate-500'}`}>{fromAccount ? fromAccount.name : `Select ${config.fromLabel}`}</Text>
               </View>
-              <ChevronRight size={20} color="#64748b" />
+              <ChevronRight size={20} color="#7C948C" />
             </TouchableOpacity>
           )}
 
@@ -432,7 +432,7 @@ function StandardTransactionScreen({
                           {overpaymentIncomeAccount ? overpaymentIncomeAccount.name : 'Select Income Account'}
                         </Text>
                       </View>
-                      <ChevronRight size={20} color="#64748b" />
+                      <ChevronRight size={20} color="#7C948C" />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -446,19 +446,19 @@ function StandardTransactionScreen({
             <View>
               <Text className="text-muted text-sm font-medium mb-1">Date</Text>
               <View className="flex-row items-center">
-                <CalendarIcon size={16} color="#94a3b8" className="mr-2" />
+                <CalendarIcon size={16} color="#9FB4AC" className="mr-2" />
                 <Text className="text-white text-base">{format(date, 'MMM dd, yyyy')}</Text>
               </View>
             </View>
-            <ChevronRight size={20} color="#64748b" />
+            <ChevronRight size={20} color="#7C948C" />
           </TouchableOpacity>
 
           {/* Description */}
           <View className="py-4 border-b border-border">
             <Text className="text-muted text-sm font-medium mb-2">Description</Text>
             <View className="flex-row items-center">
-              <FileText size={16} color="#94a3b8" className="mr-2" />
-              <TextInput value={description} onChangeText={setDescription} placeholder="What was this for?" placeholderTextColor="#64748b" className="flex-1 text-white text-base" />
+              <FileText size={16} color="#9FB4AC" className="mr-2" />
+              <TextInput value={description} onChangeText={setDescription} placeholder="What was this for?" placeholderTextColor="#7C948C" className="flex-1 text-white text-base" />
             </View>
           </View>
 
@@ -503,7 +503,7 @@ function StandardTransactionScreen({
                           {source.account ? source.account.name : 'Select Account'}
                         </Text>
                       </View>
-                      <ChevronRight size={20} color="#64748b" />
+                      <ChevronRight size={20} color="#7C948C" />
                     </TouchableOpacity>
 
                     <View className="flex-row items-center border-b border-slate-700 py-2">
@@ -517,7 +517,7 @@ function StandardTransactionScreen({
                         }}
                         keyboardType="decimal-pad"
                         placeholder="0.00"
-                        placeholderTextColor="#64748b"
+                        placeholderTextColor="#7C948C"
                         className="flex-1 text-white text-base"
                       />
                     </View>
@@ -543,7 +543,7 @@ function StandardTransactionScreen({
       {/* Save Button */}
       <View className="p-4 border-t border-border bg-card">
         <TouchableOpacity className={`h-14 rounded-xl items-center justify-center ${isPending ? 'bg-primary-500/50' : 'bg-primary-500'}`} onPress={handleSave} disabled={isPending} activeOpacity={0.8}>
-          <Text className="text-white text-base font-bold">{isPending ? 'Saving...' : 'Save Transaction'}</Text>
+          <Text className="text-onprimary text-base font-bold">{isPending ? 'Saving...' : 'Save Transaction'}</Text>
         </TouchableOpacity>
       </View>
 

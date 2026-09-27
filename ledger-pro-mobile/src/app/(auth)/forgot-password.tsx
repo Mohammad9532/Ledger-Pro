@@ -54,7 +54,8 @@ export default function ForgotPasswordScreen() {
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
         <View className="mb-10">
-          <Text className="text-3xl font-bold text-white mb-2">Reset Password</Text>
+          <Text style={{ fontFamily: 'DMMono_500Medium', fontSize: 10.5, letterSpacing: 1.4, textTransform: 'uppercase', color: '#7C948C', marginBottom: 8 }}>Account recovery</Text>
+          <Text style={{ fontFamily: 'InstrumentSerif_400Regular', fontSize: 36, lineHeight: 40, color: '#E7F0EB', letterSpacing: -0.4, marginBottom: 8 }}>Reset your password</Text>
           <Text className="text-base text-muted">
             Enter your email address to receive a password reset link.
           </Text>

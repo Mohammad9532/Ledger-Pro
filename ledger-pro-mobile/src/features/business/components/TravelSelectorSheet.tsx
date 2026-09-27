@@ -43,8 +43,8 @@ export const TravelSelectorSheet = forwardRef<BottomSheetModal, Props>(({ option
       index={0}
       snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: '#1e293b' }}
-      handleIndicatorStyle={{ backgroundColor: '#475569' }}
+      backgroundStyle={{ backgroundColor: '#0F1B18' }}
+      handleIndicatorStyle={{ backgroundColor: '#5F776F' }}
       onDismiss={() => setSearchQuery('')}
     >
       <View className="flex-1 pb-6">
@@ -52,10 +52,10 @@ export const TravelSelectorSheet = forwardRef<BottomSheetModal, Props>(({ option
           <Text className="text-white text-lg font-bold mb-4 text-center">{title}</Text>
           
           <View className="flex-row items-center bg-slate-800/80 rounded-xl px-4 py-3 border border-slate-700">
-            <Search size={20} color="#94a3b8" />
+            <Search size={20} color="#9FB4AC" />
             <TextInput
               placeholder="Search..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#7C948C"
               className="flex-1 ml-3 text-white text-base"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -86,7 +86,7 @@ export const TravelSelectorSheet = forwardRef<BottomSheetModal, Props>(({ option
               </View>
               {selectedValue === item.value && (
                 <View className="w-6 h-6 rounded-full bg-primary-500/20 items-center justify-center">
-                  <Check size={14} color="#f97316" />
+                  <Check size={14} color="#C6F13B" />
                 </View>
               )}
             </TouchableOpacity>

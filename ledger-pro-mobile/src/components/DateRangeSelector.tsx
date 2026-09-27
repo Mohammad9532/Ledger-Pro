@@ -40,9 +40,9 @@ export function DateRangeSelector({ startDate, endDate, onChange, singleDateOnly
           setShowModal(true);
         }}
       >
-        <Calendar size={18} color="#94a3b8" />
+        <Calendar size={18} color="#9FB4AC" />
         <Text className="text-white ml-2 flex-1 font-medium">{displayDate}</Text>
-        <ChevronRight size={18} color="#64748b" />
+        <ChevronRight size={18} color="#7C948C" />
       </TouchableOpacity>
 
       <Modal visible={showModal} transparent animationType="slide">
@@ -53,7 +53,7 @@ export function DateRangeSelector({ startDate, endDate, onChange, singleDateOnly
                 Select Date {singleDateOnly ? '' : 'Range'}
               </Text>
               <TouchableOpacity onPress={() => setShowModal(false)} className="bg-slate-800 p-2 rounded-full">
-                <X size={20} color="#f8fafc" />
+                <X size={20} color="#E7F0EB" />
               </TouchableOpacity>
             </View>
 
@@ -113,7 +113,7 @@ export function DateRangeSelector({ startDate, endDate, onChange, singleDateOnly
               className="bg-primary-500 p-4 rounded-xl items-center"
               onPress={handleConfirm}
             >
-              <Text className="text-white font-bold text-lg">Apply</Text>
+              <Text className="text-onprimary font-bold text-lg">Apply</Text>
             </TouchableOpacity>
           </View>
         </View>
