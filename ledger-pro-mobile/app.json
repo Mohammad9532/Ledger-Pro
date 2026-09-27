@@ -9,20 +9,20 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A1311",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.beingreal.ledgerpro",
       "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0A1311",
+        "backgroundColor": "#C6F13B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.beingreal.ledgerpro",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "output": "static",
@@ -35,7 +35,7 @@
         {
           "backgroundColor": "#0A1311",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 150
         }
       ],
       "@react-native-community/datetimepicker",
