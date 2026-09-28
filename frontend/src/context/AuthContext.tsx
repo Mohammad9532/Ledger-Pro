@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   const login = async (email: string, password: string, rememberMe = false): Promise<'onboarding' | 'dashboard'> => {
-    const res = await api.post('/login', { email, password });
+    const res = await api.post('/login', { email, password, device_name: 'web' });
     const token = res.data.token;
     // rememberMe: persist across browser sessions (localStorage) vs. tab-only (sessionStorage)
     if (rememberMe) {

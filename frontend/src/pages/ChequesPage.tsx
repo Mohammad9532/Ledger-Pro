@@ -138,7 +138,7 @@ export default function ChequesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Cheque Reminders</h1>
+          <h1 className="page-title">Cheque Reminders</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage pending cheques and automated email alerts</p>
         </div>
         <div className="flex gap-2">
@@ -172,7 +172,7 @@ export default function ChequesPage() {
                           <Banknote className={`w-5 h-5 ${c.type === 'receivable' ? 'text-emerald-500' : 'text-rose-500'}`} />
                           <h3 className="font-semibold text-lg">#{c.cheque_number}</h3>
                       </div>
-                      <div className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-full text-xs font-medium uppercase tracking-wider">
+                      <div className="flex items-center gap-1 stamp">
                           {getStatusIcon(c.status)}
                           <span className="ml-1">{c.status}</span>
                       </div>
@@ -195,7 +195,7 @@ export default function ChequesPage() {
                       </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
                       <p className={`text-xl font-bold ${c.type === 'receivable' ? 'text-emerald-500' : 'text-rose-500'}`}>
                           {c.type === 'payable' ? '-' : ''}{formatCurrency(c.amount)}
                       </p>
@@ -209,7 +209,7 @@ export default function ChequesPage() {
                                   <Button variant="outline" size="icon" className="w-8 h-8 rounded-full text-rose-600 hover:text-rose-700 hover:bg-rose-50" onClick={() => handleStatusChange(c.id, 'bounced')} title="Mark as Bounced">
                                       <XCircle className="w-4 h-4" />
                                   </Button>
-                                  <Button variant="outline" size="icon" className="w-8 h-8 rounded-full text-slate-500 hover:text-slate-600 hover:bg-slate-100" onClick={() => handleStatusChange(c.id, 'cancelled')} title="Cancel Cheque">
+                                  <Button variant="outline" size="icon" className="w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary" onClick={() => handleStatusChange(c.id, 'cancelled')} title="Cancel Cheque">
                                       <X className="w-4 h-4" />
                                   </Button>
                                   <Button variant="outline" size="icon" className="w-8 h-8 rounded-full" onClick={() => openEdit(c)} title="Edit">

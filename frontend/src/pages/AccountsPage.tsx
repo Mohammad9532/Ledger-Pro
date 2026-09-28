@@ -96,7 +96,7 @@ export default function AccountsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Accounts</h1>
+          <h1 className="page-title">Accounts</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage your chart of accounts</p>
         </div>
         <div className="flex flex-col gap-3">
@@ -113,7 +113,7 @@ export default function AccountsPage() {
             </Button>
           </div>
           <div className="flex items-center justify-end gap-2">
-            <input type="checkbox" id="showSys" checked={showSystem} onChange={e => setShowSystem(e.target.checked)} className="rounded border-gray-300" />
+            <input type="checkbox" id="showSys" checked={showSystem} onChange={e => setShowSystem(e.target.checked)} className="rounded border-border-strong accent-primary cursor-pointer" />
             <label htmlFor="showSys" className="text-sm text-muted-foreground cursor-pointer">Show System & Internal Accounts</label>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function AccountsPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-sm">{a.name}</p>
-                          {Boolean(a.is_system) && <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">System</span>}
+                          {Boolean(a.is_system) && <span className="stamp">System</span>}
                         </div>
                         <p className="text-xs text-muted-foreground">{getAccountTypeLabel(a.type)}</p>
                       </div>

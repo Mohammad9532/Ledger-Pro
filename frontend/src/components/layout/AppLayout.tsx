@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 // user is already inside the app (e.g. their onboarding was somehow reverted).
 export default function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -28,12 +29,15 @@ export default function AppLayout() {
         setMobileOpen={setMobileOpen}
       />
       <div className={cn(
-        'flex-1 flex flex-col transition-all duration-300 overflow-hidden',
+        'flex-1 flex flex-col transition-[margin] duration-300 overflow-hidden',
         sidebarCollapsed ? 'lg:ml-[68px]' : 'lg:ml-64',
       )}>
         <Header onMenuClick={() => setMobileOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto">
+          {/* Keyed on the path so each page gets its own entrance. */}
+          <div key={location.pathname} className="mx-auto w-full max-w-[1400px] p-4 lg:p-8 animate-fade-in">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

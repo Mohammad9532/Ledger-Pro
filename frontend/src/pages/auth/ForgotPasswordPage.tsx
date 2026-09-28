@@ -122,7 +122,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Recover Account</h1>
+        <h1 className="page-title">Recover Account</h1>
         <p className="text-muted-foreground text-sm">Reset your password to regain access</p>
       </div>
 

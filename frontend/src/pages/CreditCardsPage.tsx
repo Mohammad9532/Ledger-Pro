@@ -64,7 +64,7 @@ export default function CreditCardsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Credit Cards</h1>
+        <h1 className="page-title">Credit Cards</h1>
         <p className="text-muted-foreground text-sm mt-1">Track outstanding balances and settle bills</p>
       </div>
 
@@ -76,11 +76,11 @@ export default function CreditCardsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {cards.map((card: any, i: number) => (
             <Card key={card.id} className="card-hover animate-fade-in overflow-hidden" style={{ animationDelay: `${i * 50}ms` }}>
-              <div className="h-2 bg-gradient-to-r from-orange-500 to-amber-500" />
+              <div className="h-2 bg-gradient-to-r from-primary to-primary-deep" />
               <CardContent className="p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center">
-                    <CreditCard className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary-deep flex items-center justify-center">
+                    <CreditCard className="w-6 h-6 text-primary-foreground" />
                   </div>
                   <div>
                     <p className="font-semibold">{card.name}</p>

@@ -158,7 +158,7 @@ export default function VerifyEmailPage() {
           <MailCheck className="w-6 h-6 text-primary" />
         </div>
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Check your inbox</h1>
+          <h1 className="page-title">Check your inbox</h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
             We've sent a 6-digit verification code to{' '}
             <span className="font-medium text-foreground break-all">{email || 'your email address'}</span>.

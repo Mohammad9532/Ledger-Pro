@@ -1,17 +1,18 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Wallet } from 'lucide-react';
+import { BrandMark } from '@/components/layout/BrandMark';
 
 // ─── Shared loading screen ─────────────────────────────────────────────────
 // Shown while AuthContext resolves the token against GET /api/user.
 // Prevents any page from rendering before auth state is known (eliminates flicker).
 export function LoadingScreen() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg animate-pulse">
-        <Wallet className="w-6 h-6 text-white" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-5">
+      <div className="flex items-center gap-3 animate-fade-in">
+        <BrandMark className="w-11 h-11 rounded-xl animate-pulse-glow" />
+        <span className="font-display italic text-3xl">Ledger Pro</span>
       </div>
-      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-primary/25 border-t-primary rounded-full animate-spin" />
     </div>
   );
 }

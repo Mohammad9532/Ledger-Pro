@@ -103,7 +103,7 @@ export default function PeoplePage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">People</h1>
+          <h1 className="page-title">People</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage contacts and view person ledgers</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -141,7 +141,7 @@ export default function PeoplePage() {
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-primary-deep flex items-center justify-center text-primary-foreground font-bold">
                         {c.name.charAt(0).toUpperCase()}
                       </div>
                       <div>

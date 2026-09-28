@@ -100,7 +100,7 @@ export default function AccountStatementPage() {
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5" /></Button>
         <div>
-          <h1 className="text-2xl font-bold">{data.account.name}</h1>
+          <h1 className="page-title">{data.account.name}</h1>
           <p className="text-muted-foreground text-sm">Account Statement</p>
         </div>
       </div>
@@ -147,9 +147,10 @@ export default function AccountStatementPage() {
                 </tr>
               </thead>
               <tbody>
+                {/* Newest first; the API's chronological running balances stay correct when reversed. */}
                 {data.entries.length === 0 ? (
                   <tr><td colSpan={6} className="text-center p-8 text-muted-foreground">No entries found</td></tr>
-                ) : data.entries.map((e: StatementEntry, i: number) => (
+                ) : [...data.entries].reverse().map((e: StatementEntry, i: number) => (
                   <tr key={i} className="border-b hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => navigate(`/transactions?highlight=${e.transaction_id}`)}>
                     <td className="p-3">{formatDate(e.date)}</td>
                     <td className="p-3">{e.description || '-'}</td>

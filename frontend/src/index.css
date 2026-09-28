@@ -2,112 +2,342 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Ledger Pro · "Ink & Lime"
+   A modern take on the green accountant's ledger. Light mode is ruled paper
+   with petrol ink; dark mode is the same ledger at night with a lime pen.
+   The navigation rail stays petrol-black in both modes so the brand reads
+   identically everywhere.
+   ────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 262 83% 58%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.625rem;
-  --success: 142.1 76.2% 36.3%;
-  --warning: 38 92% 50%;
+  color-scheme: light;
+
+  --bg: #F3F6F4;
+  --surface: #FFFFFF;
+  --surface-2: #E9EFEC;
+  --surface-3: #DDE6E1;
+  --border: #D3DDD8;
+  --border-strong: #B8C7C0;
+
+  --ink: #0B1917;
+  --ink-muted: #5B6F68;
+  --ink-faint: #8A9C96;
+
+  --primary: #0F5C53;
+  --primary-deep: #0A433C;
+  --primary-fg: #F1FFF8;
+  --primary-soft: rgba(15, 92, 83, 0.10);
+
+  --lime: #B9EA2B;
+  --lime-fg: #0B1917;
+
+  --positive: #0F9B6C;
+  --negative: #DF4A62;
+  --warning: #C98F00;
+  --info: #2B7BD1;
+  --violet: #7C6CF0;
+  --pink: #D9569B;
+  --orange: #E4783B;
+  --teal: #14A38B;
+
+  --rail: #0B1D1A;
+  --rail-border: #16302B;
+  --rail-fg: #9FB7AF;
+  --rail-fg-strong: #EAF5F0;
+  --rail-hover: rgba(255, 255, 255, 0.05);
+  --rail-active: rgba(185, 234, 43, 0.10);
+
+  --ring: #0F5C53;
+  --radius: 0.75rem;
+  --rule: rgba(11, 25, 23, 0.05);
+
+  --elev-sm: 0 1px 2px rgba(11, 25, 23, 0.05), 0 1px 1px rgba(11, 25, 23, 0.03);
+  --elev-md: 0 6px 20px -8px rgba(11, 25, 23, 0.18), 0 2px 6px -2px rgba(11, 25, 23, 0.06);
+  --elev-lg: 0 24px 48px -20px rgba(11, 25, 23, 0.30);
 }
 
 .dark {
-  --background: 224 71.4% 4.1%;
-  --foreground: 210 20% 98%;
-  --card: 224 71.4% 6%;
-  --card-foreground: 210 20% 98%;
-  --popover: 224 71.4% 6%;
-  --popover-foreground: 210 20% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
-  --success: 142.1 70.6% 45.3%;
-  --warning: 38 92% 50%;
+  color-scheme: dark;
+
+  --bg: #0A1311;
+  --surface: #0F1B18;
+  --surface-2: #16241F;
+  --surface-3: #1D2F29;
+  --border: #1F3129;
+  --border-strong: #2C433B;
+
+  --ink: #E7F0EB;
+  --ink-muted: #93A9A1;
+  --ink-faint: #5F776F;
+
+  --primary: #C6F13B;
+  --primary-deep: #A8D622;
+  --primary-fg: #0A1311;
+  --primary-soft: rgba(198, 241, 59, 0.12);
+
+  --lime: #C6F13B;
+  --lime-fg: #0A1311;
+
+  --positive: #3DD68C;
+  --negative: #FF6B81;
+  --warning: #F2C14E;
+  --info: #5AA9F5;
+  --violet: #A79BFF;
+  --pink: #F072B6;
+  --orange: #FF9A5C;
+  --teal: #2FC7B0;
+
+  --rail: #081412;
+  --rail-border: #16302B;
+  --rail-fg: #8FA69E;
+  --rail-fg-strong: #EAF5F0;
+  --rail-hover: rgba(255, 255, 255, 0.04);
+  --rail-active: rgba(198, 241, 59, 0.10);
+
+  --ring: #C6F13B;
+  --rule: rgba(231, 240, 235, 0.04);
+
+  --elev-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --elev-md: 0 8px 24px -10px rgba(0, 0, 0, 0.6);
+  --elev-lg: 0 30px 60px -24px rgba(0, 0, 0, 0.75);
 }
 
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-success: hsl(var(--success));
-  --color-warning: hsl(var(--warning));
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--primary);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-foreground: var(--primary-fg);
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--ink-muted);
+  --color-faint: var(--ink-faint);
+  --color-accent: var(--surface-2);
+  --color-accent-foreground: var(--ink);
+  --color-surface-3: var(--surface-3);
+  --color-lime: var(--lime);
+  --color-lime-foreground: var(--lime-fg);
+  --color-destructive: var(--negative);
+  --color-destructive-foreground: #FFFFFF;
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--border-strong);
+  --color-ring: var(--ring);
+  --color-success: var(--positive);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-rail: var(--rail);
+  --color-rail-border: var(--rail-border);
+  --color-rail-foreground: var(--rail-fg);
+  --color-rail-strong: var(--rail-fg-strong);
+
+  /* Pages already speak in raw Tailwind hues for income/expense/etc.
+     Route those hues through the theme so they follow light and dark. */
+  --color-emerald-400: var(--positive);
+  --color-emerald-500: var(--positive);
+  --color-emerald-600: var(--positive);
+  --color-emerald-700: var(--positive);
+  --color-green-400: var(--positive);
+  --color-green-500: var(--positive);
+  --color-green-600: var(--positive);
+  --color-green-700: var(--positive);
+  --color-rose-400: var(--negative);
+  --color-rose-500: var(--negative);
+  --color-rose-600: var(--negative);
+  --color-red-400: var(--negative);
+  --color-red-500: var(--negative);
+  --color-red-600: var(--negative);
+  --color-amber-500: var(--warning);
+  --color-amber-600: var(--warning);
+  --color-yellow-500: var(--warning);
+  --color-orange-500: var(--orange);
+  --color-orange-600: var(--orange);
+  --color-blue-500: var(--info);
+  --color-blue-600: var(--info);
+  --color-sky-500: var(--info);
+  --color-cyan-500: var(--teal);
+  --color-cyan-600: var(--teal);
+  --color-teal-500: var(--teal);
+  --color-teal-600: var(--teal);
+  --color-indigo-500: var(--violet);
+  --color-indigo-600: var(--violet);
+  --color-violet-500: var(--violet);
+  --color-purple-500: var(--violet);
+  --color-purple-600: var(--violet);
+  --color-fuchsia-500: var(--pink);
+  --color-pink-500: var(--pink);
+  --color-slate-100: var(--surface-2);
+  --color-slate-200: var(--border);
+  --color-slate-500: var(--ink-muted);
+  --color-slate-600: var(--ink-muted);
+  --color-gray-300: var(--border-strong);
+  --color-gray-500: var(--ink-muted);
+  --color-gray-600: var(--ink-muted);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --shadow-sm: var(--elev-sm);
+  --shadow-md: var(--elev-md);
+  --shadow-lg: var(--elev-lg);
+  --shadow-xl: var(--elev-lg);
+  --shadow-2xl: var(--elev-lg);
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
+    /* Ruled ledger paper: one hairline every 32px, kept still while content scrolls. */
+    background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+    background-attachment: fixed;
+  }
+
+  h1, h2 {
+    font-family: var(--font-display);
+    font-weight: 400 !important;
+    letter-spacing: -0.012em;
+  }
+
+  input, select, textarea, button {
+    font-family: inherit;
+  }
+
+  input[type="number"], td, .tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  table thead th {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  ::selection {
+    background: var(--lime);
+    color: var(--lime-fg);
+  }
+}
+
+@layer components {
+  .page-title {
+    font-family: var(--font-display);
+    font-weight: 400 !important;
+    font-size: 1.95rem;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .figure {
+    /* Money is set in the sans at semibold: the serif's condensed numerals look stretched at size. */
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 0.4rem;
+    color: var(--ink-muted);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+
+  .ledger-sheet {
+    position: relative;
+    background-color: var(--surface);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 27px, var(--rule) 27px 28px);
+  }
+
+  .card-hover {
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elev-md);
+    border-color: var(--border-strong);
+  }
+
+  .rail-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
   }
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
+  background: color-mix(in oklab, var(--ink-muted) 35%, transparent);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: color-mix(in oklab, var(--ink-muted) 55%, transparent);
+  background-clip: padding-box;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -116,23 +346,49 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2); }
-  50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 25%, transparent); }
+  50% { box-shadow: 0 0 0 10px color-mix(in oklab, var(--primary) 0%, transparent); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .animate-slide-in {
-  animation: slideIn 0.3s ease-out forwards;
+  animation: slideIn 0.3s ease-out both;
 }
 
-.card-hover {
-  transition: all 0.2s ease;
+.animate-rise-in {
+  animation: riseIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px -5px hsl(var(--primary) / 0.15);
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in, .animate-slide-in, .animate-rise-in, .animate-pulse-glow, .skeleton {
+    animation: none;
+  }
+  .card-hover, .card-hover:hover {
+    transition: none;
+    transform: none;
+  }
 }

@@ -456,7 +456,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold">Reports</h1><p className="text-muted-foreground text-sm mt-1">Financial reports and statements</p></div>
+      <div><h1 className="page-title">Reports</h1><p className="text-muted-foreground text-sm mt-1">Financial reports and statements</p></div>
 
       <Card><CardContent className="p-4 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-end gap-4">
         <div className="space-y-1 w-full sm:w-auto"><label className="text-sm text-muted-foreground">Report Type</label>

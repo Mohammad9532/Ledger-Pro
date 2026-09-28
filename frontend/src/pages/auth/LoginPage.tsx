@@ -72,7 +72,7 @@ export default function LoginPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+        <h1 className="page-title">Welcome back</h1>
         <p className="text-muted-foreground text-sm">Sign in to your Ledger Pro account</p>
       </div>
 

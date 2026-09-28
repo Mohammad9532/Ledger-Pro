@@ -220,11 +220,11 @@ export default function PersonLedgerPage() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-deep flex items-center justify-center text-primary-foreground font-bold text-xl shadow-lg shrink-0">
               {contact.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold truncate">{contact.name}</h1>
+              <h1 className="page-title text-2xl sm:text-[1.95rem] truncate">{contact.name}</h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-1">
                 {contact.phone && <span className="flex items-center gap-1 shrink-0"><Phone className="w-3 h-3" />{contact.phone}</span>}
                 {contact.notes && <span className="flex items-center gap-1 truncate"><FileText className="w-3 h-3 shrink-0" /><span className="truncate">{contact.notes}</span></span>}
@@ -387,11 +387,15 @@ export default function PersonLedgerPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b bg-muted/30">
-                      <td className="p-3 font-medium" colSpan={4}>Opening Balance</td>
-                      <td className="p-3 text-right font-medium">{formatCurrency(statement.opening_balance)}</td>
-                    </tr>
-                    {statement.entries.map((e: any, i: number) => (
+                    {/* Newest first. The API returns the statement chronologically with a running balance;
+                        reversing for display keeps every balance figure correct. */}
+                    {statement.entries.length > 0 && (
+                      <tr className="border-b bg-muted/30">
+                        <td className="p-3 font-medium" colSpan={4}>Closing Balance</td>
+                        <td className={`p-3 text-right font-medium ${parseFloat(statement.closing_balance) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{formatCurrency(statement.closing_balance)}</td>
+                      </tr>
+                    )}
+                    {[...statement.entries].reverse().map((e: any, i: number) => (
                       <tr key={i} className="border-b hover:bg-accent/50 transition-colors">
                         <td className="p-3">{formatDate(e.date)}</td>
                         <td className="p-3">{e.description || '-'}</td>
@@ -401,6 +405,10 @@ export default function PersonLedgerPage() {
                       </tr>
                     ))}
                     {statement.entries.length === 0 && <tr><td colSpan={5} className="text-center p-8 text-muted-foreground">No transactions</td></tr>}
+                    <tr className="bg-muted/30">
+                      <td className="p-3 font-medium" colSpan={4}>Opening Balance</td>
+                      <td className="p-3 text-right font-medium">{formatCurrency(statement.opening_balance)}</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

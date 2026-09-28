@@ -486,23 +486,23 @@ export default function OnboardingPage() {
         {/* Brand + welcome header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-              <Wallet className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-deep flex items-center justify-center shadow-lg">
+              <Wallet className="w-6 h-6 text-primary-foreground" />
             </div>
           </div>
           {currentStep === 1 ? (
             <>
-              <h1 className="text-3xl font-bold tracking-tight">Welcome to Ledger Pro</h1>
+              <h1 className="page-title text-[2.25rem]">Welcome to Ledger Pro</h1>
               <p className="text-muted-foreground">Let's configure your company in just a few steps.</p>
             </>
           ) : currentStep === STEPS.length ? (
             <>
-              <h1 className="text-3xl font-bold tracking-tight">You're all set!</h1>
+              <h1 className="page-title text-[2.25rem]">You're all set!</h1>
               <p className="text-muted-foreground">Review your configuration below and click <strong>Finish</strong> to start using Ledger Pro.</p>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold tracking-tight">{step.heading}</h1>
+              <h1 className="page-title">{step.heading}</h1>
               <p className="text-muted-foreground text-sm">{step.sub}</p>
             </>
           )}
@@ -579,7 +579,7 @@ export default function OnboardingPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="gap-1.5 min-w-[130px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
+                className="gap-1.5 min-w-[130px] bg-primary hover:bg-primary-deep border-0"
               >
                 {isSubmitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" />Saving...</>

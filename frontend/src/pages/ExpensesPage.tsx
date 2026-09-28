@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/utils';
 import api from '@/lib/api';
+import { CHART_SERIES } from '@/lib/theme';
 import { Plus, Receipt, Trash2, Edit2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-const COLORS = ['#f43f5e', '#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+const COLORS = CHART_SERIES;
 
 export default function ExpensesPage() {
   const [summary, setSummary] = useState<any>(null);
@@ -70,7 +71,7 @@ export default function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Expense Management</h1>
+          <h1 className="page-title">Expense Management</h1>
           <p className="text-muted-foreground text-sm mt-1">Category-wise expense tracking and analysis</p>
         </div>
         <Button onClick={() => setShowAddCat(true)} variant="outline"><Plus className="w-4 h-4 mr-2" /> Add Category</Button>
@@ -84,7 +85,7 @@ export default function ExpensesPage() {
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
           <div className="flex items-center gap-2">
-            <input type="checkbox" id="incBusExp" checked={includeBusiness} onChange={e => setIncludeBusiness(e.target.checked)} className="rounded border-gray-300" />
+            <input type="checkbox" id="incBusExp" checked={includeBusiness} onChange={e => setIncludeBusiness(e.target.checked)} className="rounded border-border-strong accent-primary cursor-pointer" />
             <label htmlFor="incBusExp" className="text-sm text-muted-foreground cursor-pointer">Include Business Expenses</label>
           </div>
           <Button onClick={fetchData} className="w-full sm:w-auto">Apply</Button>

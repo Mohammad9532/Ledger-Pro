@@ -208,7 +208,7 @@ export default function BusinessPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Business Trading</h1>
+          <h1 className="page-title">Business Trading</h1>
           <p className="text-muted-foreground text-sm mt-1">Track purchases, sales, and profits</p>
         </div>
         <div className="flex gap-2">

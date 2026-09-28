@@ -84,7 +84,7 @@ export default function RegisterPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
+        <h1 className="page-title">Create your account</h1>
         <p className="text-muted-foreground text-sm">
           Set up your company on Ledger Pro — free to start.
         </p>
