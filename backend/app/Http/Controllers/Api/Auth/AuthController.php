@@ -29,7 +29,8 @@ class AuthController extends Controller
             ], 429);
         }
 
-        if (!Auth::attempt($validated)) {
+        // Only the credentials go to attempt(); any other validated field would become a column lookup.
+        if (!Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
             RateLimiter::hit($throttleKey, 600);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
