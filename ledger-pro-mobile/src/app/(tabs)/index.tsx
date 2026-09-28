@@ -1,8 +1,7 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, FlatList, RefreshControl, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import NetInfo from '@react-native-community/netinfo';
-import { WifiOff } from 'lucide-react-native';
+import { WifiOff, CloudOff } from 'lucide-react-native';
 
 import { useDashboard } from '../../features/dashboard/api/getDashboard';
 import { DashboardHeader } from '../../features/dashboard/components/DashboardHeader';
@@ -12,18 +11,16 @@ import { QuickActions } from '../../features/dashboard/components/QuickActions';
 import { DashboardChart } from '../../features/dashboard/components/DashboardChart';
 import { RecentActivity } from '../../features/dashboard/components/RecentActivity';
 import { DashboardSkeleton, DashboardEmptyState } from '../../features/dashboard/components/DashboardStates';
+import { AppButton } from '../../components/AppButton';
+import { useOnline } from '../../lib/queryClient';
+import { formatRelativeTime } from '../../utils/format';
+import { colors, fonts } from '../../theme';
 
 export default function DashboardScreen() {
-  const { data, isLoading, isError, refetch } = useDashboard();
+  const { data, isLoading, isError, refetch, dataUpdatedAt } = useDashboard();
   const [refreshing, setRefreshing] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      setIsOffline(!state.isConnected);
-    });
-    return () => unsubscribe();
-  }, []);
+  const online = useOnline();
+  const isOffline = !online;
 
   const onRefresh = useCallback(async () => {
     if (isOffline) return;
@@ -32,16 +29,27 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }, [refetch, isOffline]);
 
+  const lastSynced = dataUpdatedAt ? formatRelativeTime(new Date(dataUpdatedAt).toISOString()) : null;
+
   if (isLoading && !data) {
     return <DashboardSkeleton />;
   }
 
   if (isError && !data) {
     return (
-      <View className="flex-1 justify-center items-center bg-background px-4">
-        <WifiOff size={48} color="#FF6B81" />
-        <Text className="text-white text-lg font-bold mt-4">Connection Error</Text>
-        <Text className="text-muted text-center mt-2">Could not connect to the server.</Text>
+      <View className="flex-1 justify-center items-center bg-background px-8">
+        {isOffline ? <CloudOff size={44} color={colors.inkMuted} /> : <WifiOff size={44} color={colors.negative} />}
+        <Text style={{ fontFamily: fonts.display, fontSize: 28, color: colors.ink, marginTop: 18, textAlign: 'center' }}>
+          {isOffline ? "You're offline" : 'Connection error'}
+        </Text>
+        <Text style={{ fontFamily: fonts.sans, fontSize: 14, color: colors.inkMuted, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
+          {isOffline
+            ? 'Connect to the internet once to load your ledger. After that it stays available offline.'
+            : 'Could not reach the server. Check your connection and try again.'}
+        </Text>
+        <View style={{ marginTop: 22, alignSelf: 'stretch' }}>
+          <AppButton title="Try again" variant="outline" onPress={() => refetch()} disabled={isOffline} />
+        </View>
       </View>
     );
   }
@@ -59,9 +67,25 @@ export default function DashboardScreen() {
     <Animated.View entering={FadeInDown.duration(600).springify()}>
       <DashboardHeader />
       {isOffline && (
-        <View className="bg-danger/20 p-2 rounded-lg mb-4 flex-row justify-center items-center gap-2">
-          <WifiOff size={14} color="#FF6B81" />
-          <Text className="text-danger text-xs font-bold">You are offline. Showing cached data.</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            backgroundColor: colors.surface2,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 12,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            marginBottom: 16,
+          }}
+        >
+          <CloudOff size={14} color={colors.inkMuted} />
+          <Text style={{ fontFamily: fonts.sansMedium, fontSize: 12, color: colors.inkMuted }}>
+            Offline{lastSynced ? ` · showing data saved ${lastSynced}` : ''}
+          </Text>
         </View>
       )}
       {data && (
@@ -85,11 +109,11 @@ export default function DashboardScreen() {
         renderItem={() => null}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
-            tintColor="#C6F13B"
-            colors={['#C6F13B']}
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListFooterComponent={data ? <RecentActivity transactions={data.recent_transactions} /> : null}

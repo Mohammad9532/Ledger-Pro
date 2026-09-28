@@ -3,7 +3,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import '../global.css';
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -18,12 +18,14 @@ import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono'
 import Toast from 'react-native-toast-message';
 import { useAuthStore } from '../store/authStore';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { queryClient, persistOptions, setupFocusManager } from '../lib/queryClient';
 import { colors } from '../theme';
 
 // Keep the native splash up until fonts and the session are ready.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-export const queryClient = new QueryClient();
+// Re-exported for older imports; the client itself lives in lib/queryClient.
+export { queryClient };
 
 export default function RootLayout() {
   const { isLoading, token, restoreSession } = useAuthStore();
@@ -45,6 +47,9 @@ export default function RootLayout() {
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
+
+  // Refetch stale data whenever the app returns to the foreground.
+  useEffect(() => setupFocusManager(), []);
 
   useEffect(() => {
     if (fontsReady && !isLoading) {
@@ -74,7 +79,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
         <BottomSheetModalProvider>
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -82,7 +87,7 @@ export default function RootLayout() {
           </Stack>
           <Toast />
         </BottomSheetModalProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </GestureHandlerRootView>
   );
 }
