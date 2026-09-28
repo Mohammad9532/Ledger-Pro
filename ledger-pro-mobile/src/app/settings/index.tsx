@@ -6,11 +6,46 @@ import {
 import { useRouter } from 'expo-router';
 import {
   ArrowLeft, User, Lock, Building, LogOut, ChevronRight,
-  Eye, EyeOff, CheckCircle, Terminal, Bell,
+  Eye, EyeOff, CheckCircle, Terminal, Bell, Fingerprint,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
+import { useLockStore } from '../../store/lockStore';
 import api from '../../api/api';
 import { LinearGradient } from 'expo-linear-gradient';
+
+/** Biometric app lock toggle. Enabling it asks for the biometric once to confirm it works. */
+function AppLockRow() {
+  const { enabled, available, kind, setEnabled } = useLockStore();
+  const label = kind === 'face' ? 'Face unlock' : 'Fingerprint unlock';
+
+  const toggle = async (value: boolean) => {
+    const ok = await setEnabled(value);
+    if (value && !ok) {
+      Alert.alert('App lock', 'Your identity could not be confirmed, so the lock stays off.');
+    }
+  };
+
+  return (
+    <>
+      <SettingRow
+        icon={Fingerprint}
+        label={available ? label : 'App lock'}
+        value={available ? (enabled ? 'On' : 'Off') : 'Not set up on this device'}
+        onPress={() => { if (available) toggle(!enabled); }}
+        trailing={
+          <Switch
+            value={enabled}
+            disabled={!available}
+            onValueChange={toggle}
+            trackColor={{ true: '#C6F13B', false: '#2C433B' }}
+            thumbColor={enabled ? '#0A1311' : '#9FB4AC'}
+          />
+        }
+      />
+      <Divider />
+    </>
+  );
+}
 
 // Generates 0-padded strings for hour (0-23) and minute (0-59)
 const HOURS   = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
@@ -296,6 +331,7 @@ export default function SettingsScreen() {
         {/* Security */}
         <SectionHeader title="Security" />
         <SettingsCard>
+          <AppLockRow />
           <SettingRow icon={Lock} label="Change Password" onPress={() => setShowPassword(v => !v)} />
           {showPassword && (
             <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#0A1311' }}>

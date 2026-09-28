@@ -18,6 +18,7 @@ import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono'
 import Toast from 'react-native-toast-message';
 import { useAuthStore } from '../store/authStore';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { AppLockGate } from '../components/AppLockGate';
 import { queryClient, persistOptions, setupFocusManager } from '../lib/queryClient';
 import { colors } from '../theme';
 
@@ -81,11 +82,13 @@ export default function RootLayout() {
       <StatusBar style="light" />
       <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
         <BottomSheetModalProvider>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-          <Toast />
+          <AppLockGate>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+            <Toast />
+          </AppLockGate>
         </BottomSheetModalProvider>
       </PersistQueryClientProvider>
     </GestureHandlerRootView>

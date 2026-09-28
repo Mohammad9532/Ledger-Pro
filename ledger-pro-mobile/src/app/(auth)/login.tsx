@@ -37,7 +37,7 @@ export default function LoginScreen() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setIsLoading(true);
-      const response = await api.post('/login', data);
+      const response = await api.post('/login', { ...data, device_name: 'mobile' });
 
       const { token, user, company, tenant } = response.data;
       await setAuth(token, user, company, tenant);
