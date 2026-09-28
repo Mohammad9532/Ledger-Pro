@@ -17,6 +17,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
+            'device_name' => 'sometimes|nullable|string|max:60',
         ]);
 
         $throttleKey = 'login-attempts:' . $request->ip();
@@ -46,10 +47,12 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Revoke old tokens
-        $user->tokens()->delete();
+        // Revoke only this device's previous token. Revoking every token here used to
+        // sign the mobile app out whenever the same user signed in on the web.
+        $deviceName = $request->input('device_name') ?: 'web';
+        $user->tokens()->where('name', $deviceName)->delete();
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken($deviceName)->plainTextToken;
 
         $userArray = $user->toArray();
         if ($user->company) {
