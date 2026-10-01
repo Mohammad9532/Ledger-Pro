@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use App\Enums\VerificationPurpose;
 use App\Http\Controllers\Controller;
 use App\Models\Master\User;
+use App\Services\Auth\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,8 +45,19 @@ class AuthController extends Controller
 
         if (is_null($user->email_verified_at)) {
             Auth::logout(); // Ensure we don't leave an active session if they were somehow authenticated via cookies
+
+            // The password was correct, so this is the account owner: send a fresh code so they are
+            // never stuck. Inside the resend window the previous code is still valid, so a throttle is fine.
+            try {
+                app(OtpService::class)->send($user, VerificationPurpose::EMAIL_VERIFICATION);
+            } catch (\Throwable $e) {
+                // Throttled or mail hiccup: the client still routes to the verify screen, which can resend.
+            }
+
             return response()->json([
-                'message' => 'Please verify your email.'
+                'message' => 'Please verify your email. We have sent a verification code to ' . $user->email . '.',
+                'code' => 'EMAIL_NOT_VERIFIED',
+                'email' => $user->email,
             ], 403);
         }
 

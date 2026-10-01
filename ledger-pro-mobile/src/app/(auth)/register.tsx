@@ -37,11 +37,14 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterForm) => {
     try {
       setIsLoading(true);
-      await api.post('/register', data);
-      
+      const res = await api.post('/register', data);
+      const resumed = res.status === 200;
+
       Alert.alert(
-        'Registration Successful',
-        'Your account has been created. We have sent a verification code to your email.',
+        resumed ? 'Finish verifying your email' : 'Registration Successful',
+        resumed
+          ? res.data?.message
+          : 'Your account has been created. We have sent a verification code to your email.',
         [{ text: 'OK', onPress: () => router.replace(`/(auth)/verify-email?email=${encodeURIComponent(data.email)}`) }]
       );
     } catch (error: any) {

@@ -75,7 +75,7 @@ export default function VerifyEmailScreen() {
     
     try {
       setIsResending(true);
-      await api.post('/verify-email/resend', { email: email });
+      await api.post('/resend-verification', { email: email });
       setCountdown(60);
       Alert.alert('Code Sent', 'A new verification code has been sent to your email.');
     } catch (error: any) {

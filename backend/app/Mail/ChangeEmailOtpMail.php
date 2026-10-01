@@ -24,7 +24,7 @@ class ChangeEmailOtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verify your new email address',
+            subject: 'Confirm your new Ledger Pro email',
         );
     }
 
@@ -32,6 +32,7 @@ class ChangeEmailOtpMail extends Mailable
     {
         return new Content(
             view: 'emails.change-email-otp',
+            text: 'emails.change-email-otp-text',
         );
     }
 }

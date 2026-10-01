@@ -24,7 +24,7 @@ class PasswordResetOtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Reset your password',
+            subject: 'Your Ledger Pro password reset code',
         );
     }
 
@@ -32,6 +32,7 @@ class PasswordResetOtpMail extends Mailable
     {
         return new Content(
             view: 'emails.password-reset-otp',
+            text: 'emails.password-reset-otp-text',
         );
     }
 }

@@ -25,6 +25,8 @@ Route::post('/register', [RegisterController::class, 'store']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify-email', [VerificationController::class, 'verify']);
 Route::post('/resend-verification', [VerificationController::class, 'resend']);
+// Alias: mobile builds 1.0.0 and 1.1.0 call this path for "Resend code".
+Route::post('/verify-email/resend', [VerificationController::class, 'resend']);
 
 // Password Reset
 Route::post('/password/forgot', [PasswordController::class, 'forgot']);

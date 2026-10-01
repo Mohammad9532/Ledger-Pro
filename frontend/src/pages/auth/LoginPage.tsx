@@ -56,9 +56,11 @@ export default function LoginPage() {
         setGeneralError('Unable to connect to the server. Please check your connection.');
       } else if (status >= 500) {
         setGeneralError('An unexpected server error occurred. Please try again in a moment.');
+      } else if (status === 403 && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        // The server has just sent a fresh code; take the user straight to the code screen.
+        navigate(`/verify-email?email=${encodeURIComponent(err.response.data.email ?? email)}`);
       } else if (status === 403 && message) {
-        // Email not verified — give a clear, actionable message
-        setFieldError(message + ' Please check your inbox.');
+        setFieldError(message);
       } else if (status === 422) {
         setFieldError(message || 'The provided credentials are incorrect.');
       } else {

@@ -43,9 +43,18 @@ export default function LoginScreen() {
       await setAuth(token, user, company, tenant);
       // Navigation is automatically handled by the root _layout based on token presence
     } catch (error: any) {
+      const res = error.response;
+      if (res?.status === 403 && res.data?.code === 'EMAIL_NOT_VERIFIED') {
+        // The server has just sent a fresh code; go straight to the code screen.
+        const target = res.data.email ?? data.email;
+        Alert.alert('Verify your email', res.data.message, [
+          { text: 'Enter code', onPress: () => router.push(`/(auth)/verify-email?email=${encodeURIComponent(target)}`) },
+        ]);
+        return;
+      }
       Alert.alert(
         'Login Failed',
-        error.response?.data?.message || 'Please check your credentials and try again.'
+        res?.data?.message || 'Please check your credentials and try again.'
       );
     } finally {
       setIsLoading(false);

@@ -24,7 +24,7 @@ class VerifyEmailOtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verify your email address',
+            subject: 'Your Ledger Pro verification code',
         );
     }
 
@@ -32,6 +32,7 @@ class VerifyEmailOtpMail extends Mailable
     {
         return new Content(
             view: 'emails.verify-otp',
+            text: 'emails.verify-otp-text',
         );
     }
 }

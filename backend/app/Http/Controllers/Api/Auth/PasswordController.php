@@ -87,9 +87,15 @@ class PasswordController extends Controller
             ], 403);
         }
 
-        $user->update([
-            'password' => Hash::make($request->password)
-        ]);
+        $updates = ['password' => Hash::make($request->password)];
+
+        // The reset code was delivered to this inbox and entered correctly, which proves ownership
+        // of the address. Mark it verified so an account that never finished signup can log in.
+        if (is_null($user->email_verified_at)) {
+            $updates['email_verified_at'] = now();
+        }
+
+        $user->update($updates);
 
         $this->otpService->consume($user, VerificationPurpose::PASSWORD_RESET);
 
