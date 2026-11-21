@@ -411,14 +411,18 @@ class BusinessItemController extends Controller
         $validated = $request->validate([
             'document_type' => 'required|string|in:flight',
             'data' => 'required|array',
+            'data.template' => 'sometimes|required|string|in:classic,professional',
         ]);
 
         $item = BusinessItem::findOrFail($id);
         
         // Save metadata
         $metadata = $item->metadata ?? [];
+        // Keep all itinerary fields: nested template validation filters them out
+        // of validated(), while the parent rule already ensures data is an array.
+        $metadata = array_merge($metadata, $request->input('data'));
         $metadata['document_type'] = $validated['document_type'];
-        $metadata = array_merge($metadata, $validated['data']);
+        $metadata['template'] = ($metadata['template'] ?? 'classic') === 'professional' ? 'professional' : 'classic';
         
         $item->update(['metadata' => $metadata]);
 
@@ -455,6 +459,16 @@ class BusinessItemController extends Controller
             ], $seg)];
         }
 
+        // Match the shared booking details displayed by both document editors.
+        foreach ($metadata['segments'] as $index => &$segment) {
+            if ($index > 0 && !empty($segment['same_as_first'])) {
+                foreach (['airline', 'pnr', 'ticket_number', 'class', 'baggage', 'cabin_baggage'] as $field) {
+                    $segment[$field] = $metadata['segments'][0][$field] ?? '';
+                }
+            }
+        }
+        unset($segment);
+
         // Generate PDF
         $company = auth()->user()->company;
         $profile = \App\Models\Tenant\CompanyProfile::first();
@@ -467,7 +481,8 @@ class BusinessItemController extends Controller
         if ($validated['document_type'] === 'flight') {
             $firstSegPnr = $metadata['segments'][0]['pnr'] ?? 'N/A';
             
-            $pdf = Pdf::loadView('tickets.flight', [
+            $view = $metadata['template'] === 'professional' ? 'tickets.flight-professional' : 'tickets.flight';
+            $pdf = Pdf::loadView($view, [
                 'company' => $company,
                 'profile' => $profile,
                 'item' => $item,
@@ -479,6 +494,12 @@ class BusinessItemController extends Controller
                 'currency' => $profile->currency_code ?? 'INR',
                 'logoPath' => $logoPath,
             ]);
+
+            if ($metadata['template'] === 'professional') {
+                $pdf->setPaper('a4', 'portrait');
+                $pdf->render();
+                $pdf->getDomPDF()->getCanvas()->page_text(490, 810, 'Page {PAGE_NUM} of {PAGE_COUNT}', $pdf->getDomPDF()->getFontMetrics()->getFont('DejaVu Sans'), 8, [0.39, 0.45, 0.53]);
+            }
             
             $passengers = $metadata['passengers'] ?? [];
             $passengerName = !empty($passengers) ? ($passengers[0]['first_name'] ?? 'Ticket') : 'Ticket';

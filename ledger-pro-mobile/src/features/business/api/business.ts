@@ -93,12 +93,16 @@ export const useCancelBusinessItem = () => {
 };
 
 export const useGenerateDocument = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       const response = await api.post(`/business-items/${id}/documents`, data, {
         responseType: 'arraybuffer'
       });
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['business-items'] });
     }
   });
 };

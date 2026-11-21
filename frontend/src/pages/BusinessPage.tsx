@@ -40,6 +40,7 @@ export default function BusinessPage() {
 
   const [docForm, setDocForm] = useState({
     document_type: 'flight',
+    template: 'professional',
     passengers: [{ title: 'Mr', first_name: '', last_name: '', passport: '' }],
     segments: [defaultSegment()] as any[],
     status: 'Confirmed',
@@ -140,6 +141,7 @@ export default function BusinessPage() {
       }
       setDocForm({
         document_type: 'flight',
+        template: m.template === 'professional' ? 'professional' : 'classic',
         passengers,
         segments,
         status: m.status || m.flight?.status || 'Confirmed',
@@ -149,6 +151,7 @@ export default function BusinessPage() {
     } else {
       setDocForm({
         document_type: 'flight',
+        template: 'professional',
         passengers: [{ title: 'Mr', first_name: '', last_name: '', passport: '' }],
         segments: [defaultSegment()],
         status: 'Confirmed',
@@ -654,6 +657,23 @@ export default function BusinessPage() {
 
             {docForm.document_type === 'flight' && (
               <>
+                <fieldset className="space-y-3">
+                  <legend className="text-sm font-medium">Ticket Template</legend>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { value: 'professional', label: 'Professional', description: 'Navy and teal styling, clear flight sections, and a polished booking summary.' },
+                      { value: 'classic', label: 'Classic', description: 'The original compact itinerary with blue dividers and detail tables.' },
+                    ].map(template => (
+                      <label key={template.value} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors ${docForm.template === template.value ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/30'}`}>
+                        <input type="radio" name="ticket-template" value={template.value} checked={docForm.template === template.value} onChange={() => setDocForm(prev => ({ ...prev, template: template.value }))} className="mt-1 accent-primary" />
+                        <span>
+                          <span className="block font-semibold">{template.label}</span>
+                          <span className="mt-1 block text-sm text-muted-foreground">{template.description}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
                 <div className="border border-border p-4 rounded-lg space-y-4">
                   <div className="flex justify-between items-center border-b pb-2">
                     <h3 className="font-semibold">Passenger Information</h3>

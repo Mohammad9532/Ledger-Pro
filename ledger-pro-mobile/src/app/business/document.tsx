@@ -60,6 +60,7 @@ export default function GenerateDocumentScreen() {
 
   const [docForm, setDocForm] = useState({
     document_type: 'flight',
+    template: existingDoc ? (existingDoc.template === 'professional' ? 'professional' : 'classic') : 'professional',
     passengers: existingDoc?.passengers || [{ title: 'Mr', first_name: '', last_name: '', passport: '' }],
     segments: buildInitialSegments(),
     status: existingDoc?.status || existingDoc?.flight?.status || 'Confirmed',
@@ -260,6 +261,25 @@ export default function GenerateDocumentScreen() {
       </View>
 
       <ScrollView className="flex-1 p-4" keyboardShouldPersistTaps="handled">
+        <View className="mb-6">
+          <Text className="text-white text-lg font-bold mb-3">Ticket Template</Text>
+          {[
+            { value: 'professional', label: 'Professional', description: 'Navy and teal styling with a polished booking summary and clear flight sections.' },
+            { value: 'classic', label: 'Classic', description: 'The original compact itinerary with blue dividers and detail tables.' },
+          ].map(template => (
+            <TouchableOpacity
+              key={template.value}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: docForm.template === template.value }}
+              accessibilityLabel={`${template.label} ticket template`}
+              onPress={() => setDocForm(prev => ({ ...prev, template: template.value }))}
+              className={`p-4 rounded-2xl border mb-3 ${docForm.template === template.value ? 'bg-primary-500/10 border-primary-500' : 'bg-card border-border'}`}
+            >
+              <Text className={`font-bold text-base mb-1 ${docForm.template === template.value ? 'text-primary-500' : 'text-white'}`}>{template.label}</Text>
+              <Text className="text-slate-400 text-sm">{template.description}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         {/* Passengers */}
         <View className="mb-6">
           <View className="flex-row justify-between items-center mb-4">
